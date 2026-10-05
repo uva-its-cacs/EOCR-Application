@@ -1,43 +1,48 @@
+using Eocr.Server.Auth;
+using Eocr.Server.Data;
+using Eocr.Server.Features.Requests;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<EocrDbContext>(o =>
+    o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<ICurrentUser, DevCurrentUser>();
+builder.Services.AddScoped<IRequestService, RequestService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<EocrDbContext>();
+    db.Database.Migrate();
+    DevSeeder.Seed(db);
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));
 
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+app.MapGet("/api/me", async (ICurrentUser currentUser, EocrDbContext db, CancellationToken ct) =>
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+    var ctx = await currentUser.GetAsync(ct);
+    if (ctx is null)
+        return Results.Unauthorized();
+
+    var user = await db.Users
+        .Where(u => u.Id == ctx.Id)
+        .Select(u => new { u.Id, u.Name, u.Email, Role = u.Role.ToString() })
+        .FirstOrDefaultAsync(ct);
+
+    return user is null ? Results.Unauthorized() : Results.Ok(user);
+});
+
+RequestEndpoints.MapRoutes(app);
+
+app.Run();
