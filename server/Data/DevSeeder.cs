@@ -8,9 +8,26 @@ public static class DevSeeder
     {
         if (db.Users.Any()) return;
 
-        var dana = new User { Email = "dana@example.com", Name = "Dana Example", Role = UserRole.User };
-        var sam = new User { Email = "sam@example.com", Name = "Sam Example", Role = UserRole.User };
-        var adminUser = new User { Email = "admin@example.com", Name = "Admin Example", Role = UserRole.Admin };
+        var userRoleId = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.User)
+            .Select(c => c.Id)
+            .Single();
+
+        var adminRoleId = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.Admin)
+            .Select(c => c.Id)
+            .Single();
+
+        var statusIds = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.RequestStatus)
+            .Select(c => new { c.Value, c.Id })
+            .ToDictionary(c => c.Value, c => c.Id);
+
+        int StatusId(string value) => statusIds[value];
+
+        var dana = new User { Email = "dana@example.com", Name = "Dana Example", RoleId = userRoleId };
+        var sam = new User { Email = "sam@example.com", Name = "Sam Example", RoleId = userRoleId };
+        var adminUser = new User { Email = "admin@example.com", Name = "Admin Example", RoleId = adminRoleId };
 
         db.Users.AddRange(dana, sam, adminUser);
 
@@ -22,7 +39,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Acme Suite",
                 Vendor = "Acme Corp",
-                Status = RequestStatus.Approved,
+                StatusId = StatusId(CodeConstants.RequestStatuses.Approved),
                 CreatedAt = now.AddDays(-30),
                 UpdatedAt = now.AddDays(-5),
             },
@@ -31,7 +48,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Buildout Pro",
                 Vendor = "Buildout Inc",
-                Status = RequestStatus.HumanReview,
+                StatusId = StatusId(CodeConstants.RequestStatuses.HumanReview),
                 CreatedAt = now.AddDays(-20),
                 UpdatedAt = now.AddDays(-2),
             },
@@ -40,7 +57,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Clover Analytics",
                 Vendor = "Clover Tech",
-                Status = RequestStatus.Submitted,
+                StatusId = StatusId(CodeConstants.RequestStatuses.Submitted),
                 CreatedAt = now.AddDays(-15),
                 UpdatedAt = now.AddDays(-15),
             },
@@ -49,7 +66,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Delphi Boards",
                 Vendor = "Delphi Systems",
-                Status = RequestStatus.AiReview,
+                StatusId = StatusId(CodeConstants.RequestStatuses.AiReview),
                 CreatedAt = now.AddDays(-10),
                 UpdatedAt = now.AddDays(-10),
             },
@@ -58,7 +75,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Ember Forms",
                 Vendor = "Ember LLC",
-                Status = RequestStatus.MoreInfoNeeded,
+                StatusId = StatusId(CodeConstants.RequestStatuses.MoreInfoNeeded),
                 CreatedAt = now.AddDays(-8),
                 UpdatedAt = now.AddDays(-1),
             },
@@ -67,7 +84,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Flux Reporter",
                 Vendor = "Flux Co",
-                Status = RequestStatus.Draft,
+                StatusId = StatusId(CodeConstants.RequestStatuses.Draft),
                 CreatedAt = now.AddDays(-3),
                 UpdatedAt = now.AddDays(-3),
             },
@@ -76,7 +93,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Granite Maps",
                 Vendor = "Granite GIS",
-                Status = RequestStatus.Denied,
+                StatusId = StatusId(CodeConstants.RequestStatuses.Denied),
                 CreatedAt = now.AddDays(-60),
                 UpdatedAt = now.AddDays(-45),
             },
@@ -85,7 +102,7 @@ public static class DevSeeder
                 Requestor = dana,
                 SoftwareName = "Harbor Docs",
                 Vendor = "Harbor Group",
-                Status = RequestStatus.ApprovedWithConditions,
+                StatusId = StatusId(CodeConstants.RequestStatuses.ApprovedWithConditions),
                 CreatedAt = now.AddDays(-90),
                 UpdatedAt = now.AddDays(-20),
             },
@@ -95,7 +112,7 @@ public static class DevSeeder
                 Requestor = sam,
                 SoftwareName = "Iris Tools",
                 Vendor = "Iris Dev",
-                Status = RequestStatus.Submitted,
+                StatusId = StatusId(CodeConstants.RequestStatuses.Submitted),
                 CreatedAt = now.AddDays(-5),
                 UpdatedAt = now.AddDays(-5),
             },
@@ -104,7 +121,7 @@ public static class DevSeeder
                 Requestor = sam,
                 SoftwareName = "Jasper CMS",
                 Vendor = "Jasper Web",
-                Status = RequestStatus.Draft,
+                StatusId = StatusId(CodeConstants.RequestStatuses.Draft),
                 CreatedAt = now.AddDays(-1),
                 UpdatedAt = now.AddDays(-1),
             }

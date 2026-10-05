@@ -1,8 +1,10 @@
-using Eocr.Server.Data.Entities;
-
 namespace Eocr.Server.Auth;
 
-public sealed record CurrentUserContext(int Id, UserRole Role);
+public class CurrentUserContext
+{
+    public int Id { get; set; }
+    public string RoleCode { get; set; } = string.Empty;
+}
 
 public interface ICurrentUser
 {

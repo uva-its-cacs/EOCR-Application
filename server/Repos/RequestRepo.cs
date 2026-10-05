@@ -1,14 +1,15 @@
 using Eocr.Server.Data;
+using Eocr.Server.DTOs;
 using Microsoft.EntityFrameworkCore;
 
-namespace Eocr.Server.Features.Requests;
+namespace Eocr.Server.Repos;
 
-public interface IRequestService
+public interface IRequestRepo
 {
     Task<IEnumerable<RequestSummaryDto>> GetMyRequestsAsync(int requestorId, CancellationToken ct);
 }
 
-public sealed class RequestService(EocrDbContext db) : IRequestService
+public class RequestRepo(EocrDbContext db) : IRequestRepo
 {
     public async Task<IEnumerable<RequestSummaryDto>> GetMyRequestsAsync(
         int requestorId,
@@ -17,13 +18,15 @@ public sealed class RequestService(EocrDbContext db) : IRequestService
         return await db.VettingRequests
             .Where(r => r.RequestorId == requestorId)
             .OrderByDescending(r => r.UpdatedAt)
-            .Select(r => new RequestSummaryDto(
-                r.Id,
-                r.SoftwareName,
-                r.Vendor,
-                r.Status.ToString(),
-                r.UpdatedAt
-            ))
+            .Select(r => new RequestSummaryDto
+            {
+                Id = r.Id,
+                SoftwareName = r.SoftwareName,
+                Vendor = r.Vendor,
+                StatusCode = r.Status.Value,
+                StatusLabel = r.Status.Label,
+                UpdatedAt = r.UpdatedAt,
+            })
             .ToListAsync(ct);
     }
 }
