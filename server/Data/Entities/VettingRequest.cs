@@ -1,8 +1,8 @@
 namespace Eocr.Server.Data.Entities;
 
-public class VettingRequest
+public class Request
 {
-    public int Id { get; set; }
+    public int RequestId { get; set; }
     public int RequestorId { get; set; }
     public User Requestor { get; set; } = null!;
     public string SoftwareName { get; set; } = string.Empty;

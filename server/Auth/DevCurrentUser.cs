@@ -19,11 +19,11 @@ public class DevCurrentUser : ICurrentUser
     {
         var user = await _db.Users
             .Where(u => u.Email == _email)
-            .Select(u => new { u.Id, RoleCode = u.Role.Value })
+            .Select(u => new { u.UserId, RoleCode = u.Role.Value })
             .FirstOrDefaultAsync(ct);
 
         return user is null
             ? null
-            : new CurrentUserContext { Id = user.Id, RoleCode = user.RoleCode };
+            : new CurrentUserContext { UserId = user.UserId, RoleCode = user.RoleCode };
     }
 }

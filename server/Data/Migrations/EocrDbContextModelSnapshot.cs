@@ -24,11 +24,11 @@ namespace Eocr.Server.Data.Migrations
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.Code", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CodeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CodeId"));
 
                     b.Property<string>("CodeType")
                         .IsRequired()
@@ -58,7 +58,7 @@ namespace Eocr.Server.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.HasKey("Id");
+                    b.HasKey("CodeId");
 
                     b.HasIndex("CodeType", "Value")
                         .IsUnique();
@@ -68,7 +68,7 @@ namespace Eocr.Server.Data.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1,
+                            CodeId = 1,
                             CodeType = "UserRole",
                             IsActive = true,
                             IsSystem = true,
@@ -78,7 +78,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 2,
+                            CodeId = 2,
                             CodeType = "UserRole",
                             IsActive = true,
                             IsSystem = true,
@@ -88,7 +88,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 101,
+                            CodeId = 101,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -98,7 +98,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 102,
+                            CodeId = 102,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -108,7 +108,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 103,
+                            CodeId = 103,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -118,7 +118,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 104,
+                            CodeId = 104,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -128,7 +128,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 105,
+                            CodeId = 105,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -138,7 +138,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 106,
+                            CodeId = 106,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -148,7 +148,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 107,
+                            CodeId = 107,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -158,7 +158,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 108,
+                            CodeId = 108,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -168,7 +168,7 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
-                            Id = 109,
+                            CodeId = 109,
                             CodeType = "RequestStatus",
                             IsActive = true,
                             IsSystem = true,
@@ -178,41 +178,13 @@ namespace Eocr.Server.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>
+            modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("RequestId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Eocr.Server.Data.Entities.VettingRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestId"));
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -236,7 +208,7 @@ namespace Eocr.Server.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.HasKey("Id");
+                    b.HasKey("RequestId");
 
                     b.HasIndex("RequestorId");
 
@@ -247,16 +219,33 @@ namespace Eocr.Server.Data.Migrations
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>
                 {
-                    b.HasOne("Eocr.Server.Data.Entities.Code", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
-                    b.Navigation("Role");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Eocr.Server.Data.Entities.VettingRequest", b =>
+            modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
                     b.HasOne("Eocr.Server.Data.Entities.User", "Requestor")
                         .WithMany("VettingRequests")
@@ -273,6 +262,17 @@ namespace Eocr.Server.Data.Migrations
                     b.Navigation("Requestor");
 
                     b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>
+                {
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>

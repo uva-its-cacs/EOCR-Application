@@ -18,10 +18,10 @@ public class MeController(ICurrentUser currentUser, EocrDbContext db) : Controll
             return Unauthorized();
 
         var dto = await db.Users
-            .Where(u => u.Id == ctx.Id)
+            .Where(u => u.UserId == ctx.UserId)
             .Select(u => new MeDto
             {
-                Id = u.Id,
+                UserId = u.UserId,
                 Name = u.Name,
                 Email = u.Email,
                 RoleCode = u.Role.Value,

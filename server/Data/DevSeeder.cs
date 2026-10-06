@@ -10,18 +10,18 @@ public static class DevSeeder
 
         var userRoleId = db.Codes
             .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.User)
-            .Select(c => c.Id)
+            .Select(c => c.CodeId)
             .Single();
 
         var adminRoleId = db.Codes
             .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.Admin)
-            .Select(c => c.Id)
+            .Select(c => c.CodeId)
             .Single();
 
         var statusIds = db.Codes
             .Where(c => c.CodeType == CodeConstants.CodeTypes.RequestStatus)
-            .Select(c => new { c.Value, c.Id })
-            .ToDictionary(c => c.Value, c => c.Id);
+            .Select(c => new { c.Value, c.CodeId })
+            .ToDictionary(c => c.Value, c => c.CodeId);
 
         int StatusId(string value) => statusIds[value];
 
@@ -34,7 +34,7 @@ public static class DevSeeder
         var now = DateTimeOffset.UtcNow;
 
         db.VettingRequests.AddRange(
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Acme Suite",
@@ -43,7 +43,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-30),
                 UpdatedAt = now.AddDays(-5),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Buildout Pro",
@@ -52,7 +52,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-20),
                 UpdatedAt = now.AddDays(-2),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Clover Analytics",
@@ -61,7 +61,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-15),
                 UpdatedAt = now.AddDays(-15),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Delphi Boards",
@@ -70,7 +70,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-10),
                 UpdatedAt = now.AddDays(-10),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Ember Forms",
@@ -79,7 +79,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-8),
                 UpdatedAt = now.AddDays(-1),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Flux Reporter",
@@ -88,7 +88,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-3),
                 UpdatedAt = now.AddDays(-3),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Granite Maps",
@@ -97,7 +97,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-60),
                 UpdatedAt = now.AddDays(-45),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = dana,
                 SoftwareName = "Harbor Docs",
@@ -107,7 +107,7 @@ public static class DevSeeder
                 UpdatedAt = now.AddDays(-20),
             },
             // Sam's requests — must not appear in Dana's dashboard
-            new VettingRequest
+            new Request
             {
                 Requestor = sam,
                 SoftwareName = "Iris Tools",
@@ -116,7 +116,7 @@ public static class DevSeeder
                 CreatedAt = now.AddDays(-5),
                 UpdatedAt = now.AddDays(-5),
             },
-            new VettingRequest
+            new Request
             {
                 Requestor = sam,
                 SoftwareName = "Jasper CMS",

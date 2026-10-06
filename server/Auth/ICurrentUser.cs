@@ -2,7 +2,7 @@ namespace Eocr.Server.Auth;
 
 public class CurrentUserContext
 {
-    public int Id { get; set; }
+    public int UserId { get; set; }
     public string RoleCode { get; set; } = string.Empty;
 }
 

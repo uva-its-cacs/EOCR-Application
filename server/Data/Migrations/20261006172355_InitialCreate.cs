@@ -17,7 +17,7 @@ namespace Eocr.Server.Data.Migrations
                 name: "Codes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    CodeId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CodeType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Value = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -29,14 +29,14 @@ namespace Eocr.Server.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Codes", x => x.Id);
+                    table.PrimaryKey("PK_Codes", x => x.CodeId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    UserId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -44,12 +44,12 @@ namespace Eocr.Server.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Users", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.UserId);
                     table.ForeignKey(
                         name: "FK_Users_Codes_RoleId",
                         column: x => x.RoleId,
                         principalTable: "Codes",
-                        principalColumn: "Id",
+                        principalColumn: "CodeId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -57,7 +57,7 @@ namespace Eocr.Server.Data.Migrations
                 name: "VettingRequests",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    RequestId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RequestorId = table.Column<int>(type: "int", nullable: false),
                     SoftwareName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
@@ -68,24 +68,24 @@ namespace Eocr.Server.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VettingRequests", x => x.Id);
+                    table.PrimaryKey("PK_VettingRequests", x => x.RequestId);
                     table.ForeignKey(
                         name: "FK_VettingRequests_Codes_StatusId",
                         column: x => x.StatusId,
                         principalTable: "Codes",
-                        principalColumn: "Id",
+                        principalColumn: "CodeId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_VettingRequests_Users_RequestorId",
                         column: x => x.RequestorId,
                         principalTable: "Users",
-                        principalColumn: "Id",
+                        principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
                 table: "Codes",
-                columns: new[] { "Id", "CodeType", "Description", "IsActive", "IsSystem", "Label", "SortOrder", "Value" },
+                columns: new[] { "CodeId", "CodeType", "Description", "IsActive", "IsSystem", "Label", "SortOrder", "Value" },
                 values: new object[,]
                 {
                     { 1, "UserRole", null, true, true, "User", 1, "User" },

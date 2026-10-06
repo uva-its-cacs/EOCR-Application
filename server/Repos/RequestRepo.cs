@@ -20,7 +20,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             .OrderByDescending(r => r.UpdatedAt)
             .Select(r => new RequestSummaryDto
             {
-                Id = r.Id,
+                RequestId = r.RequestId,
                 SoftwareName = r.SoftwareName,
                 Vendor = r.Vendor,
                 StatusCode = r.Status.Value,

@@ -15,7 +15,7 @@ public class RequestsController(ICurrentUser currentUser, IRequestRepo requestRe
         if (user is null)
             return Unauthorized();
 
-        var requests = await requestRepo.GetMyRequestsAsync(user.Id, ct);
+        var requests = await requestRepo.GetMyRequestsAsync(user.UserId, ct);
         return Ok(requests);
     }
 }
