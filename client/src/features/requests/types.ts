@@ -2,6 +2,7 @@ export interface RequestSummary {
   id: number
   softwareName: string
   vendor: string
-  status: string
+  statusCode: string
+  statusLabel: string
   updatedAt: string
 }

@@ -11,15 +11,15 @@ The app is built in small **slices**. Each slice is a thin, end-to-end piece of 
 ## Stack
 
 - **server/**: .NET 10, ASP.NET Core with controllers, EF Core with SQL Server (LocalDB in development, Azure SQL in production). Namespace root: `Eocr.Server`.
-- **client/**: React + TypeScript, Vite, React Router, TanStack Query.
+- **client/**: React + TypeScript, Vite, React Router, TanStack Query, Material UI (MUI) with the MUI X Data Grid (community).
 - **Solution file**: `EOCR.slnx` (contains `server/` only; `client/` is a Vite project).
 
 ## Run locally
 
-Run all commands from the repo root.
+Run `dotnet` commands from the repo root and `npm` / `npx` commands from `client/`.
 
 ```bash
-# API (http://localhost:5246)
+# API (http://localhost:5246), from the repo root
 dotnet run --project server
 
 # Client (http://localhost:5173), in a second terminal
@@ -78,7 +78,8 @@ Rules:
 
 - **No C# enums for domain values.** Statuses, roles, and other select lists live in the `Codes` table:
   `Id`, `CodeType`, `Value`, `Label`, `Description`, `SortOrder`, `IsActive`, `IsSystem`, with a unique index on `(CodeType, Value)`.
-- Entities reference codes by int foreign key (`StatusId`, `RoleId`) with a navigation property (`Status`, `Role`). Use `DeleteBehavior.Restrict`.
+- Entities reference codes by int foreign key (`StatusId`, `RoleId`) with a navigation property (`Status`, `Role`).
+- All foreign keys use `DeleteBehavior.Restrict` unless a slice says otherwise.
 - **Logic compares on the stable `Value` string, never on the numeric `Id`.** Values used by logic are defined once as string constants in `Data/CodeConstants.cs`.
 - Codes the app depends on (request statuses, user roles) have `IsSystem = true`, are seeded with `HasData` and fixed Ids so they exist in every environment, and cannot be deleted or have their `Value` changed. Admin-managed lists (funding source, software category, and so on) are `IsSystem = false`.
 - Repos validate that a referenced code has the expected `CodeType` before saving.
@@ -87,14 +88,13 @@ Rules:
 - Computed values such as a request title are computed in DTOs, not stored.
 - Binary files such as VPAT documents go in blob storage, with only a path in the database. Do not store file bytes in SQL.
 - Seed data is fictional. Never use real people, vendors, or products in seed data or tests.
--All foreign keys use DeleteBehavior.Restrict unless a slice says otherwise.
 
 ## Authentication and roles
 
 - Roles are `UserRole` codes (`User`, `Admin`) referenced from `Users.RoleId`. The identity provider only proves who someone is. The provider is undecided (Entra ID or Keycloak), so the app must stay provider-agnostic and use standard OpenID Connect.
 - Controllers depend on `ICurrentUser` only. Never read provider-specific claims in feature code. `ICurrentUser` exposes the role as its code `Value` string.
 - Admin-only endpoints use an "Admin" authorization policy that checks the user's role code. Until real auth is in place, checks go through `ICurrentUser`.
-- In Development, `DevCurrentUser` acts as the seeded user configured by `DevAuth:Email` in `appsettings.Development.json`, and looks codes up by `(CodeType, Value)`.
+- In Development, `DevCurrentUser` acts as the seeded user configured by `DevAuth:Email` in `appsettings.Development.json`, and looks codes up by `(CodeType, Value)`. Keep it set to the standard dev user (`dana@example.com`) when committing.
 - Users must only ever see their own requests. Always filter by the current user's ID in user-facing queries.
 
 ## Client architecture
@@ -102,15 +102,17 @@ Rules:
 ```
 client/src/
   app/          # Providers.tsx, queryClient.ts, router.tsx
-  components/   # shared, reusable UI (Layout, ...)
-  features/     # one folder per domain (requests/, reviews/, ...)
+  components/   # shared, reusable UI
+  features/     # one folder per domain (requests/, reviews/, auth/, ...)
     <feature>/
       components/
       api.ts    # fetch functions for this feature
       types.ts
   hooks/
+  layouts/      # dashboard shell (side menu, mobile bar, header)
   lib/          # api.ts: apiFetch wrapper
   pages/        # route-level components that compose features
+  theme/        # MUI theme, overrides, and the AppTheme wrapper
   main.tsx
 ```
 
@@ -122,7 +124,25 @@ Rules:
 - Types in `features/<feature>/types.ts` must match the server DTOs. Codes are plain strings (`statusCode`, `statusLabel`). Do not model codes as TypeScript unions or enums, since admins can add values. Style by code with a safe fallback for unknown codes, and always display the label.
 - Dropdown options come from the server (`GET /api/codes/{codeType}`, added in the intake slice), not hard-coded lists.
 - Function components and hooks only. Keep TypeScript strict. No `any` without a comment explaining why.
-- UI: Tailwind CSS and shadcn/ui are the approved stack. shadcn components are copied into `src/components/ui/` and may be customized there. Do not add other UI or state-management libraries without approval.
+- Do not add state-management or other UI libraries without approval.
+
+### UI (Material UI)
+
+- UI is **Material UI** (`@mui/material`, v9) with the **MUI X Data Grid community** package (`@mui/x-data-grid`). Styling is Emotion, through the theme in `src/theme/` and the `sx` prop. Icons come from `@mui/icons-material`.
+- Layout and styling are adapted from the official MUI **Dashboard** template (`mui/material-ui`, folders `docs/data/material/getting-started/templates/dashboard` and `shared-theme`, MIT). Use the TypeScript files. Copy only the shell (side menu, mobile bar, header, stat card styling), theme, and Data Grid styling that we use, into `src/layouts/` and `src/theme/`. Do not copy mock data, charts, tree view, or date pickers. Keep an attribution note in `THIRD_PARTY_NOTICES.md`.
+- Do not use Tailwind, shadcn/ui, or any other UI library. Do not use MUI X Pro or Premium packages (they require a paid license). Theme augmentation imports come from the community packages only (for example `@mui/x-data-grid/themeAugmentation`), never from `-pro` or `-premium`.
+- Do not add `@mui/x-charts`, `@mui/x-tree-view`, `@mui/x-date-pickers`, or `dayjs` without approval. A chart may never be the only way to see information: provide a table or text equivalent.
+- Wrap the app in `ThemeProvider` and `CssBaseline` (directly in `app/Providers.tsx`, or through the `AppTheme` wrapper in `theme/`). **Light mode only** for now, with no color-mode toggle. Use a system font stack. Do not load external fonts.
+- Navigation items are real React Router links, and the active one carries `aria-current="page"`.
+- Use the plain MUI `Table` (a real HTML `<table>`) for small, static lists. Use the Data Grid for lists that need sorting, filtering, or pagination, such as the user's request list and the admin queue. Every Data Grid needs an `aria-label`, must be keyboard operable, must show status as text, and has no checkbox selection unless a slice calls for it.
+- Form fields use MUI `TextField` / `FormControl` with a visible label, so every input is programmatically labelled.
+- Prefer theme values over hard-coded colors and spacing.
+
+### Writing React code
+
+- Write readable, vertically formatted code. Do not put JSX, props, or objects all on one line. Put each prop on its own line once a component has more than a couple of props or the line gets long.
+- Follow industry-standard organization: one component per file, PascalCase file and component names, hooks named `useX`, and feature folders as shown above.
+- Keep components small. Move data fetching into feature hooks and keep presentational components free of API calls.
 
 ## Accessibility (required)
 
@@ -132,10 +152,11 @@ This application tracks accessibility compliance, so it must itself meet **WCAG 
 - Every form control has a visible label. Errors are announced and tied to their field.
 - Everything is keyboard operable with a visible focus indicator.
 - Never convey status by color alone. Status badges include text.
-- Maintain sufficient color contrast and respect reduced-motion preferences.
+- Maintain sufficient color contrast and respect reduced-motion preferences. MUI gives a good baseline, but verify the contrast of the theme (especially secondary text, navigation states, and any custom status colors) against WCAG AA. Every text/background pairing must meet 4.5:1 for normal text, and the measured ratios must be reported whenever the theme changes.
 - Set a meaningful page title and move focus to the page `h1` on route changes.
 - Lint with `eslint-plugin-jsx-a11y`. Fix violations, do not disable rules.
 - ESLint is pinned to v9 because `eslint-plugin-jsx-a11y` does not yet support v10. Do not upgrade `eslint` or `@eslint/js` past v9 until the plugin does.
+
 ## Request status codes
 
 Code type `RequestStatus`, values: `Draft`, `Submitted`, `AiReview`, `HumanReview`, `MoreInfoNeeded`, `AwaitingEeaap`, `Approved`, `ApprovedWithConditions`, `Denied`.
@@ -157,8 +178,5 @@ Status changes happen only through the repo layer, never by writing the column d
 - Do not weaken or remove authorization checks to make something work.
 - Do not remove or rename `/api/health` or `/api/me`, or change the `/api` prefix.
 - Do not introduce enums, records for DTOs, or `sealed` classes.
-
-
-## Writing react code
--Please do not do all on one line, make it readable vertical format
--Organize in industry standard
+- Do not reintroduce Tailwind or shadcn/ui.
+- Do not commit template clones or copy template mock data into the repo.

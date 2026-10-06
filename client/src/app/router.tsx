@@ -1,11 +1,11 @@
 import { createBrowserRouter } from 'react-router-dom'
-import { Layout } from '../components/Layout'
+import { DashboardLayout } from '../layouts/DashboardLayout'
 import { DashboardPage } from '../pages/DashboardPage'
 import { NewRequestPage } from '../pages/NewRequestPage'
 
 export const router = createBrowserRouter([
   {
-    element: <Layout />,
+    element: <DashboardLayout />,
     children: [
       { path: '/', element: <DashboardPage /> },
       { path: '/requests/new', element: <NewRequestPage /> },
