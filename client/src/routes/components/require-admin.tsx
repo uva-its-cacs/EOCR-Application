@@ -1,12 +1,11 @@
 import { Outlet } from 'react-router';
 
 import Link from '@mui/material/Link';
-import Alert from '@mui/material/Alert';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { ErrorState } from 'src/components/feedback';
+import { PageHeader } from 'src/components/page-header';
 import { PageLoading } from 'src/components/page-loading';
 
 import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
@@ -29,13 +28,11 @@ export function RequireAdmin() {
   if (current.status === 'unauthenticated') {
     return (
       <DashboardContent maxWidth="xl">
-        <Typography variant="h4" component="h1">
-          You are not signed in
-        </Typography>
-        <Typography sx={{ mt: 1 }}>
-          Your session could not be verified. Sign in through your organization and reload this
-          page.
-        </Typography>
+        <PageHeader
+          title="You are not signed in"
+          documentTitle="Not signed in"
+          description="Your session could not be verified. Sign in through your organization and reload this page."
+        />
       </DashboardContent>
     );
   }
@@ -43,19 +40,8 @@ export function RequireAdmin() {
   if (current.status === 'error') {
     return (
       <DashboardContent maxWidth="xl">
-        <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-          We could not check your access
-        </Typography>
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={current.refetch}>
-              Retry
-            </Button>
-          }
-        >
-          {current.error.message}
-        </Alert>
+        <PageHeader title="We could not check your access" documentTitle="Access check failed" />
+        <ErrorState onRetry={current.refetch}>{current.error.message}</ErrorState>
       </DashboardContent>
     );
   }
@@ -63,14 +49,15 @@ export function RequireAdmin() {
   if (current.user.roleCode !== ADMIN_ROLE_CODE) {
     return (
       <DashboardContent maxWidth="xl">
-        <Typography variant="h4" component="h1">
-          You do not have access to this page
-        </Typography>
-        <Typography sx={{ mt: 1 }}>
-          <Link component={RouterLink} href={paths.requests.root}>
-            Go to My requests
-          </Link>
-        </Typography>
+        <PageHeader
+          title="You do not have access to this page"
+          documentTitle="No access"
+          description={
+            <Link component={RouterLink} href={paths.requests.root}>
+              Go to My requests
+            </Link>
+          }
+        />
       </DashboardContent>
     );
   }
