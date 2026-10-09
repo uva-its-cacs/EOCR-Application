@@ -7,6 +7,7 @@ import pluginImport from 'eslint-plugin-import';
 import pluginReactHooks from 'eslint-plugin-react-hooks';
 import pluginPerfectionist from 'eslint-plugin-perfectionist';
 import pluginUnusedImports from 'eslint-plugin-unused-imports';
+import pluginJsxA11y from 'eslint-plugin-jsx-a11y';
 
 // ----------------------------------------------------------------------
 
@@ -210,6 +211,103 @@ const baseConfig = {
   files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
 };
 
+// ----------------------------------------------------------------------
+// EOCR additions (not part of the Minimal template). Keep these at the end of the file.
+// ----------------------------------------------------------------------
+
+/**
+ * @config eocrA11yConfig
+ * Package: 'eslint-plugin-jsx-a11y' (recommended rules, all as errors).
+ * `components` maps MUI and template components to the native element they render,
+ * so the rules also check them.
+ */
+const eocrA11yConfig = {
+  ...pluginJsxA11y.flatConfigs.recommended,
+  files: ['**/*.{ts,tsx}'],
+  settings: {
+    'jsx-a11y': {
+      components: {
+        Button: 'button',
+        IconButton: 'button',
+        MenuButton: 'button',
+        Link: 'a',
+        RouterLink: 'a',
+      },
+    },
+  },
+  rules: {
+    ...pluginJsxA11y.flatConfigs.recommended.rules,
+    'jsx-a11y/control-has-associated-label': ['error', { depth: 5 }],
+  },
+};
+
+/**
+ * @config eocrRules
+ * Rules the template turns off, enabled for all code.
+ */
+const eocrRules = {
+  files: ['**/*.{ts,tsx}'],
+  rules: {
+    'react/jsx-key': 2,
+    '@typescript-eslint/no-explicit-any': 2,
+    'react-hooks/refs': 2,
+    'react-hooks/immutability': 2,
+    'react-hooks/set-state-in-effect': 2,
+    'react-hooks/incompatible-library': 2,
+    'react-hooks/preserve-manual-memoization': 2,
+  },
+};
+
+/**
+ * @config eocrOverrides
+ * File-scoped exceptions for template code that violates the rules above.
+ * Each entry names the slice that removes it. A template file ported later that trips
+ * these rules is added here in its own vendor commit and recorded in
+ * docs/migration/template-provenance.md.
+ */
+const eocrOverrides = [
+  {
+    // Remove in Slice 7 (these files are rewritten).
+    files: [
+      'src/layouts/components/menu-button.tsx',
+      'src/components/nav-section/**/*.{ts,tsx}',
+      'src/layouts/dashboard/nav-vertical.tsx',
+      'src/layouts/dashboard/nav-mobile.tsx',
+    ],
+    rules: { 'jsx-a11y/control-has-associated-label': 0 },
+  },
+  {
+    // Remove in Slice 7 (custom-popover is rewritten).
+    files: ['src/components/custom-popover/custom-popover.tsx'],
+    rules: { 'react-hooks/refs': 0 },
+  },
+  {
+    // Remove in Slice 7 (custom-popover is rewritten).
+    files: ['src/components/custom-popover/hooks.ts'],
+    rules: { 'react-hooks/set-state-in-effect': 0 },
+  },
+  {
+    // Remove in Slice 10 (hook-form wrappers are rewritten).
+    files: ['src/components/hook-form/form-provider.tsx'],
+    rules: { '@typescript-eslint/no-explicit-any': 0 },
+  },
+  {
+    // Remove in Slice 10 (hook-form wrappers are rewritten).
+    files: ['src/components/hook-form/rhf-autocomplete.tsx'],
+    rules: { '@typescript-eslint/no-explicit-any': 0 },
+  },
+  {
+    // Remove in Slice 7 (nav-section is rewritten).
+    files: ['src/components/nav-section/utils/create-nav-item.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 0 },
+  },
+  {
+    // Remove in Slice 9 (error pages are built).
+    files: ['src/routes/components/error-boundary.tsx'],
+    rules: { '@typescript-eslint/no-explicit-any': 0 },
+  },
+];
+
 const eslintConfig = [
   globalIgnores([
     // Default ignores
@@ -233,6 +331,10 @@ const eslintConfig = [
   importConfig,
   unusedImportsConfig,
   perfectionistConfig,
+  /********/
+  eocrA11yConfig,
+  eocrRules,
+  ...eocrOverrides,
 ];
 
 export default eslintConfig;

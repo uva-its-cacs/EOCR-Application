@@ -65,6 +65,7 @@ export function DashboardLayout({
         <>
           {/** @slot Nav mobile */}
           <MenuButton
+            aria-label="Open navigation menu"
             onClick={onOpen}
             sx={{ mr: 1, ml: -1, [theme.breakpoints.up(layoutQuery)]: { display: 'none' } }}
           />

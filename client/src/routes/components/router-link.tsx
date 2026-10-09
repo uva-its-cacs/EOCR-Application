@@ -9,6 +9,10 @@ interface RouterLinkProps extends Omit<LinkProps, 'to'> {
   ref?: React.RefObject<HTMLAnchorElement | null>;
 }
 
-export function RouterLink({ href, ref, ...other }: RouterLinkProps) {
-  return <Link ref={ref} to={href} {...other} />;
+export function RouterLink({ href, ref, children, ...other }: RouterLinkProps) {
+  return (
+    <Link ref={ref} to={href} {...other}>
+      {children}
+    </Link>
+  );
 }
