@@ -1,16 +1,7 @@
-import { DashboardContent } from 'src/layouts/dashboard';
-
-import { PageHeader } from 'src/components/page-header';
+import { NewRequestView } from 'src/sections/requests/view/new-request-view';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
-  return (
-    <DashboardContent maxWidth="xl">
-      <PageHeader
-        title="New request"
-        description="This page is a placeholder until a later slice builds it."
-      />
-    </DashboardContent>
-  );
+  return <NewRequestView />;
 }
