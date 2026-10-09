@@ -1,17 +1,16 @@
-import { CONFIG } from 'src/global-config';
+import { DashboardContent } from 'src/layouts/dashboard';
 
-import { BlankView } from 'src/sections/blank/view';
+import { PageHeader } from 'src/components/page-header';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Software - ${CONFIG.appName}` };
-
 export default function Page() {
   return (
-    <>
-      <title>{metadata.title}</title>
-
-      <BlankView title="Software" />
-    </>
+    <DashboardContent maxWidth="xl">
+      <PageHeader
+        title="Software"
+        description="This page is a placeholder until a later slice builds it."
+      />
+    </DashboardContent>
   );
 }
