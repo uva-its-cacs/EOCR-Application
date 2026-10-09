@@ -6,6 +6,32 @@
     <meta name="theme-color" content="#000000" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EOCR</title>
+    <!-- No-flash color scheme: the exact output of MUI InitColorSchemeScript for our config (data-color-scheme, theme-mode, default light). Guarded by src/theme/color-scheme-script.test.ts. A strict CSP needs a hash or nonce for it. -->
+    <script>(function() {
+try {
+  let colorScheme = '';
+  const mode = localStorage.getItem('theme-mode') || 'light';
+  const dark = localStorage.getItem('mui-color-scheme-dark') || 'dark';
+  const light = localStorage.getItem('mui-color-scheme-light') || 'light';
+  if (mode === 'system') {
+    // handle system mode
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mql.matches) {
+      colorScheme = dark
+    } else {
+      colorScheme = light
+    }
+  }
+  if (mode === 'light') {
+    colorScheme = light;
+  }
+  if (mode === 'dark') {
+    colorScheme = dark;
+  }
+  if (colorScheme) {
+    document.documentElement.setAttribute('data-color-scheme', colorScheme);
+  }
+} catch(e){}})();</script>
   </head>
 
   <body>

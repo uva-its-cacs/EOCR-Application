@@ -10,7 +10,9 @@ import { useNavGroups } from 'src/components/eocr-nav/use-nav-groups';
 import { SkipLink } from './skip-link';
 import { NavDrawer } from './nav-drawer';
 import { NavSidebar } from './nav-sidebar';
+import { AccountMenu } from './account-menu';
 import { useRouteFocus } from './use-route-focus';
+import { ColorModeToggle } from './color-mode-toggle';
 import { MenuButton } from '../components/menu-button';
 import { MainSection, HeaderSection, LayoutSection, layoutClasses } from '../core';
 import { dashboardLayoutVars, dashboardNavColorVars } from '../dashboard/css-vars';
@@ -22,7 +24,6 @@ const NAV_DRAWER_ID = 'primary-nav-drawer';
 
 type Props = {
   children: React.ReactNode;
-  headerRight?: React.ReactNode;
   layoutQuery?: Breakpoint;
 };
 
@@ -31,7 +32,7 @@ type Props = {
  * MainSection) and its dashboard CSS variables: skip link, header, fixed sidebar (or a drawer below the
  * layout breakpoint) and <main id="main-content">.
  */
-export function EocrLayout({ children, headerRight, layoutQuery = 'lg' }: Props) {
+export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
   const theme = useTheme();
   const navGroups = useNavGroups();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -56,9 +57,12 @@ export function EocrLayout({ children, headerRight, layoutQuery = 'lg' }: Props)
             sx={{ mr: 1, ml: -1, [theme.breakpoints.up(layoutQuery)]: { display: 'none' } }}
           />
         ),
-        rightArea: headerRight ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>{headerRight}</Box>
-        ) : undefined,
+        rightArea: (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ColorModeToggle />
+            <AccountMenu />
+          </Box>
+        ),
       }}
     />
   );
