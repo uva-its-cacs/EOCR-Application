@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'src/routes/hooks';
 
 import { themeConfig, ThemeProvider } from 'src/theme';
+import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
 // ----------------------------------------------------------------------
 
@@ -19,6 +20,7 @@ export default function App({ children }: AppProps) {
     <ThemeProvider
       modeStorageKey={themeConfig.modeStorageKey}
       defaultMode={themeConfig.defaultMode}
+      themeOverrides={eocrThemeOverrides}
     >
       {children}
     </ThemeProvider>
