@@ -9,6 +9,7 @@
     "dev": "vite",
     "start": "vite preview",
     "build": "tsc && vite build",
+    "test": "vitest run",
     "lint": "eslint --max-warnings 0 \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:print": "npx eslint --print-config eslint.config.mjs > eslint-show-config.json",
@@ -58,6 +59,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.49.0",
     "vite": "^8.0.16",
-    "vite-plugin-checker": "^0.13.0"
+    "vite-plugin-checker": "^0.13.0",
+    "vitest": "^5.0.3"
   }
 }
