@@ -1,5 +1,9 @@
-import type { Theme, Components } from '@mui/material/styles';
+import type { Theme, Components, ComponentsVariants } from '@mui/material/styles';
 
+import { chipClasses } from '@mui/material/Chip';
+
+import { colorKeys } from './core/palette';
+import { softStyles } from './core/mixins/global-styles-components';
 import { components as templateComponents } from './core/components';
 // ----------------------------------------------------------------------
 
@@ -37,18 +41,93 @@ export function extend(base: Style, ours: Style): Style {
 // The template's style for a component slot, typed loosely so it can be composed. The composed result is
 // cast with `as never` because MUI's per-slot override types are too strict to express a composed function.
 function templateStyle(component: keyof Components<Theme>, slot: string): Style {
-  const entry = templateComponents[component] as
-    | { styleOverrides?: Record<string, Style> }
-    | undefined;
+  const entry = templateComponents[component] as { styleOverrides?: Record<string, Style> } | undefined;
   const overrides = entry?.styleOverrides;
   return overrides?.[slot];
 }
 
 // ----------------------------------------------------------------------
 
+const COLORS = colorKeys.palette;
+
+/**
+ * Button. Colored outlined buttons get a solid `main` border (3:1 or better on every surface), and
+ * colored outlined and text buttons use the `dark` step as text on hover (the hover tint sits under the
+ * text). In the dark scheme `dark` is the lighter step, so the same rule holds there.
+ */
+type ButtonVariants = ComponentsVariants<Theme>['MuiButton'];
+type ChipVariants = ComponentsVariants<Theme>['MuiChip'];
+
+const buttonVariants = [
+  ...(COLORS.map((color) => ({
+    props: (props) => props.variant === 'outlined' && props.color === color,
+    style: ({ theme }) => ({
+      borderColor: theme.vars.palette[color].main,
+      '&:hover': {
+        color: theme.vars.palette[color].dark,
+        borderColor: 'currentColor',
+      },
+    }),
+  })) satisfies ButtonVariants),
+  ...(COLORS.map((color) => ({
+    props: (props) => props.variant === 'text' && props.color === color,
+    style: ({ theme }) => ({
+      '&:hover': { color: theme.vars.palette[color].dark },
+    }),
+  })) satisfies ButtonVariants),
+];
+
+/**
+ * Chip. Clickable outlined chips use the `dark` step as hover text. The avatar inside a colored chip
+ * uses `contrastText` on the `dark` fill in the dark scheme (the template's `lighter` text on the
+ * lighter `dark` fill has no contrast there).
+ */
+const chipRootVariants = (COLORS.map((color) => ({
+  props: (props) => props.variant === 'outlined' && props.color === color,
+  style: ({ theme }) => ({
+    [`&.${chipClasses.clickable}:hover`]: { color: theme.vars.palette[color].dark },
+  }),
+})) satisfies ChipVariants);
+
+const chipAvatarVariants = (COLORS.map((color) => ({
+  props: (props) => props.color === color,
+  style: ({ theme }) =>
+    theme.applyStyles('dark', {
+      color: theme.vars.palette[color].contrastText,
+      backgroundColor: theme.vars.palette[color].dark,
+    }),
+})) satisfies ChipVariants);
+
 // ----------------------------------------------------------------------
 
 export const eocrComponents: Components<Theme> = {
+  MuiButton: {
+    styleOverrides: {
+      root: extend(templateStyle('MuiButton', 'root'), { variants: buttonVariants }) as never,
+    },
+  },
+
+  MuiChip: {
+    styleOverrides: {
+      root: extend(templateStyle('MuiChip', 'root'), { variants: chipRootVariants }) as never,
+      avatar: extend(templateStyle('MuiChip', 'avatar'), { variants: chipAvatarVariants }) as never,
+    },
+  },
+
+  // Default letters: `text.secondary` (the template's `action.active` is under 4.5:1 on the avatar fill).
+  MuiAvatar: {
+    styleOverrides: {
+      colorDefault: extend(templateStyle('MuiAvatar', 'colorDefault'), {
+        variants: [
+          {
+            props: {},
+            style: ({ theme }: StyleArgs) => ({ color: theme.vars.palette.text.secondary }),
+          },
+        ],
+      }) as never,
+    },
+  },
+
   // Placeholder text uses `shared.inputOutlined` (4.5:1 or better, visibly lighter than entered text).
   MuiInputBase: {
     styleOverrides: {
@@ -91,4 +170,24 @@ export const eocrComponents: Components<Theme> = {
       },
     },
   },
+};
+
+// ----------------------------------------------------------------------
+
+/**
+ * `theme.mixins.softStyles` (used by soft Label, Chip and Button): the text color is the `dark` step in
+ * both schemes. The template uses the `light` step in the dark scheme, which fails for secondary.
+ * Replaced through `themeOverrides.mixins`; it calls the template's function and then sets the color.
+ */
+const PALETTE_KEYS: readonly string[] = COLORS;
+
+export const eocrMixins = {
+  softStyles: ((theme, colorKey, options) => {
+    const base = softStyles(theme, colorKey, options);
+    if (!PALETTE_KEYS.includes(colorKey)) return base;
+
+    const color = theme.vars.palette[colorKey as (typeof COLORS)[number]].dark;
+
+    return { ...base, color, ...theme.applyStyles('dark', { color }) };
+  }) as typeof softStyles,
 };

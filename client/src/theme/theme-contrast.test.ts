@@ -15,9 +15,11 @@ import { eocrThemeOverrides } from './eocr-overrides';
 type Scheme = 'light' | 'dark';
 type Rgb = { r: number; g: number; b: number; a: number };
 
-// A palette path such as 'primary.main', or `{ top, on }`: the `top` token composited over the `on` token,
-// which is how an alpha token (for example action.hover) looks when it sits on a surface.
-type Ref = string | { top: string; on: string };
+// A palette path such as 'primary.main', or `{ top, on, opacity? }`: the `top` token composited over the `on`
+// token, which is how an alpha token (for example action.hover) looks when it sits on a surface. `opacity`
+// names a template opacity ('soft.bg', 'soft.hoverBg' or 'action.hoverOpacity') applied to `top` first.
+type OpacityKey = 'soft.bg' | 'soft.hoverBg' | 'action.hoverOpacity';
+type Ref = string | { top: string; on: string; opacity?: OpacityKey };
 
 type Pair = {
   name: string;
@@ -36,6 +38,58 @@ const SURFACES = ['background.default', 'background.paper', 'background.neutral'
 const STATE_OVERLAYS = ['action.hover', 'action.selected'];
 const TEXT_TOKENS = ['text.primary', 'text.secondary'];
 const BORDER_TOKENS = ['shared.inputOutlined', 'shared.buttonOutlined'];
+
+// Pairs for the fixes in Slice 5. Soft Label, Chip and Button put the `dark` step on the color at the soft
+// opacity; outlined and text buttons put the `dark` step on a hover tint of itself.
+const SOFT = COLORS.flatMap((c) =>
+  SURFACES.flatMap((s) =>
+    (['soft.bg', 'soft.hoverBg'] as const).map((opacity) => ({
+      name: `soft ${c}: ${c}.dark on ${c}.main at ${opacity} over ${s}`,
+      schemes: BOTH,
+      fg: `${c}.dark`,
+      bg: { top: `${c}.main`, on: s, opacity },
+      min: TEXT,
+    }))
+  )
+);
+
+const HOVER = COLORS.flatMap((c) =>
+  SURFACES.map((s) => ({
+    name: `outlined/text hover ${c}: ${c}.dark on its hover tint over ${s}`,
+    schemes: BOTH,
+    fg: `${c}.dark`,
+    bg: { top: `${c}.dark`, on: s, opacity: 'action.hoverOpacity' as OpacityKey },
+    min: TEXT,
+  }))
+);
+
+// DataGrid: cell text turns `primary.main` on hover. The grid sits on default or paper surfaces.
+const GRID_SURFACES = ['background.default', 'background.paper'];
+const GRID = GRID_SURFACES.map((s) => ({
+  name: `DataGrid hovered cell: primary.main on ${s} + action.hover`,
+  schemes: BOTH,
+  fg: 'primary.main',
+  bg: { top: 'action.hover', on: s },
+  min: TEXT,
+}));
+
+// Avatar letters (`text.secondary`) on the default avatar fill (grey 300 light, grey 700 dark).
+const AVATAR: Pair[] = [
+  {
+    name: 'Avatar letters: text.secondary on grey.300',
+    schemes: ['light'],
+    fg: 'text.secondary',
+    bg: 'grey.300',
+    min: TEXT,
+  },
+  {
+    name: 'Avatar letters: text.secondary on grey.700',
+    schemes: ['dark'],
+    fg: 'text.secondary',
+    bg: 'grey.700',
+    min: TEXT,
+  },
+];
 
 // ----------------------------------------------------------------------
 // The pair list (readable data). Edit the lists above to change what is guarded.
@@ -117,6 +171,10 @@ export const PAIRS: Pair[] = [
       min: UI,
     }))
   ),
+  ...SOFT,
+  ...HOVER,
+  ...GRID,
+  ...AVATAR,
   ...SURFACES.map((s) => ({
     name: `primary.main as outline/focus ring on ${s}`,
     schemes: BOTH,
@@ -183,12 +241,24 @@ export function contrastRatio(a: Rgb, b: Rgb): number {
 // ----------------------------------------------------------------------
 
 type PaletteNode = { [key: string]: PaletteNode | string };
+type Context = {
+  palette: PaletteNode;
+  soft: { bg: number; hoverBg: number };
+  hoverOpacity: number;
+};
 
-export function buildPalette(scheme: Scheme, overrides = eocrThemeOverrides): PaletteNode {
+export function buildPalette(scheme: Scheme, overrides = eocrThemeOverrides): Context {
   const theme = createTheme({ themeOverrides: overrides });
-  const palette = theme.colorSchemes[scheme]?.palette;
-  if (!palette) throw new Error(`No ${scheme} color scheme`);
-  return palette as unknown as PaletteNode;
+  const colorScheme = theme.colorSchemes[scheme];
+  if (!colorScheme) throw new Error(`No ${scheme} color scheme`);
+  const opacity = (colorScheme as unknown as { opacity: { soft: Context['soft'] } }).opacity;
+  const action = colorScheme.palette.action as unknown as { hoverOpacity: number };
+
+  return {
+    palette: colorScheme.palette as unknown as PaletteNode,
+    soft: opacity.soft,
+    hoverOpacity: action.hoverOpacity,
+  };
 }
 
 function lookup(palette: PaletteNode, path: string): string {
@@ -202,13 +272,24 @@ function lookup(palette: PaletteNode, path: string): string {
   return node;
 }
 
-function resolve(palette: PaletteNode, ref: Ref): Rgb {
-  if (typeof ref === 'string') return parseColor(lookup(palette, ref));
-  return composite(parseColor(lookup(palette, ref.top)), parseColor(lookup(palette, ref.on)));
+function resolve(ctx: Context, ref: Ref): Rgb {
+  if (typeof ref === 'string') return parseColor(lookup(ctx.palette, ref));
+
+  const top = parseColor(lookup(ctx.palette, ref.top));
+  if (ref.opacity) {
+    const alphas = {
+      'soft.bg': ctx.soft.bg,
+      'soft.hoverBg': ctx.soft.hoverBg,
+      'action.hoverOpacity': ctx.hoverOpacity,
+    };
+    top.a *= alphas[ref.opacity];
+  }
+
+  return composite(top, parseColor(lookup(ctx.palette, ref.on)));
 }
 
-export function pairRatio(palette: PaletteNode, pair: Pair): number {
-  return contrastRatio(resolve(palette, pair.fg), resolve(palette, pair.bg));
+export function pairRatio(ctx: Context, pair: Pair): number {
+  return contrastRatio(resolve(ctx, pair.fg), resolve(ctx, pair.bg));
 }
 
 // ----------------------------------------------------------------------

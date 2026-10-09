@@ -30,6 +30,18 @@ function slot(theme: ThemeLike, component: string, name: string): Rules {
   return (resolved ?? {}) as Rules;
 }
 
+type Variant = {
+  props: (p: Record<string, unknown>) => boolean;
+  style: (a: { theme: ThemeLike }) => Record<string, unknown>;
+};
+
+function lastMatching(variants: Variant[], props: Record<string, unknown>): Variant {
+  const matches = variants.filter(
+    (variant) => typeof variant.props === 'function' && variant.props(props)
+  );
+  return matches[matches.length - 1];
+}
+
 function expectTemplateSurvives(component: string, name: string) {
   const before = slot(template, component, name);
   const after = slot(ours, component, name);
@@ -90,5 +102,63 @@ describe('component overrides keep the template styles', () => {
   it('Breadcrumbs links keep a hover-only underline', () => {
     const root = slot(ours, 'MuiBreadcrumbs', 'root') as Record<string, Record<string, unknown>>;
     expect(root['& .MuiLink-underlineAlways'].textDecoration).toBe('none');
+  });
+
+  it('Button root keeps all template variants and adds ours last', () => {
+    const { before, after } = expectTemplateSurvives('MuiButton', 'root');
+    expect(after.variants?.length).toBe((before.variants?.length ?? 0) + 12);
+  });
+
+  it('Button: colored outlined and text buttons use the dark step on hover, outlined border is solid main', () => {
+    const variants = (slot(ours, 'MuiButton', 'root').variants ?? []) as Variant[];
+    const outlined = lastMatching(variants, { variant: 'outlined', color: 'primary' });
+    const text = lastMatching(variants, { variant: 'text', color: 'primary' });
+    const vars = ours.vars.palette.primary;
+    expect(outlined.style({ theme: ours })).toMatchObject({
+      borderColor: vars.main,
+      '&:hover': { color: vars.dark },
+    });
+    expect(text.style({ theme: ours })).toMatchObject({ '&:hover': { color: vars.dark } });
+  });
+
+  it('Chip root keeps all template variants and adds ours last', () => {
+    const { before, after } = expectTemplateSurvives('MuiChip', 'root');
+    expect(after.variants?.length).toBe((before.variants?.length ?? 0) + 6);
+  });
+
+  it('Chip avatar keeps its variants; the dark scheme uses contrastText on the dark fill', () => {
+    const { before, after } = expectTemplateSurvives('MuiChip', 'avatar');
+    expect(after.variants?.length).toBe((before.variants?.length ?? 0) + 6);
+    const variant = lastMatching((after.variants ?? []) as Variant[], { color: 'primary' });
+    const css = JSON.stringify(variant.style({ theme: ours }));
+    expect(css).toContain(ours.vars.palette.primary.contrastText);
+    expect(css).toContain(ours.vars.palette.primary.dark);
+  });
+
+  it('Avatar default letters use text.secondary', () => {
+    const { before, after } = expectTemplateSurvives('MuiAvatar', 'colorDefault');
+    expect(after.variants?.length).toBe((before.variants?.length ?? 0) + 1);
+    const last = (after.variants as Variant[]).at(-1) as Variant;
+    expect(last.style({ theme: ours })).toEqual({ color: ours.vars.palette.text.secondary });
+  });
+});
+
+describe('soft styles (Label, Chip and Button soft)', () => {
+  it('use the dark step as text in both schemes, with and without hover', () => {
+    for (const color of ['primary', 'secondary', 'info', 'success', 'warning', 'error'] as const) {
+      const dark = ours.vars.palette[color].dark;
+      for (const options of [undefined, { hover: true }]) {
+        const css = ours.mixins.softStyles(ours, color, options) as Record<string, unknown>;
+        expect(css.color).toBe(dark);
+        // the template sets `light` for the dark scheme through applyStyles; ours replaces it
+        const darkScheme = Object.entries(css).find(([key]) => key.includes('dark'))?.[1];
+        expect(darkScheme).toEqual({ color: dark });
+      }
+    }
+  });
+
+  it('leave the default color alone', () => {
+    const before = template.mixins.softStyles(template, 'default');
+    expect(ours.mixins.softStyles(ours, 'default')).toEqual(before);
   });
 });

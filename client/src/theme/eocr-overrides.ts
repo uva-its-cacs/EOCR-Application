@@ -2,8 +2,9 @@ import type { ThemeOptions } from './types';
 
 import { createPaletteChannel } from 'minimal-shared/utils';
 
+import { opacity } from './core/opacity';
 import { eocrTokens } from './eocr-tokens';
-import { eocrComponents } from './eocr-components';
+import { eocrMixins, eocrComponents } from './eocr-components';
 
 // ----------------------------------------------------------------------
 
@@ -31,7 +32,12 @@ function createPalette(tokens: SchemeTokens) {
   };
 }
 
+// Soft hover tint: 0.24 instead of the template's 0.32, so the `dark` step text stays at 4.5:1 or better on it
+// for every color on every surface in both schemes (at 0.32 success and warning fail in the light scheme).
+const softOpacity = { ...opacity, soft: { ...opacity.soft, hoverBg: 0.24 } };
+
 export const eocrThemeOverrides: ThemeOptions = {
+  mixins: eocrMixins,
   components: {
     ...eocrComponents,
     MuiCssBaseline: {
@@ -71,7 +77,7 @@ export const eocrThemeOverrides: ThemeOptions = {
     },
   },
   colorSchemes: {
-    light: { palette: createPalette(eocrTokens.light) },
-    dark: { palette: createPalette(eocrTokens.dark) },
+    light: { palette: createPalette(eocrTokens.light), opacity: softOpacity },
+    dark: { palette: createPalette(eocrTokens.dark), opacity: softOpacity },
   },
 };
