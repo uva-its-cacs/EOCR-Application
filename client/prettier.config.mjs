@@ -10,6 +10,15 @@ const config = {
   printWidth: 100,
   singleQuote: true,
   trailingComma: 'es5',
+  // EOCR: our own code uses one attribute per line. Vendored template files keep the
+  // template's formatting so they stay diffable (list them in excludeFiles).
+  overrides: [
+    {
+      files: ['src/sections/**/*.{ts,tsx}', 'src/pages/**/*.{ts,tsx}'],
+      excludeFiles: ['src/pages/dashboard/one.tsx', 'src/sections/blank/view.tsx'],
+      options: { singleAttributePerLine: true },
+    },
+  ],
 };
 
 export default config;
