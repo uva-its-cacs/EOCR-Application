@@ -118,6 +118,17 @@ Lowest: 5.19 light (success on neutral), 5.80 dark (error on neutral). The chips
 
 The `ConfirmDialog` destructive confirm button is the contained `error` button: the guarded pairs error.contrastText on error.main (6.56 light, 5.38 dark) and on error.dark when hovered (11.18, 8.48).
 
+## Slice 9 pages
+
+No new color pairs, so no new guard pairs. Everything the pages add uses pairs that are already asserted:
+
+- StatCard: `text.secondary` title and `text.primary` value on `background.paper` (the template Card). Its boundary is a shadow, which is not needed to identify the card, so 1.4.11 does not apply.
+- Both grids: the Slice 5 DataGrid pairs (cell text, hover, focus ring 3px inset), and StatusChip as measured in Slice 8.
+- The toolbar buttons and Refresh: `text.primary` (button color inherit) on `background.default`. While a refresh runs, Refresh is shown in `text.disabled` with `aria-disabled`; inactive controls are exempt from 1.4.3.
+- The error page: `text.primary` on `background.default` in both schemes, with the theme's Public Sans. The template's error page used undefined font variables; that known failure is removed.
+
+Browser findings (Slice 9 evidence): at 320 CSS px no page scrolls horizontally; only each grid's own virtual scroller does, and a focused cell in the last column keeps its 3px ring inside the scroller. With the WCAG 1.4.12 text-spacing override, grid cells with long values are cut off with an ellipsis (several Vendor, Category and Software cells; two cells are cut off even without the override: "Northstar Technologies" and "Communication and collaboration"). Nothing else clips or overlaps. Not fixed in Slice 9 (see the Slice 9 report).
+
 ## Asserted pairs
 
 Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted in that scheme (the `dark` step as text is only used as text in the light scheme).
@@ -342,7 +353,7 @@ In-scope components have no known failures left. The nav caption and subheader f
 | Slider rail | primary at 38% (`slider.tsx`) | 1.73 light, 1.78 dark (needs 3) | first slice that uses a Slider |
 | Slider mark labels | `text.disabled` (`slider.tsx`) | as above | first slice that uses a Slider |
 | Checkbox, Radio, Tabs, Accordion, Stepper, Rating | not measured in Slice 5 | unknown | first slice that uses each |
-| Undefined font variable | `routes/components/error-boundary.tsx` uses `var(--font-stack-sans)` and `var(--font-stack-monospace)`, which are not defined anywhere | not a contrast issue | Slice 9 |
+| Grid cell truncation | DataGrid cells end in an ellipsis when the value is wider than the column (worse under the 1.4.12 text-spacing override) | content cut off, not a contrast issue | to be decided (Slice 9 report) |
 | Inline Link focus ring | the 3px band touches the space between words but covers no glyph (gap 3.89px) | accepted | none |
 
 Corrections to the Slice 4 version of this list: "Dark-scheme filled chip" was the Chip's **avatar** (`chip.tsx:115-116` is `avatarVariants`); the filled chip's own text passes. "DataGrid cell hover" and "soft hover for success and warning in light" were estimates; in the browser the grid passes on default and paper surfaces. Soft hover in light did fail at the template's 0.32 tint when measured with settled transitions, and is fixed with the 0.24 tint.

@@ -114,33 +114,40 @@ client/src/
                       # from the full vite-ts demo: custom-dialog/ (ConfirmDialog, adapted)
                       # ours: eocr-nav/ (primary nav, nav data and role filtering), page-header/,
                       #   feedback/ (LoadingState, ErrorState, EmptyState), page-loading/, status-chip/,
-                      #   visually-hidden/
+                      #   visually-hidden/, stat-card/ (StatCard, StatCardGroup), data-grid/ (EocrDataGrid)
   layouts/            # template: core/ (layout, header, main sections), dashboard/ (content and css-vars
                       #   only), components/menu-button.tsx
                       # ours: eocr/ (shell: skip link, header with dark mode toggle and account menu,
                       #   sidebar, mobile drawer, route focus hook, wordmark)
   lib/                # api.ts (apiFetch, ApiError), query-client.ts
-  pages/              # requests/list.tsx, requests/new.tsx, admin/software.tsx (placeholders)
+  pages/              # requests/list.tsx, requests/new.tsx, admin/software.tsx (thin: each composes a
+                      #   section view), not-found.tsx
   routes/             # paths.ts, route-handle.ts, sections/ (index, eocr), hooks/,
-                      #   components/ (RouterLink, RequireAdmin, ErrorBoundary)
-  sections/           # auth/, requests/ (also status-colors.ts), software/ (types, api, hooks)
+                      #   components/ (RouterLink, RequireAdmin, EocrErrorBoundary, route-error-message.ts)
+  sections/           # auth/, requests/, software/: types, api, hooks (use-my-requests, use-software),
+                      #   view/ (*-view.tsx and their grids); requests/ also has status-groups.ts and
+                      #   status-colors.ts
   theme/              # template theme pipeline plus our eocr-tokens.ts, eocr-overrides.ts, eocr-components.ts
-  test/               # render helpers for component tests (app theme, memory router)
+  test/               # render helpers for component tests (app theme, memory router, QueryClient, fetch
+                      #   mock)
   utils/              # format.ts (date formatters)
 ```
 
-The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around three placeholder pages. Later slices add our domain folders under `sections/` and `pages/` as described under Rules. There is no settings drawer and no auth code in the client.
+The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (summary cards and the requests grid), New request (a placeholder until the intake slice), Software (admin, a read-only grid until Slice 10) and the not-found page for any other URL. Route errors render `EocrErrorBoundary` (outside the layout, with its own theme). There is no settings drawer and no auth code in the client.
 
-Shared components (Slice 8). Use these instead of building one-off versions:
+Shared components (Slices 8 and 9). Use these instead of building one-off versions:
 
 - `PageHeader` (`components/page-header`): every page's heading. It renders the page's only `h1` (styled as the template's `h4`, `tabIndex={-1}` for the route-focus hook, no ring), sets the document title to "documentTitle (or title) - EOCR", and takes optional `description` and `actions`. Breadcrumbs come from the route `handle` (`{ crumb, parent? }`, see `routes/route-handle.ts`) and appear only when the trail has more than one crumb; the last crumb carries `aria-current="page"` and is not a link.
 - `LoadingState`, `ErrorState`, `EmptyState` (`components/feedback`): in-page loading (a polite `role="status"` with visible text), errors (an Alert, `role="alert"`, with Retry when `onRetry` is given), and empty lists.
 - `PageLoading` (`components/page-loading`): page-level loading (route Suspense fallback, access check). It names the template's progress bar "Loading" and announces "Loading page".
 - `StatusChip` (`components/status-chip`): every status display. Pass the code, its label and a color map (`REQUEST_STATUS_COLORS` or `APPROVAL_STATUS_COLORS` in `sections/requests/status-colors.ts`). The label is always shown and is the accessible name (no `aria-label`); unknown codes get the `default` color.
 - `ConfirmDialog` (`components/custom-dialog`): confirmations. It is named by its title and described by its content. Pass `destructive` for actions that delete or cannot be undone: the confirm button turns error-colored and initial focus goes to Cancel; otherwise initial focus goes to the confirm button. Escape closes it and focus returns to the trigger.
-- `VisuallyHidden` (`components/visually-hidden`): text for screen readers only.
+- `VisuallyHidden` (`components/visually-hidden`): text for screen readers only. Pass `component` (and `id`) to hide a block element such as a heading instead of nesting it in a span.
+- `StatCardGroup` and `StatCard` (`components/stat-card`): summary numbers. The group is a `section` named by a visually hidden `h2` and holds one `dl`; each card is a `dt` title and a `dd` value on the template's Card. Pass `value={null}` while loading (an em dash with "Loading" for screen readers) and `busy` on the group; never show 0 for data that has not arrived.
+- `EocrDataGrid` (`components/data-grid`): every Data Grid. `aria-label` and `emptyTitle` are required; checkbox selection cannot be turned on. Defaults: compact, auto height, 10/25/50 rows per page, no selection on click, the toolbar only when a `slots.toolbar` is passed, EmptyState overlays for no rows and no results (in a status region), a named loading overlay, and a block container that keeps the grid at its content height with its horizontal scroll inside the grid.
+- `focusPageHeading()` (`components/page-header`): moves focus to the page `h1` when the focused control disappears (used after a successful Retry).
 
-Component tests use Testing Library with jsdom, opted in per file with `// @vitest-environment jsdom` (the default test environment stays `node`), and render through `src/test/render-with-theme.tsx`.
+Component tests use Testing Library with jsdom, opted in per file with `// @vitest-environment jsdom` (the default test environment stays `node`), and render through `src/test/render-with-theme.tsx`, or `src/test/render-view.tsx` for views that fetch (fresh non-retrying QueryClient, data router, `mockFetch`).
 
 Rules:
 
