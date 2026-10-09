@@ -1,29 +1,21 @@
 import type { RouteObject } from 'react-router';
 
-import { lazy } from 'react';
 import { Navigate } from 'react-router';
 
-import { CONFIG } from 'src/global-config';
-
-import { authRoutes } from './auth';
+import { paths } from '../paths';
 import { dashboardRoutes } from './dashboard';
 
 // ----------------------------------------------------------------------
 
-const Page404 = lazy(() => import('src/pages/error/404'));
-
 export const routesSection: RouteObject[] = [
   {
     path: '/',
-    element: <Navigate to={CONFIG.auth.redirectPath} replace />,
+    element: <Navigate to={paths.dashboard.root} replace />,
   },
-
-  // Auth
-  ...authRoutes,
 
   // Dashboard
   ...dashboardRoutes,
 
-  // No match
-  { path: '*', element: <Page404 /> },
+  // No match (temporary: Slice 9 builds an accessible 404)
+  { path: '*', element: <Navigate to={paths.dashboard.root} replace /> },
 ];
