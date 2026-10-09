@@ -62,8 +62,25 @@ export const eocrThemeOverrides: ThemeOptions = {
           '.MuiInputBase-root:has(> .MuiSelect-select:focus-visible)': focusRing,
           // Checkbox, radio and switch: the real input is invisible (opacity 0), so ring the visible control.
           '.PrivateSwitchBase-input:focus-visible:focus-visible': { outline: 'none' },
-          '.MuiCheckbox-root.Mui-focusVisible, .MuiRadio-root.Mui-focusVisible': focusRing,
-          '.MuiSwitch-root:has(.Mui-focusVisible)': focusRing,
+          // The ring goes on the icon (checkbox, radio) and the track (switch), not the padded root, so it
+          // does not reach the label text next to it.
+          '.MuiCheckbox-root.Mui-focusVisible > .MuiSvgIcon-root': {
+            ...focusRing,
+            borderRadius: '6px',
+          },
+          '.MuiRadio-root.Mui-focusVisible > :not(input)': { ...focusRing, borderRadius: '50%' },
+          '.MuiSwitch-root:has(.Mui-focusVisible) .MuiSwitch-track': focusRing,
+          // Items inside a Paper that clips (menus, drawers, lists): inset the ring so it is not cut off.
+          '.MuiMenuItem-root:focus-visible:focus-visible, .MuiListItemButton-root:focus-visible:focus-visible':
+            {
+              outlineOffset: '-3px',
+            },
+          // DataGrid cells and column headers: 3px inset ring (MUI X draws a 1px one). Doubled class beats its CSS.
+          '.MuiDataGrid-root.MuiDataGrid-root .MuiDataGrid-cell:focus, .MuiDataGrid-root.MuiDataGrid-root .MuiDataGrid-columnHeader:focus':
+            {
+              outline: `3px solid ${theme.vars.palette.primary.main}`,
+              outlineOffset: '-3px',
+            },
           '@media (prefers-reduced-motion: reduce)': {
             '*, *::before, *::after': {
               animationDuration: '0.01ms !important',
