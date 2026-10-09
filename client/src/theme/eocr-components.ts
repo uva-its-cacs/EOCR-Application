@@ -41,7 +41,9 @@ export function extend(base: Style, ours: Style): Style {
 // The template's style for a component slot, typed loosely so it can be composed. The composed result is
 // cast with `as never` because MUI's per-slot override types are too strict to express a composed function.
 function templateStyle(component: keyof Components<Theme>, slot: string): Style {
-  const entry = templateComponents[component] as { styleOverrides?: Record<string, Style> } | undefined;
+  const entry = templateComponents[component] as
+    | { styleOverrides?: Record<string, Style> }
+    | undefined;
   const overrides = entry?.styleOverrides;
   return overrides?.[slot];
 }
@@ -82,21 +84,21 @@ const buttonVariants = [
  * uses `contrastText` on the `dark` fill in the dark scheme (the template's `lighter` text on the
  * lighter `dark` fill has no contrast there).
  */
-const chipRootVariants = (COLORS.map((color) => ({
+const chipRootVariants = COLORS.map((color) => ({
   props: (props) => props.variant === 'outlined' && props.color === color,
   style: ({ theme }) => ({
     [`&.${chipClasses.clickable}:hover`]: { color: theme.vars.palette[color].dark },
   }),
-})) satisfies ChipVariants);
+})) satisfies ChipVariants;
 
-const chipAvatarVariants = (COLORS.map((color) => ({
+const chipAvatarVariants = COLORS.map((color) => ({
   props: (props) => props.color === color,
   style: ({ theme }) =>
     theme.applyStyles('dark', {
       color: theme.vars.palette[color].contrastText,
       backgroundColor: theme.vars.palette[color].dark,
     }),
-})) satisfies ChipVariants);
+})) satisfies ChipVariants;
 
 // ----------------------------------------------------------------------
 
