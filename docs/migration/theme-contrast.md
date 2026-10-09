@@ -4,7 +4,8 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 
 - **Guard:** `npm test` runs `src/theme/theme-contrast.test.ts`. It builds the real theme, resolves every pair below from `theme.colorSchemes.<scheme>.palette`, and asserts the ratio against the threshold (4.5 for text, 3 for UI components). Ratios are computed from unrounded values and are not rounded before comparing. Alpha tokens (`action.hover`, `action.selected`) are composited over each surface first.
 - **Surfaces:** `background.default`, `background.paper` and `background.neutral` in each scheme. Borders and other UI pairs are asserted against all three.
-- **Scope:** only the pairs this slice is responsible for are asserted. Pairs the template still fails are listed under "Known failures" with the slice that fixes each.
+- **Scope:** the pairs for the tokens (Slice 4) and for the in-scope components (Slice 5) are asserted. Pairs the template still fails for components we do not use yet are listed under "Known failures" with the slice that fixes each.
+- **Browser pairs:** some pairs need real CSS (alpha tints, `color-mix`, hover states, DOM structure). They are measured in a real browser (see "Browser measurements") and the code that produces them is guarded by `src/theme/theme-composition.test.ts`.
 - **Not changed on purpose:** `text.disabled`, `divider` and `shared.paperOutlined`.
 
 ## Token sources
@@ -52,6 +53,34 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 | shared.inputOutlined, shared.buttonOutlined | #919EAB | grey 500 at 20% and 32% | Ramp (template grey 500), solid |
 
 In the dark scheme the hover fill (`dark`) is lighter than `main`, because the template's `dark` steps fail with dark text (2.4 to 3.9).
+
+## Slice 5 component changes
+
+All in our own files (`src/theme/eocr-components.ts`, `src/theme/eocr-overrides.ts`); no template file is edited. `eocr-components.ts` composes with the template's overrides through `extend()`: a plain object merges through `themeOverrides`, but a function or a `variants` array replaces the template's, so the helper calls the template's style and appends ours. `theme-composition.test.ts` proves the template's focus, disabled and variant styles survive for OutlinedInput, InputBase, Button and Chip.
+
+| Component | Before (template) | After | Evidence |
+| --- | --- | --- | --- |
+| Input placeholder | `text.disabled`: 2.52 light, 2.66 dark | `shared.inputOutlined` (grey 600 light, grey 500 dark): 4.88 / 4.51 (default, neutral) light, 6.41 / 5.68 / 4.76 (default, paper, neutral) dark | asserted pair, browser |
+| Unshrunk floating label | `text.disabled`: 2.52 / 2.66 | `text.secondary`: 7.68 or better light, 8.08 or better dark | asserted pair, browser |
+| Link | hover-only underline; underline at 40% alpha (about 1.8:1); link vs body text 2.87:1 | underlined at rest (`underline: always`), underline is full `currentColor`. Breadcrumbs keep a hover-only underline | browser, composition test |
+| Link focus ring | 3px, 2px offset: overlapped neighboring text | 3px, offset 0, radius 2px. Gap to the neighboring glyphs is 3.89px, ring band is 3px, so no glyph is covered | browser |
+| Outlined colored Button | border `currentColor` at 48% (1.9 to 2.4:1) | solid `main` border (3:1 or better on every surface). **Visual change:** colored outlined buttons have a stronger border. `inherit` (default) outlined buttons keep `shared.buttonOutlined` | browser |
+| Outlined and text colored Button, hover | `main` text on a `main` tint: 4.01 to 4.48 | `dark` step text on hover (5.68 light, 6.05 dark worst) | asserted pair, browser |
+| Clickable outlined Chip, hover | `main` text: 4.43 (dark, neutral) | `dark` step text on hover | browser |
+| Soft Label, Chip, Button (text) | `light` step in dark: secondary 3.98 (neutral) | `dark` step in both schemes (through `theme.mixins.softStyles`) | asserted pair, composition test |
+| Soft hover tint | 0.32: light success 4.43 and warning 4.48 fail | 0.24 (`opacity.soft.hoverBg`): 4.65 or better in both schemes | asserted pair |
+| Chip avatar, dark scheme | `lighter` text on the lighter `dark` fill: 1.00 to 1.56 | `contrastText` on the `dark` fill: 6.14 or better | asserted pair, browser |
+| Avatar default letters | `action.active`: 3.79 light, 3.05 dark | `text.secondary` | asserted pair, browser |
+| DataGrid cell and column-header focus | 1px inset ring (MUI X default) | 3px inset ring | browser, composition test |
+| Menu and List items focus | outside ring clipped by the Paper | 3px ring inset by 3px | browser (clipped sides: none) |
+| Checkbox, Radio, Switch focus | ring on the padded root overlapped the label | ring on the icon (checkbox, radio) or track (switch); gap to the label 3px (checkbox), 7px (switch) | browser |
+
+Rules:
+
+- **Inline links** (Link in running text) are underlined at rest. Links in breadcrumbs, navigation and button-like contexts keep a hover-only underline: set `underline="hover"` on a Link, or use the Breadcrumbs component, which does it for its links.
+- **Soft buttons** (`variant="soft"`): do not use them if the soft hover pairs in the contrast test fail. As of Slice 5 they pass in both schemes (soft rest at 0.16 and hover at 0.24, `dark` step text), and the test guards them.
+- **Placeholders** are never the only instruction: visible labels stay required.
+- **Disabled controls** are exempt from contrast (WCAG 1.4.3) and are not guarded.
 
 ## Asserted pairs
 
@@ -125,12 +154,73 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | text.secondary on background.neutral | 4.5 | 7.6846 | 8.0804 |
 | text.secondary on background.neutral + action.hover | 4.5 | 7.2117 | 7.1113 |
 | text.secondary on background.neutral + action.selected | 4.5 | 6.7573 | 6.2273 |
+| placeholder (shared.inputOutlined) on background.default | 4.5 | 4.8839 | 6.4052 |
+| placeholder (shared.inputOutlined) on background.paper | 4.5 | 4.8839 | 5.6764 |
+| placeholder (shared.inputOutlined) on background.neutral | 4.5 | 4.5082 | 4.7605 |
 | shared.inputOutlined on background.default | 3 | 4.8839 | 6.4052 |
 | shared.inputOutlined on background.paper | 3 | 4.8839 | 5.6764 |
 | shared.inputOutlined on background.neutral | 3 | 4.5082 | 4.7605 |
 | shared.buttonOutlined on background.default | 3 | 4.8839 | 6.4052 |
 | shared.buttonOutlined on background.paper | 3 | 4.8839 | 5.6764 |
 | shared.buttonOutlined on background.neutral | 3 | 4.5082 | 4.7605 |
+| soft primary: primary.dark on primary.main at soft.bg over background.default | 4.5 | 7.8767 | 8.5959 |
+| soft primary: primary.dark on primary.main at soft.hoverBg over background.default | 4.5 | 6.9825 | 7.4350 |
+| soft primary: primary.dark on primary.main at soft.bg over background.paper | 4.5 | 7.8767 | 7.5623 |
+| soft primary: primary.dark on primary.main at soft.hoverBg over background.paper | 4.5 | 6.9825 | 6.5838 |
+| soft primary: primary.dark on primary.main at soft.bg over background.neutral | 4.5 | 7.3228 | 6.4221 |
+| soft primary: primary.dark on primary.main at soft.hoverBg over background.neutral | 4.5 | 6.5187 | 5.6681 |
+| soft secondary: secondary.dark on secondary.main at soft.bg over background.default | 4.5 | 7.6076 | 10.3168 |
+| soft secondary: secondary.dark on secondary.main at soft.hoverBg over background.default | 4.5 | 6.7065 | 8.9161 |
+| soft secondary: secondary.dark on secondary.main at soft.bg over background.paper | 4.5 | 7.6076 | 9.0785 |
+| soft secondary: secondary.dark on secondary.main at soft.hoverBg over background.paper | 4.5 | 6.7065 | 7.8981 |
+| soft secondary: secondary.dark on secondary.main at soft.bg over background.neutral | 4.5 | 7.0684 | 7.6884 |
+| soft secondary: secondary.dark on secondary.main at soft.hoverBg over background.neutral | 4.5 | 6.2560 | 6.7762 |
+| soft info: info.dark on info.main at soft.bg over background.default | 4.5 | 9.5041 | 9.9354 |
+| soft info: info.dark on info.main at soft.hoverBg over background.default | 4.5 | 8.3906 | 8.4001 |
+| soft info: info.dark on info.main at soft.bg over background.paper | 4.5 | 9.5041 | 8.7174 |
+| soft info: info.dark on info.main at soft.hoverBg over background.paper | 4.5 | 8.3906 | 7.4236 |
+| soft info: info.dark on info.main at soft.bg over background.neutral | 4.5 | 8.8344 | 7.3921 |
+| soft info: info.dark on info.main at soft.hoverBg over background.neutral | 4.5 | 7.8315 | 6.3865 |
+| soft success: success.dark on success.main at soft.bg over background.default | 4.5 | 5.5809 | 9.0036 |
+| soft success: success.dark on success.main at soft.hoverBg over background.default | 4.5 | 4.9802 | 7.5780 |
+| soft success: success.dark on success.main at soft.bg over background.paper | 4.5 | 5.5809 | 7.8977 |
+| soft success: success.dark on success.main at soft.hoverBg over background.paper | 4.5 | 4.9802 | 6.6969 |
+| soft success: success.dark on success.main at soft.bg over background.neutral | 4.5 | 5.1899 | 6.6921 |
+| soft success: success.dark on success.main at soft.hoverBg over background.neutral | 4.5 | 4.6512 | 5.7578 |
+| soft warning: warning.dark on warning.main at soft.bg over background.default | 4.5 | 5.6111 | 9.2030 |
+| soft warning: warning.dark on warning.main at soft.hoverBg over background.default | 4.5 | 5.0229 | 7.5770 |
+| soft warning: warning.dark on warning.main at soft.bg over background.paper | 4.5 | 5.6111 | 8.0846 |
+| soft warning: warning.dark on warning.main at soft.hoverBg over background.paper | 4.5 | 5.0229 | 6.7168 |
+| soft warning: warning.dark on warning.main at soft.bg over background.neutral | 4.5 | 5.2161 | 6.8381 |
+| soft warning: warning.dark on warning.main at soft.hoverBg over background.neutral | 4.5 | 4.6884 | 5.7699 |
+| soft error: error.dark on error.main at soft.bg over background.default | 4.5 | 8.4959 | 7.7138 |
+| soft error: error.dark on error.main at soft.hoverBg over background.default | 4.5 | 7.3411 | 6.7082 |
+| soft error: error.dark on error.main at soft.bg over background.paper | 4.5 | 8.4959 | 6.8265 |
+| soft error: error.dark on error.main at soft.hoverBg over background.paper | 4.5 | 7.3411 | 5.9839 |
+| soft error: error.dark on error.main at soft.bg over background.neutral | 4.5 | 7.8824 | 5.7982 |
+| soft error: error.dark on error.main at soft.hoverBg over background.neutral | 4.5 | 6.8333 | 5.1532 |
+| outlined/text hover primary: primary.dark on its hover tint over background.default | 4.5 | 8.6341 | 9.2238 |
+| outlined/text hover primary: primary.dark on its hover tint over background.paper | 4.5 | 8.6341 | 8.0559 |
+| outlined/text hover primary: primary.dark on its hover tint over background.neutral | 4.5 | 7.9905 | 6.7404 |
+| outlined/text hover secondary: secondary.dark on its hover tint over background.default | 4.5 | 8.3681 | 10.8824 |
+| outlined/text hover secondary: secondary.dark on its hover tint over background.paper | 4.5 | 8.3681 | 9.4860 |
+| outlined/text hover secondary: secondary.dark on its hover tint over background.neutral | 4.5 | 7.7419 | 7.9172 |
+| outlined/text hover info: info.dark on its hover tint over background.default | 4.5 | 10.3980 | 10.8426 |
+| outlined/text hover info: info.dark on its hover tint over background.paper | 4.5 | 10.3980 | 9.4485 |
+| outlined/text hover info: info.dark on its hover tint over background.neutral | 4.5 | 9.6203 | 7.8943 |
+| outlined/text hover success: success.dark on its hover tint over background.default | 4.5 | 6.1395 | 10.0101 |
+| outlined/text hover success: success.dark on its hover tint over background.paper | 4.5 | 6.1395 | 8.7342 |
+| outlined/text hover success: success.dark on its hover tint over background.neutral | 4.5 | 5.6845 | 7.3016 |
+| outlined/text hover warning: warning.dark on its hover tint over background.default | 4.5 | 6.1480 | 10.5194 |
+| outlined/text hover warning: warning.dark on its hover tint over background.paper | 4.5 | 6.1480 | 9.1837 |
+| outlined/text hover warning: warning.dark on its hover tint over background.neutral | 4.5 | 5.6916 | 7.6713 |
+| outlined/text hover error: error.dark on its hover tint over background.default | 4.5 | 9.5811 | 8.2536 |
+| outlined/text hover error: error.dark on its hover tint over background.paper | 4.5 | 9.5811 | 7.2294 |
+| outlined/text hover error: error.dark on its hover tint over background.neutral | 4.5 | 8.8599 | 6.0512 |
+| DataGrid hovered cell: primary.main on background.default + action.hover | 4.5 | 5.0531 | 5.4090 |
+| DataGrid hovered cell: primary.main on background.paper + action.hover | 4.5 | 5.0531 | 4.7488 |
+| Avatar letters: text.secondary on grey.300 | 4.5 | 6.4581 | n/a |
+| Avatar letters: text.secondary on grey.700 | 4.5 | n/a | 5.1697 |
 | primary.main as outline/focus ring on background.default | 3 | 5.4090 | 6.0916 |
 | primary.main as outline/focus ring on background.paper | 3 | 5.4090 | 5.3985 |
 | primary.main as outline/focus ring on background.neutral | 3 | 4.9928 | 4.5274 |
@@ -146,119 +236,79 @@ Every asserted pair under 4.6 (text, threshold 4.5) or under 3.1 (UI, threshold 
 | success.main as text on background.neutral | light | 4.5312 | 4.5 |
 | warning.main as text on background.neutral | light | 4.5137 | 4.5 |
 | error.main as text on background.neutral | dark | 4.5082 | 4.5 |
+| placeholder (shared.inputOutlined) on background.neutral | light | 4.5082 | 4.5 |
+
+## Browser measurements (Slice 5)
+
+Method: a throwaway page rendered every in-scope component in rest, forced hover, focus, selected, error and disabled states on the default, paper and neutral surfaces, in both schemes (`client/focus-test/`, not committed). A script drove headless Edge: it forced `:hover` through the DevTools protocol (with reduced motion on, so transitions are settled), read computed colors, composited alpha down the ancestor chain, and applied the WCAG formula. Worst ratio across colors, variants and surfaces per measured pair; 957 measurements per scheme. Disabled controls and the outlined Paper border (`paperOutlined`, unchanged on purpose) are excluded; disabled controls are exempt.
+
+| Component | Measured pair | Min | Light (worst) | Dark (worst) |
+| --- | --- | --- | --- | --- |
+| Alert | icon | 3 | 4.09 | 5.28 |
+| Alert | message text | 4.5 | 4.89 | 6.46 |
+| Avatar | letters | 4.5 | 5.41 | 5.17 |
+| Backdrop | indicator on backdrop | 3 | 5.23 | 16.57 |
+| Breadcrumbs | current text | 4.5 | 7.68 | 8.08 |
+| Breadcrumbs | link text | 4.5 | 4.99 | 4.53 |
+| Breadcrumbs | separator | 4.5 | 7.68 | 8.08 |
+| Button | text | 4.5 | 4.51 | 4.50 |
+| Chip with avatar | avatar letter | 4.5 | 6.14 | 6.46 |
+| Chip with avatar | chip text | 4.5 | 4.51 | 4.50 |
+| Chip with avatar | delete icon | 3 | 4.51 | 4.50 |
+| Chip | text | 4.5 | 4.51 | 4.50 |
+| Column menu | SPAN.MuiTypography-root.MuiTypography-body1 | 4.5 | 15.52 | 15.72 |
+| Column menu | svg icon | 3 | 15.52 | 15.72 |
+| DataGrid | cell text | 4.5 | 15.52 | 17.51 |
+| DataGrid | column menu icon | 3 | 4.51 | 4.76 |
+| DataGrid | header title | 4.5 | 7.68 | 8.08 |
+| DataGrid | pagination label | 4.5 | 15.52 | 17.51 |
+| DataGrid | pagination select text | 4.5 | 15.52 | 17.51 |
+| DataGrid | pagination text | 4.5 | 15.52 | 17.51 |
+| DataGrid | selected row cell text | 4.5 | 13.87 | 13.87 |
+| DataGrid | sort icon | 3 | 4.88 | 5.68 |
+| Dialog | BUTTON.MuiButtonBase-root.MuiButton-root | 4.5 | 15.52 | 15.52 |
+| Dialog | H2.MuiTypography-root.MuiTypography-h6 | 4.5 | 15.52 | 15.52 |
+| Drawer | item text | 4.5 | 15.52 | 15.52 |
+| Drawer | selected item text | 4.5 | 13.87 | 13.87 |
+| Filter panel | LABEL.MuiFormLabel-root.MuiInputLabel-root | 4.5 | 8.33 | 9.76 |
+| IconButton | icon | 3 | 4.51 | 4.19 |
+| Label | text | 4.5 | 4.51 | 4.50 |
+| Link | link text | 4.5 | 4.99 | 4.53 |
+| Link | underline present | 3 | 4.99 | 4.53 |
+| List and Menu items | text | 4.5 | 12.59 | 10.03 |
+| Menu | LI.MuiButtonBase-root.MuiMenuItem-root | 4.5 | 13.52 | 12.02 |
+| Pagination | item text | 4.5 | 14.32 | 11.45 |
+| Pagination | selected text | 4.5 | 13.44 | 11.45 |
+| Paper | primary text | 4.5 | 15.52 | 15.52 |
+| Paper | secondary text | 4.5 | 8.33 | 9.63 |
+| Progress | indicator | 3 | 15.52 | 17.51 |
+| Progress | linear bar vs surface | 3 | 15.52 | 17.51 |
+| Table | body cell text | 4.5 | 14.32 | 13.01 |
+| Table | header text | 4.5 | 7.68 | 8.08 |
+| TextField / Select | border | 3 | 4.51 | 4.51 |
+| TextField / Select | helper/error text | 4.5 | 6.05 | 4.51 |
+| TextField / Select | input text | 4.5 | 14.32 | 13.01 |
+| TextField / Select | label | 4.5 | 6.05 | 4.51 |
+| TextField / Select | placeholder | 4.5 | 4.51 | 4.76 |
+| TextField / Select | select icon | 3 | 4.51 | 4.76 |
+| Tooltip | tooltip text | 4.5 | 15.52 | 8.33 |
 
 ## Known failures (not asserted)
 
-These pairs fail today and are outside this slice. The worst ratio is shown; the full measurements are in the appendix.
+In-scope components have no known failures left. These remain, all for components we do not use yet; fix them in the slice that first uses the component.
 
-| Item | Where it comes from | Worst ratio | Fixing slice |
+| Item | Where it comes from | Measured | Fixing slice |
 | --- | --- | --- | --- |
-| Placeholder text | `text.disabled` in `theme/core/components/text-field.tsx` (placeholder) | 2.52 light, 2.66 dark (needs 4.5) | Slice 5 |
-| Floating label and helper text | `text.disabled` in `theme/core/components/form.tsx` | same as above | Slice 5 |
-| Slider mark labels | `text.disabled` in `theme/core/components/slider.tsx` | same as above | Slice 5 |
-| Nav caption and subheader | `text.disabled` in `components/nav-section/styles/css-vars.ts` | same as above | Slice 7 |
-| Switch track | grey 500 at 48% (`switch.tsx`) | 1.50 light, 2.22 dark (needs 3) | Slice 5 |
-| Slider rail | primary at 38% (`slider.tsx`) | 1.73 light, 1.78 dark (needs 3) | Slice 5 |
-| Link underline | `currentColor` at 40% (`link.tsx`) | 1.79 light, 1.84 dark (needs 3) | Slice 5 |
-| DataGrid cell hover | `primary.main` text on a hovered row (`mui-x-data-grid.tsx`) | 3.98 dark on neutral (light passes) | Slice 5 |
-| Soft hover pairs | text on `main` at 32% (`global-styles-components.ts`): success and warning in light (4.43, 4.48); secondary in dark (3.54, 3.95). The rest state passes everywhere | 3.54 dark secondary on paper | Slice 5 |
-| Dark-scheme filled chip | `chip.tsx:115-116` uses `lighter` text on a `dark` fill. The lighter hover token in the dark scheme (decided in this slice) breaks that pairing | 1.00 to 1.56 | Slice 5 |
-| Undefined font variable | `routes/components/error-boundary.tsx` uses `var(--font-stack-sans)` and `var(--font-stack-monospace)`, which are not defined anywhere, so the browser default font is used | not a contrast issue | Slice 9 |
-| Focus ring overlaps the label | the ring around a Checkbox, Radio and Switch (the visible control) overlaps the start of the label text | not a contrast issue | Slice 5 |
+| Nav caption and subheader | `text.disabled` in `components/nav-section/styles/css-vars.ts` | 2.52 light, 2.66 dark (needs 4.5) | Slice 7 |
+| Switch track | grey 500 at 48% (`switch.tsx`) | 1.50 light, 2.22 dark (needs 3) | first slice that uses a Switch |
+| Slider rail | primary at 38% (`slider.tsx`) | 1.73 light, 1.78 dark (needs 3) | first slice that uses a Slider |
+| Slider mark labels | `text.disabled` (`slider.tsx`) | as above | first slice that uses a Slider |
+| Checkbox, Radio, Tabs, Accordion, Stepper, Rating | not measured in Slice 5 | unknown | first slice that uses each |
+| Undefined font variable | `routes/components/error-boundary.tsx` uses `var(--font-stack-sans)` and `var(--font-stack-monospace)`, which are not defined anywhere | not a contrast issue | Slice 9 |
+| Inline Link focus ring | the 3px band touches the space between words but covers no glyph (gap 3.89px) | accepted | none |
 
-## Appendix: measurements for the known failures
+Corrections to the Slice 4 version of this list: "Dark-scheme filled chip" was the Chip's **avatar** (`chip.tsx:115-116` is `avatarVariants`); the filled chip's own text passes. "DataGrid cell hover" and "soft hover for success and warning in light" were estimates; in the browser the grid passes on default and paper surfaces. Soft hover in light did fail at the template's 0.32 tint when measured with settled transitions, and is fixed with the 0.24 tint.
 
-Pairs marked **FAILS** are the ones above. Passing rows are shown for context. Soft pairs use the `dark` step in the light scheme and the `light` step in the dark scheme, as the template does.
+## Template dependence
 
-| Item | Scheme | Pair | Ratio | Min |
-| --- | --- | --- | --- | --- |
-| text.disabled (placeholder, floating label, nav caption) | light | text.disabled on default | 2.7334 | 4.5 **FAILS** |
-| switch track (grey 500 at 48%) | light | track on default | 1.5487 | 3 **FAILS** |
-| slider rail (primary at 38%) | light | rail on default | 1.7687 | 3 **FAILS** |
-| link underline (primary at 40%) | light | underline on default | 1.8277 | 3 **FAILS** |
-| DataGrid cell hover (primary.main text on hovered row) | light | primary.main on default + hover | 5.0531 | 4.5 (passes) |
-| text.disabled (placeholder, floating label, nav caption) | light | text.disabled on paper | 2.7334 | 4.5 **FAILS** |
-| switch track (grey 500 at 48%) | light | track on paper | 1.5487 | 3 **FAILS** |
-| slider rail (primary at 38%) | light | rail on paper | 1.7687 | 3 **FAILS** |
-| link underline (primary at 40%) | light | underline on paper | 1.8277 | 3 **FAILS** |
-| DataGrid cell hover (primary.main text on hovered row) | light | primary.main on paper + hover | 5.0531 | 4.5 (passes) |
-| text.disabled (placeholder, floating label, nav caption) | light | text.disabled on neutral | 2.5231 | 4.5 **FAILS** |
-| switch track (grey 500 at 48%) | light | track on neutral | 1.5009 | 3 **FAILS** |
-| slider rail (primary at 38%) | light | rail on neutral | 1.7340 | 3 **FAILS** |
-| link underline (primary at 40%) | light | underline on neutral | 1.7894 | 3 **FAILS** |
-| DataGrid cell hover (primary.main text on hovered row) | light | primary.main on neutral + hover | 4.6856 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | primary on default | 7.8767 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | primary on default | 6.1623 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | primary on paper | 7.8767 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | primary on paper | 6.1623 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | light | primary.lighter on primary.dark | 8.5291 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | secondary on default | 7.6076 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | secondary on default | 5.8877 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | secondary on paper | 7.6076 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | secondary on paper | 5.8877 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | light | secondary.lighter on secondary.dark | 7.2411 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | info on default | 9.5041 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | info on default | 7.3715 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | info on paper | 9.5041 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | info on paper | 7.3715 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | light | info.lighter on info.dark | 10.8110 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | success on default | 5.5809 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | success on default | 4.4264 | 4.5 **FAILS** |
-| soft rest (dark text on main at 16%) | light | success on paper | 5.5809 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | success on paper | 4.4264 | 4.5 **FAILS** |
-| chip filled (lighter text on dark fill) | light | success.lighter on success.dark | 6.1442 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | warning on default | 5.6111 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | warning on default | 4.4776 | 4.5 **FAILS** |
-| soft rest (dark text on main at 16%) | light | warning on paper | 5.6111 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | warning on paper | 4.4776 | 4.5 **FAILS** |
-| chip filled (lighter text on dark fill) | light | warning.lighter on warning.dark | 6.3224 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | error on default | 8.4959 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | error on default | 6.3065 | 4.5 (passes) |
-| soft rest (dark text on main at 16%) | light | error on paper | 8.4959 | 4.5 (passes) |
-| soft hover (dark text on main at 32%) | light | error on paper | 6.3065 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | light | error.lighter on error.dark | 9.5137 | 4.5 (passes) |
-| text.disabled (placeholder, floating label, nav caption) | dark | text.disabled on default | 3.5848 | 4.5 **FAILS** |
-| switch track (grey 500 at 48%) | dark | track on default | 2.4704 | 3 **FAILS** |
-| slider rail (primary at 38%) | dark | rail on default | 1.9222 | 3 **FAILS** |
-| link underline (primary at 40%) | dark | underline on default | 2.0013 | 3 **FAILS** |
-| DataGrid cell hover (primary.main text on hovered row) | dark | primary.main on default + hover | 5.4090 | 4.5 (passes) |
-| text.disabled (placeholder, floating label, nav caption) | dark | text.disabled on paper | 3.1769 | 4.5 **FAILS** |
-| switch track (grey 500 at 48%) | dark | track on paper | 2.3838 | 3 **FAILS** |
-| slider rail (primary at 38%) | dark | rail on paper | 1.8845 | 3 **FAILS** |
-| link underline (primary at 40%) | dark | underline on paper | 1.9552 | 3 **FAILS** |
-| DataGrid cell hover (primary.main text on hovered row) | dark | primary.main on paper + hover | 4.7488 | 4.5 (passes) |
-| text.disabled (placeholder, floating label, nav caption) | dark | text.disabled on neutral | 2.6643 | 4.5 **FAILS** |
-| switch track (grey 500 at 48%) | dark | track on neutral | 2.2153 | 3 **FAILS** |
-| slider rail (primary at 38%) | dark | rail on neutral | 1.7825 | 3 **FAILS** |
-| link underline (primary at 40%) | dark | underline on neutral | 1.8411 | 3 **FAILS** |
-| DataGrid cell hover (primary.main text on hovered row) | dark | primary.main on neutral + hover | 3.9845 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | primary on default | 8.5959 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | primary on default | 6.3650 | 4.5 (passes) |
-| soft rest (light text on main at 16%) | dark | primary on paper | 7.5623 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | primary on paper | 5.6975 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | dark | primary.lighter on primary.dark | 1.3907 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | secondary on default | 5.3416 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | secondary on default | 3.9534 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | secondary on paper | 4.7004 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | secondary on paper | 3.5401 | 4.5 **FAILS** |
-| chip filled (lighter text on dark fill) | dark | secondary.lighter on secondary.dark | 1.0000 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | info on default | 9.9354 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | info on default | 7.0327 | 4.5 (passes) |
-| soft rest (light text on main at 16%) | dark | info on paper | 8.7174 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | info on paper | 6.2894 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | dark | info.lighter on info.dark | 1.2085 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | success on default | 9.0036 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | success on default | 6.3167 | 4.5 (passes) |
-| soft rest (light text on main at 16%) | dark | success on paper | 7.8977 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | success on paper | 5.6505 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | dark | success.lighter on success.dark | 1.3051 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | warning on default | 9.2030 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | warning on default | 6.1783 | 4.5 (passes) |
-| soft rest (light text on main at 16%) | dark | warning on paper | 8.0846 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | warning on paper | 5.5515 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | dark | warning.lighter on warning.dark | 1.2737 | 4.5 **FAILS** |
-| soft rest (light text on main at 16%) | dark | error on default | 7.7138 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | error on default | 5.7588 | 4.5 (passes) |
-| soft rest (light text on main at 16%) | dark | error on paper | 6.8265 | 4.5 (passes) |
-| soft hover (light text on main at 32%) | dark | error on paper | 5.1964 | 4.5 (passes) |
-| chip filled (lighter text on dark fill) | dark | error.lighter on error.dark | 1.5571 | 4.5 **FAILS** |
+The contrast test reads the real theme, so a template update that changes a template override is caught if it breaks an asserted pair. The composition tests fail if a template slot we extend stops being a function or object we can compose.
