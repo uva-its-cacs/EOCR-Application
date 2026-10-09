@@ -267,16 +267,6 @@ const eocrRules = {
  */
 const eocrOverrides = [
   {
-    // Remove in Slice 7 (these files are rewritten).
-    files: [
-      'src/layouts/components/menu-button.tsx',
-      'src/components/nav-section/**/*.{ts,tsx}',
-      'src/layouts/dashboard/nav-vertical.tsx',
-      'src/layouts/dashboard/nav-mobile.tsx',
-    ],
-    rules: { 'jsx-a11y/control-has-associated-label': 0 },
-  },
-  {
     // Remove in Slice 7 (custom-popover is rewritten).
     files: ['src/components/custom-popover/custom-popover.tsx'],
     rules: { 'react-hooks/refs': 0 },
