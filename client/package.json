@@ -1,8 +1,8 @@
 {
-  "name": "@minimal-kit/starter-vite-ts",
-  "author": "Minimals",
+  "name": "eocr-client",
+  "author": "UVA ITS CACS",
   "version": "7.7.0",
-  "description": "Vite Starter & TypeScript",
+  "description": "EOCR client (accessibility vetting of software)",
   "private": true,
   "type": "module",
   "scripts": {

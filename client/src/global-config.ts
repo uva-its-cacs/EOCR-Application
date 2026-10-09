@@ -11,7 +11,7 @@ export type ConfigValue = {
 // ----------------------------------------------------------------------
 
 export const CONFIG: ConfigValue = {
-  appName: 'Minimal UI',
+  appName: 'EOCR',
   appVersion: packageJson.version,
   assetsDir: import.meta.env.VITE_ASSETS_DIR ?? '',
 };
