@@ -46,7 +46,10 @@ export const eocrRoutes: RouteObject[] = [
       {
         path: paths.requests.new,
         element: <NewRequestPage />,
-        handle: { crumb: 'New request' } satisfies RouteHandle,
+        handle: {
+          crumb: 'New request',
+          parent: { crumb: 'My requests', path: paths.requests.root },
+        } satisfies RouteHandle,
       },
       {
         // Admin pages: the guard decides what to show; the server enforces access.
