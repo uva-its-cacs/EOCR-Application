@@ -9,7 +9,6 @@ import Drawer from '@mui/material/Drawer';
 import { usePathname } from 'src/routes/hooks';
 
 import { Logo } from 'src/components/logo';
-import { Scrollbar } from 'src/components/scrollbar';
 import { NavSectionVertical } from 'src/components/nav-section';
 
 import { layoutClasses } from '../core';
@@ -68,14 +67,23 @@ export function NavMobile({
         </Box>
       )}
 
-      <Scrollbar fillContent>
+      <Box
+        sx={{
+          minWidth: 0,
+          minHeight: 0,
+          flexGrow: 1,
+          display: 'flex',
+          overflowY: 'auto',
+          flexDirection: 'column',
+        }}
+      >
         <NavSectionVertical
           data={data}
           checkPermissions={checkPermissions}
           sx={{ px: 2, flex: '1 1 auto' }}
           {...other}
         />
-      </Scrollbar>
+      </Box>
 
       {slots?.bottomArea}
     </Drawer>

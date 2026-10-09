@@ -6,9 +6,6 @@ import { usePathname } from 'src/routes/hooks';
 
 import { themeConfig, ThemeProvider } from 'src/theme';
 
-import { ProgressBar } from 'src/components/progress-bar';
-import { MotionLazy } from 'src/components/animate/motion-lazy';
-
 // ----------------------------------------------------------------------
 
 type AppProps = {
@@ -23,10 +20,7 @@ export default function App({ children }: AppProps) {
       modeStorageKey={themeConfig.modeStorageKey}
       defaultMode={themeConfig.defaultMode}
     >
-      <MotionLazy>
-        <ProgressBar />
-        {children}
-      </MotionLazy>
+      {children}
     </ThemeProvider>
   );
 }
