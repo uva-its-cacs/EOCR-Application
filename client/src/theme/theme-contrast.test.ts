@@ -19,7 +19,7 @@ type Rgb = { r: number; g: number; b: number; a: number };
 // token, which is how an alpha token (for example action.hover) looks when it sits on a surface. `opacity`
 // names a template opacity ('soft.bg', 'soft.hoverBg' or 'action.hoverOpacity') applied to `top` first.
 type OpacityKey = 'soft.bg' | 'soft.hoverBg' | 'action.hoverOpacity';
-type Ref = string | { top: string; on: string; opacity?: OpacityKey };
+type Ref = string | { top: string; on: string; opacity?: OpacityKey; alpha?: number };
 
 type Pair = {
   name: string;
@@ -87,6 +87,55 @@ const AVATAR: Pair[] = [
     schemes: ['dark'],
     fg: 'text.secondary',
     bg: 'grey.700',
+    min: TEXT,
+  },
+];
+
+// Primary nav (Slice 7): the nav sits on background.default ('integrate' nav color). The active item is
+// primary on an 8% primary tint, 16% on hover. On hover the light scheme uses primary.dark; the dark scheme
+// keeps the template's primary.light. Group labels and captions use text.secondary.
+const NAV_BG = 'background.default';
+const NAV: Pair[] = [
+  {
+    name: 'nav active: primary.main on primary at 8%',
+    schemes: ['light'],
+    fg: 'primary.main',
+    bg: { top: 'primary.main', on: NAV_BG, alpha: 0.08 },
+    min: TEXT,
+  },
+  {
+    name: 'nav active hover: primary.dark on primary at 16%',
+    schemes: ['light'],
+    fg: 'primary.dark',
+    bg: { top: 'primary.main', on: NAV_BG, alpha: 0.16 },
+    min: TEXT,
+  },
+  {
+    name: 'nav active: primary.light on primary at 8%',
+    schemes: ['dark'],
+    fg: 'primary.light',
+    bg: { top: 'primary.main', on: NAV_BG, alpha: 0.08 },
+    min: TEXT,
+  },
+  {
+    name: 'nav active hover: primary.light on primary at 16%',
+    schemes: ['dark'],
+    fg: 'primary.light',
+    bg: { top: 'primary.main', on: NAV_BG, alpha: 0.16 },
+    min: TEXT,
+  },
+  {
+    name: 'nav group label and caption: text.secondary on the nav',
+    schemes: BOTH,
+    fg: 'text.secondary',
+    bg: NAV_BG,
+    min: TEXT,
+  },
+  {
+    name: 'nav item hover: text.secondary on action.hover',
+    schemes: BOTH,
+    fg: 'text.secondary',
+    bg: { top: 'action.hover', on: NAV_BG },
     min: TEXT,
   },
 ];
@@ -172,6 +221,7 @@ export const PAIRS: Pair[] = [
     }))
   ),
   ...SOFT,
+  ...NAV,
   ...HOVER,
   ...GRID,
   ...AVATAR,
@@ -284,6 +334,7 @@ function resolve(ctx: Context, ref: Ref): Rgb {
     };
     top.a *= alphas[ref.opacity];
   }
+  if (ref.alpha !== undefined) top.a *= ref.alpha;
 
   return composite(top, parseColor(lookup(ctx.palette, ref.on)));
 }

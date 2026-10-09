@@ -70,8 +70,8 @@ export const eocrThemeOverrides: ThemeOptions = {
           },
           '.MuiRadio-root.Mui-focusVisible > :not(input)': { ...focusRing, borderRadius: '50%' },
           '.MuiSwitch-root:has(.Mui-focusVisible) .MuiSwitch-track': focusRing,
-          // Items inside a Paper that clips (menus, drawers, lists): inset the ring so it is not cut off.
-          '.MuiMenuItem-root:focus-visible:focus-visible, .MuiListItemButton-root:focus-visible:focus-visible':
+          // Items inside a Paper that clips (menus, drawers, lists, our nav): inset the ring so it is not cut off.
+          '.MuiMenuItem-root:focus-visible:focus-visible, .MuiListItemButton-root:focus-visible:focus-visible, .eocr-nav__item:focus-visible:focus-visible':
             {
               outlineOffset: '-3px',
             },
