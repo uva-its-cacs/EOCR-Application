@@ -5,8 +5,8 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | Our path | Template path | Template version | Status | Note |
 | --- | --- | --- | --- | --- |
 | `client/` (whole starter) | `starter-vite-ts/` | v7.7.0 | verbatim | Vendored in commit `vendor: Minimal starter-vite-ts v7.7.0 (unmodified)`. SHA-256 compared with the source: 673 files identical (excluding `node_modules`, `.env`, `.gitattributes`). `.vscode/settings.json` is not tracked because the starter's `.gitignore` ignores `.vscode`. |
-| `client/vite.config.ts` | `vite.config.ts` | v7.7.0 | modified | Port 8081 changed to 5173 (server and preview); added `/api` proxy to `http://localhost:5246`. |
-| `client/package.json` | `package.json` | v7.7.0 | modified | Removed `packageManager` and the `clean`, `re:dev`, `re:build`, `re:build-npm` scripts (yarn and `rm -rf`). |
+| `client/vite.config.ts` | `vite.config.ts` | v7.7.0 | modified | Port 8081 changed to 5173 (server and preview); added `/api` proxy to `http://localhost:5246`. `host: true` removed from server and preview so the dev server listens on localhost only (Slice 3). |
+| `client/package.json` | `package.json` | v7.7.0 | modified | Slice 3: added `eslint-plugin-jsx-a11y` (devDependency), `lint` script now `eslint --max-warnings 0 ...`, `react-router` floor `^7.18.4`, `vite` floor `^8.0.16`. Removed `packageManager` and the `clean`, `re:dev`, `re:build`, `re:build-npm` scripts (yarn and `rm -rf`). |
 | `client/.gitignore` | `.gitignore` | v7.7.0 | modified | Added `!.env.example` after `.env*`. |
 | `client/src/global-config.ts` | `src/global-config.ts` | v7.7.0 | modified | `auth.skip` changed from `false` to `true` to bypass the auth guard until the strip slice. |
 | `client/src/app.tsx` | `src/app.tsx` | v7.7.0 | modified | Removed `AuthProvider`, `SettingsProvider`, `SettingsDrawer`, `MotionLazy` and `ProgressBar`. |
@@ -15,7 +15,7 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `client/src/routes/sections/index.tsx` | `src/routes/sections/index.tsx` | v7.7.0 | modified | Removed auth routes and the 404 page. `/` and `*` both redirect to `/dashboard` (temporary; Slice 9 builds the 404). |
 | `client/src/routes/sections/dashboard.tsx` | `src/routes/sections/dashboard.tsx` | v7.7.0 | modified | Removed `AuthGuard`, the `CONFIG.auth.skip` branch and pages two to six. |
 | `client/src/layouts/nav-config-dashboard.tsx` | `src/layouts/nav-config-dashboard.tsx` | v7.7.0 | modified | Reduced to one item ("One", `/dashboard`, icon `ic-dashboard`). |
-| `client/src/layouts/dashboard/layout.tsx` | `src/layouts/dashboard/layout.tsx` | v7.7.0 | modified | Removed header widgets, horizontal nav, mocked user and role checks. Header keeps only the mobile `MenuButton`. Settings context removed: nav color `integrate`, nav layout `vertical`, no mini mode. |
+| `client/src/layouts/dashboard/layout.tsx` | `src/layouts/dashboard/layout.tsx` | v7.7.0 | modified | Slice 3: `MenuButton` given `aria-label="Open navigation menu"` (jsx-a11y `control-has-associated-label`). Removed header widgets, horizontal nav, mocked user and role checks. Header keeps only the mobile `MenuButton`. Settings context removed: nav color `integrate`, nav layout `vertical`, no mini mode. |
 | `client/src/layouts/dashboard/nav-vertical.tsx` | `src/layouts/dashboard/nav-vertical.tsx` | v7.7.0 | modified | Removed `NavToggleButton`, `onToggleNav`, `NavUpgrade`, and the mini variant (`isNavMini`, `NavSectionMini`). `Scrollbar` replaced by a plain `Box` with `overflowY: auto`. |
 | `client/src/layouts/dashboard/nav-mobile.tsx` | `src/layouts/dashboard/nav-mobile.tsx` | v7.7.0 | modified | Removed `NavUpgrade`. `Scrollbar` replaced by a plain `Box` with `overflowY: auto`. |
 | `client/src/theme/theme-provider.tsx` | `src/theme/theme-provider.tsx` | v7.7.0 | modified | Removed settings context and the `Rtl` wrapper. Keeps `defaultMode` and the mode storage key. |
@@ -33,8 +33,11 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `client/src/components/hook-form/fields.tsx` | `src/components/hook-form/fields.tsx` | v7.7.0 | modified | Removed `DatePicker`, `TimePicker` and `DateTimePicker` from `Field`. |
 | `client/src/components/hook-form/schema-utils.ts` | `src/components/hook-form/schema-utils.ts` | v7.7.0 | modified | Removed `schemaUtils.date` and the `dayjs` import. |
 | `client/package.json` | `package.json` | v7.7.0 | modified | Identity: `name` is `eocr-client`, `author` and `description` updated. Also removed the dependencies `axios`, `nprogress`, `simplebar-react`, `framer-motion`, `@mui/lab`, `@mui/x-date-pickers`, `@mui/x-tree-view`, `dayjs`, `autosuggest-highlight`, `@emotion/cache`, `@mui/stylis-plugin-rtl`, `stylis` and the types for `nprogress`, `autosuggest-highlight`, `stylis`. |
-| `client/package-lock.json` | `package-lock.json` | v7.7.0 | modified | Updated by `npm uninstall` for the removed packages; package `name` changed to `eocr-client`. |
+| `client/package-lock.json` | `package-lock.json` | v7.7.0 | modified | Updated by `npm uninstall` for the removed packages; package `name` changed to `eocr-client`. Slice 3: updated for `eslint-plugin-jsx-a11y`, `react-router` 7.18.4, and in-range security updates to dev tooling (vite 8.0.16 and others); `npm audit` reports 0. |
 | `client/index.html` | `index.html` | v7.7.0 | modified | Title set to "EOCR". |
+| `client/eslint.config.mjs` | `eslint.config.mjs` | v7.7.0 | modified | Slice 3: appended our own blocks at the end (template blocks unchanged, including `react/jsx-key: 0`): jsx-a11y recommended rules as errors with a component mapping (`Button`, `IconButton`, `MenuButton` to `button`; `Link`, `RouterLink` to `a`) and `control-has-associated-label`; `react/jsx-key`, `no-explicit-any` and the react-hooks compiler rules as errors; file-scoped overrides (see below). Added the `eslint-plugin-jsx-a11y` import. |
+| `client/prettier.config.mjs` | `prettier.config.mjs` | v7.7.0 | modified | Slice 3: added an `overrides` entry with `singleAttributePerLine: true` for `src/sections/**` and `src/pages/**`, excluding the vendored `src/pages/dashboard/one.tsx` and `src/sections/blank/view.tsx`. Template options unchanged. |
+| `client/src/routes/components/router-link.tsx` | `src/routes/components/router-link.tsx` | v7.7.0 | modified | Slice 3: `children` destructured and passed explicitly to `Link` (jsx-a11y `anchor-has-content` cannot see children forwarded through `...other`). No behavior change. |
 | `client/yarn.lock` | `yarn.lock` | v7.7.0 | deleted | npm is the package manager. `package-lock.json` is unchanged (`npm ci` succeeded). |
 | `client/.env.example` | n/a | n/a | ours-only | Only `VITE_ASSETS_DIR` (the one variable still read, by `global-config.ts`), empty. |
 | `client/.gitattributes` | n/a | n/a | ours-only | Line-ending rules, committed before the vendor commit. |
@@ -55,3 +58,16 @@ Kept but unused until later slices: `src/components/custom-popover/**` (Slice 7)
 | Demo assets | `src/assets/**` (25 files: countries data, icon and illustration components), `public/assets/**` except `icons/navbar/ic-dashboard.svg` (images, video, backgrounds, illustrations, other icon sets), `public/fonts/Roboto-*.ttf`. 321 files, about 7.7 MB. | Slice 2 (f) |
 
 Kept from `public/`: `favicon.ico`, `logo/*` (4 files, only the two SVGs are referenced), `assets/icons/navbar/ic-dashboard.svg` (the one nav item).
+
+## ESLint overrides (eslint.config.mjs)
+
+File-scoped exceptions for template files that violate the rules we enabled (Slice 3). A template file ported later that trips these rules is added here in its own `vendor:` commit.
+
+| Files | Rule turned off | Removed in |
+| --- | --- | --- |
+| `src/components/custom-popover/custom-popover.tsx` | `react-hooks/refs` | Slice 7 |
+| `src/components/custom-popover/hooks.ts` | `react-hooks/set-state-in-effect` | Slice 7 |
+| `src/components/hook-form/form-provider.tsx`, `src/components/hook-form/rhf-autocomplete.tsx` | `@typescript-eslint/no-explicit-any` | Slice 10 |
+| `src/components/nav-section/utils/create-nav-item.ts` | `@typescript-eslint/no-explicit-any` | Slice 7 |
+| `src/routes/components/error-boundary.tsx` | `@typescript-eslint/no-explicit-any` | Slice 9 |
+| `src/layouts/components/menu-button.tsx`, `src/components/nav-section/**`, `src/layouts/dashboard/nav-vertical.tsx`, `src/layouts/dashboard/nav-mobile.tsx` | `jsx-a11y/control-has-associated-label` (suppresses nothing today; reserved for the Slice 7 rewrite) | Slice 7 |

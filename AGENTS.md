@@ -157,7 +157,7 @@ Rules:
 
 ### Writing React code
 
-- Write readable, vertically formatted code. Do not put JSX, props, or objects all on one line. Prettier enforces this with `singleAttributePerLine`, so run `npm run fm:fix` rather than formatting by hand.
+- Write readable, vertically formatted code. Do not put JSX, props, or objects all on one line. Template-derived files keep the template's Prettier formatting so they stay diffable. Our own code in `sections/` and `pages/` uses one attribute per line through a Prettier override in `prettier.config.mjs`. Run `npm run fm:fix`, which applies the right style per file, rather than formatting by hand.
 - Follow industry-standard organization: one component per file, hooks named `useX`, and domain folders as shown above.
 - Keep components small. Move data fetching into domain hooks and keep presentational components free of API calls.
 - Import order and unused-import cleanup are enforced by ESLint (the template's rules). Run `npm run lint:fix`; do not reorder imports by hand.
