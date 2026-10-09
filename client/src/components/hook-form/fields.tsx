@@ -6,7 +6,6 @@ import { RHFAutocomplete } from './rhf-autocomplete';
 import { RHFSwitch, RHFMultiSwitch } from './rhf-switch';
 import { RHFSelect, RHFMultiSelect } from './rhf-select';
 import { RHFCheckbox, RHFMultiCheckbox } from './rhf-checkbox';
-import { RHFDatePicker, RHFTimePicker, RHFDateTimePicker } from './rhf-date-picker';
 
 // ----------------------------------------------------------------------
 
@@ -22,8 +21,4 @@ export const Field = {
   MultiSwitch: RHFMultiSwitch,
   Autocomplete: RHFAutocomplete,
   MultiCheckbox: RHFMultiCheckbox,
-  // Pickers
-  DatePicker: RHFDatePicker,
-  TimePicker: RHFTimePicker,
-  DateTimePicker: RHFDateTimePicker,
 };

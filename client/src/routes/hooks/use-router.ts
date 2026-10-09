@@ -1,9 +1,7 @@
 import type { NavigateOptions } from 'react-router';
 
-import NProgress from 'nprogress';
 import { useNavigate } from 'react-router';
 import { useMemo, useCallback } from 'react';
-import { isEqualPath } from 'minimal-shared/utils';
 
 // ----------------------------------------------------------------------
 
@@ -16,9 +14,6 @@ export function useRouter() {
 
   const push = useCallback(
     (href: string, options?: NavigateOptions) => {
-      if (!isEqualPath(href, window.location.href, { deep: false })) {
-        NProgress.start();
-      }
       navigate(href, options);
     },
     [navigate]
@@ -26,9 +21,6 @@ export function useRouter() {
 
   const replace = useCallback(
     (href: string, options?: NavigateOptions) => {
-      if (!isEqualPath(href, window.location.href, { deep: false })) {
-        NProgress.start();
-      }
       navigate(href, { ...options, replace: true });
     },
     [navigate]

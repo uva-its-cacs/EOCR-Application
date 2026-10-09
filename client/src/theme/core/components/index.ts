@@ -30,7 +30,6 @@ import { svgIcon } from './svg-icon';
 import { skeleton } from './skeleton';
 import { backdrop } from './backdrop';
 import { progress } from './progress';
-import { timeline } from './timeline';
 import { checkbox } from './checkbox';
 import { accordion } from './accordion';
 import { textField } from './text-field';
@@ -38,11 +37,9 @@ import { pagination } from './pagination';
 import { iconButton } from './button-icon';
 import { breadcrumbs } from './breadcrumbs';
 import { dataGrid } from './mui-x-data-grid';
-import { treeView } from './mui-x-tree-view';
 import { buttonGroup } from './button-group';
 import { autocomplete } from './autocomplete';
 import { toggleButton } from './button-toggle';
-import { datePicker } from './mui-x-date-picker';
 
 // ----------------------------------------------------------------------
 
@@ -67,7 +64,6 @@ export const components: Components<Theme> = {
   ...popover,
   ...svgIcon,
   ...skeleton,
-  ...timeline,
   ...backdrop,
   ...progress,
   ...accordion,
@@ -90,7 +86,5 @@ export const components: Components<Theme> = {
   ...buttonGroup,
   ...toggleButton,
   // ➤➤ MUI X ➤➤
-  ...treeView,
   ...dataGrid,
-  ...datePicker,
 };

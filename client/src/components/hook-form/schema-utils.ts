@@ -1,5 +1,4 @@
 import * as z from 'zod';
-import dayjs from 'dayjs';
 
 // ----------------------------------------------------------------------
 
@@ -32,43 +31,6 @@ export const schemaUtils = {
           ? (props?.error?.invalid ?? 'Email must be a valid email address!')
           : (props?.error?.required ?? 'Email is required!'),
     }),
-
-  /**
-   * Date
-   * Apply for date pickers.
-   */
-  date: (props?: { error?: SchemaErrorMessages }) => {
-    const INVALID_DATE_SENTINEL = '__INVALID_DATE__';
-    const error_required = props?.error?.required ?? 'Date is required!';
-    const error_invalid = props?.error?.invalid ?? 'Invalid date!';
-
-    return z.preprocess(
-      (val) => {
-        if (val === '' || val === undefined) return null;
-        if (val instanceof Date) return val;
-        if (dayjs.isDayjs(val)) {
-          return val.isValid() ? dayjs(val).toISOString() : INVALID_DATE_SENTINEL;
-        }
-        return val;
-      },
-      z.union([z.string(), z.number(), z.date(), z.null()]).superRefine((value, ctx) => {
-        if (value === null) {
-          ctx.addIssue({
-            code: 'custom',
-            message: error_required,
-          });
-          return;
-        }
-
-        if (value === INVALID_DATE_SENTINEL || !dayjs(value).isValid()) {
-          ctx.addIssue({
-            code: 'custom',
-            message: error_invalid,
-          });
-        }
-      })
-    );
-  },
 
   /**
    * Editor

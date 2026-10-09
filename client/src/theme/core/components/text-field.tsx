@@ -1,6 +1,5 @@
-import type { InputBaseClasses } from '@mui/material/InputBase';
 import type { OutlinedInputClasses } from '@mui/material/OutlinedInput';
-import type { PickerTextFieldOwnerState } from '@mui/x-date-pickers/models';
+import type { InputBaseProps, InputBaseClasses } from '@mui/material/InputBase';
 import type { FilledInputProps, FilledInputClasses } from '@mui/material/FilledInput';
 import type { Theme, CSSObject, Components, ComponentsVariants } from '@mui/material/styles';
 
@@ -16,23 +15,14 @@ import { inputAdornmentClasses } from '@mui/material/InputAdornment';
 type InputContext = 'standard' | 'picker';
 
 type InputSizeProps = Pick<FilledInputProps, 'size' | 'hiddenLabel'> & {
-  ownerState?: PickerTextFieldOwnerState;
+  ownerState?: Partial<InputBaseProps> & { inputSize?: FilledInputProps['size'] };
 };
 
 type InputBaseVariants = ComponentsVariants<Theme>['MuiInputBase'];
-type PickersInputBaseVariants =
-  | InputBaseVariants
-  | ComponentsVariants<Theme>['MuiPickersInputBase'];
 
 type OutlinedInputVariants = ComponentsVariants<Theme>['MuiOutlinedInput'];
-type PickersOutlinedInputVariants =
-  | OutlinedInputVariants
-  | ComponentsVariants<Theme>['MuiPickersOutlinedInput'];
 
 type FilledInputVariants = ComponentsVariants<Theme>['MuiFilledInput'];
-type PickersFilledInputVariants =
-  | FilledInputVariants
-  | ComponentsVariants<Theme>['MuiPickersFilledInput'];
 
 export const INPUT_TYPOGRAPHY = {
   fontSize: { base: 15, responsive: 16 },
@@ -132,7 +122,7 @@ export const inputBaseVariants = {
   ],
 } satisfies {
   root: InputBaseVariants;
-  input: PickersInputBaseVariants;
+  input: InputBaseVariants;
 };
 
 const multilineInputVariants = [
@@ -224,7 +214,7 @@ export const outlinedInputVariants = {
   ],
 } satisfies {
   root: OutlinedInputVariants;
-  input: PickersOutlinedInputVariants;
+  input: OutlinedInputVariants;
 };
 
 const MuiOutlinedInput: Components<Theme>['MuiOutlinedInput'] = {
@@ -303,7 +293,7 @@ export const filledInputVariants = {
   ],
 } satisfies {
   root: FilledInputVariants;
-  input: PickersFilledInputVariants;
+  input: FilledInputVariants;
 };
 
 const MuiFilledInput: Components<Theme>['MuiFilledInput'] = {

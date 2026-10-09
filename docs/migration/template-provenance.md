@@ -25,6 +25,15 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `client/src/global.css` | `src/global.css` | v7.7.0 | modified | Removed the `@import` of the scrollbar styles (the component was removed). The now-empty "Plugins" comment block is left as shipped. |
 | `client/src/components/loading-screen/index.ts` | `src/components/loading-screen/index.ts` | v7.7.0 | modified | Barrel no longer exports `splash-screen`. |
 | `client/src/components/nav-section/index.ts` | `src/components/nav-section/index.ts` | v7.7.0 | modified | Barrel no longer exports `mini` and `horizontal`. `styles/` still contains the mini and horizontal css-vars and class names, unchanged. |
+| `client/src/theme/core/components/index.ts` | `src/theme/core/components/index.ts` | v7.7.0 | modified | Removed the `timeline`, `treeView` and `datePicker` imports and spreads. |
+| `client/src/theme/core/components/text-field.tsx` | `src/theme/core/components/text-field.tsx` | v7.7.0 | modified | `PickerTextFieldOwnerState` (from `@mui/x-date-pickers`) replaced by the local type `Partial<InputBaseProps> & { inputSize?: FilledInputProps['size'] }` for `InputSizeProps.ownerState`. The `Pickers*InputVariants` aliases (which referenced `MuiPickers*` theme keys) removed; the `satisfies` clauses use the plain MUI variant types. The `picker` input context and `inputSize` checks are unchanged (now unused). |
+| `client/src/theme/extend-theme-types.d.ts` | `src/theme/extend-theme-types.d.ts` | v7.7.0 | modified | Removed the `@mui/lab`, `@mui/x-tree-view` and `@mui/x-date-pickers` theme augmentation imports. |
+| `client/src/routes/hooks/use-router.ts` | `src/routes/hooks/use-router.ts` | v7.7.0 | modified | Removed the `NProgress.start()` calls (and the `isEqualPath` guard around them and its import). The doc comment still says "NProgress integration" (not changed). |
+| `client/src/components/hook-form/index.ts` | `src/components/hook-form/index.ts` | v7.7.0 | modified | Removed the `rhf-date-picker` export. |
+| `client/src/components/hook-form/fields.tsx` | `src/components/hook-form/fields.tsx` | v7.7.0 | modified | Removed `DatePicker`, `TimePicker` and `DateTimePicker` from `Field`. |
+| `client/src/components/hook-form/schema-utils.ts` | `src/components/hook-form/schema-utils.ts` | v7.7.0 | modified | Removed `schemaUtils.date` and the `dayjs` import. |
+| `client/package.json` | `package.json` | v7.7.0 | modified | Also removed the dependencies `axios`, `nprogress`, `simplebar-react`, `framer-motion`, `@mui/lab`, `@mui/x-date-pickers`, `@mui/x-tree-view`, `dayjs`, `autosuggest-highlight`, `@emotion/cache`, `@mui/stylis-plugin-rtl`, `stylis` and the types for `nprogress`, `autosuggest-highlight`, `stylis`. |
+| `client/package-lock.json` | `package-lock.json` | v7.7.0 | modified | Updated by `npm uninstall` for the removed packages. |
 | `client/yarn.lock` | `yarn.lock` | v7.7.0 | deleted | npm is the package manager. `package-lock.json` is unchanged (`npm ci` succeeded). |
 | `client/.env.example` | n/a | n/a | ours-only | Same variable names as the starter's `.env`, empty values. |
 | `client/.gitattributes` | n/a | n/a | ours-only | Line-ending rules, committed before the vendor commit. |
@@ -41,3 +50,4 @@ Removed with `git rm`; the files stay available in the vendor commit `bd436d9`.
 | Animation, progress bar, scrollbar and unused components | `src/components/{animate,progress-bar,scrollbar,file-thumbnail,flag-icon,search-not-found}/**`, `src/components/loading-screen/splash-screen.tsx`, `src/components/nav-section/{mini,horizontal}/**` | Slice 2 (d) |
 
 Kept but unused until later slices: `src/components/custom-popover/**` (Slice 7) and `src/components/hook-form/**` (Slice 10).
+| Unapproved-package theme and form hooks | `src/theme/core/components/{mui-x-date-picker,mui-x-tree-view,timeline}.tsx`, `src/components/hook-form/rhf-date-picker.tsx`, `src/utils/format-time.ts` | Slice 2 (e) |
