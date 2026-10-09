@@ -1,8 +1,9 @@
 import type { ThemeOptions } from './types';
 
-import { createPaletteChannel } from 'minimal-shared/utils';
+import { setFont, createPaletteChannel } from 'minimal-shared/utils';
 
 import { eocrTokens } from './eocr-tokens';
+import { themeConfig } from './theme-config';
 
 // ----------------------------------------------------------------------
 
@@ -30,7 +31,16 @@ function createPalette(tokens: SchemeTokens) {
   };
 }
 
+// One font family for all text: the template's secondary (heading) font is replaced by the primary.
+const publicSans = setFont(themeConfig.fontFamily.primary);
+
 export const eocrThemeOverrides: ThemeOptions = {
+  typography: {
+    fontSecondaryFamily: publicSans,
+    h1: { fontFamily: publicSans },
+    h2: { fontFamily: publicSans },
+    h3: { fontFamily: publicSans },
+  },
   colorSchemes: {
     light: { palette: createPalette(eocrTokens.light) },
     dark: { palette: createPalette(eocrTokens.dark) },
