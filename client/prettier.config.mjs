@@ -15,7 +15,6 @@ const config = {
   overrides: [
     {
       files: ['src/sections/**/*.{ts,tsx}', 'src/pages/**/*.{ts,tsx}'],
-      excludeFiles: ['src/pages/dashboard/one.tsx', 'src/sections/blank/view.tsx'],
       options: { singleAttributePerLine: true },
     },
   ],

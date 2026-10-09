@@ -17,6 +17,7 @@ import { RequireAdmin } from '../components';
 const MyRequestsPage = lazy(() => import('src/pages/requests/list'));
 const NewRequestPage = lazy(() => import('src/pages/requests/new'));
 const SoftwarePage = lazy(() => import('src/pages/admin/software'));
+const NotFoundPage = lazy(() => import('src/pages/not-found'));
 
 // ----------------------------------------------------------------------
 
@@ -61,6 +62,11 @@ export const eocrRoutes: RouteObject[] = [
             handle: { crumb: 'Software' } satisfies RouteHandle,
           },
         ],
+      },
+      {
+        path: '*',
+        element: <NotFoundPage />,
+        handle: { crumb: 'Page not found' } satisfies RouteHandle,
       },
     ],
   },

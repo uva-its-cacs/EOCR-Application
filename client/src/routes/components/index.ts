@@ -2,4 +2,4 @@ export * from './router-link';
 
 export * from './require-admin';
 
-export * from './error-boundary';
+export * from './eocr-error-boundary';

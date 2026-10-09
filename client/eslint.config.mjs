@@ -276,11 +276,6 @@ const eocrOverrides = [
     files: ['src/components/hook-form/rhf-autocomplete.tsx'],
     rules: { '@typescript-eslint/no-explicit-any': 0 },
   },
-  {
-    // Remove in Slice 9 (error pages are built).
-    files: ['src/routes/components/error-boundary.tsx'],
-    rules: { '@typescript-eslint/no-explicit-any': 0 },
-  },
 ];
 
 const eslintConfig = [
