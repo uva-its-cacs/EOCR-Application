@@ -1,14 +1,20 @@
 // ----------------------------------------------------------------------
 
 const ROOTS = {
-  DASHBOARD: '/dashboard',
+  REQUESTS: '/requests',
+  ADMIN: '/admin',
 };
 
 // ----------------------------------------------------------------------
 
 export const paths = {
-  // DASHBOARD
-  dashboard: {
-    root: ROOTS.DASHBOARD,
+  // REQUESTS
+  requests: {
+    root: '/',
+    new: `${ROOTS.REQUESTS}/new`,
+  },
+  // ADMIN
+  admin: {
+    software: `${ROOTS.ADMIN}/software`,
   },
 };

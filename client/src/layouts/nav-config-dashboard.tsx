@@ -24,6 +24,6 @@ export const navData: NavSectionProps['data'] = [
    */
   {
     subheader: 'Overview',
-    items: [{ title: 'One', path: paths.dashboard.root, icon: ICONS.dashboard }],
+    items: [{ title: 'One', path: paths.requests.root, icon: ICONS.dashboard }],
   },
 ];
