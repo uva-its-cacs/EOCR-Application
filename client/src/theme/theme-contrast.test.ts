@@ -96,6 +96,16 @@ export const PAIRS: Pair[] = [
     ])
   ),
 
+  // Placeholder text (shared.inputOutlined) is lighter than entered text but still 4.5:1. Placeholders are
+  // never the only instruction: visible labels stay required.
+  ...SURFACES.map((s) => ({
+    name: `placeholder (shared.inputOutlined) on ${s}`,
+    schemes: BOTH,
+    fg: 'shared.inputOutlined',
+    bg: s,
+    min: TEXT,
+  })),
+
   // UI components (3:1): input and button outlines on every surface, and the primary color as an outline
   // (the focus ring uses primary.main).
   ...BORDER_TOKENS.flatMap((t) =>

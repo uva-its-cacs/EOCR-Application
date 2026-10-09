@@ -3,6 +3,7 @@ import type { ThemeOptions } from './types';
 import { createPaletteChannel } from 'minimal-shared/utils';
 
 import { eocrTokens } from './eocr-tokens';
+import { eocrComponents } from './eocr-components';
 
 // ----------------------------------------------------------------------
 
@@ -32,6 +33,7 @@ function createPalette(tokens: SchemeTokens) {
 
 export const eocrThemeOverrides: ThemeOptions = {
   components: {
+    ...eocrComponents,
     MuiCssBaseline: {
       styleOverrides: (theme) => {
         // Focus ring: 3px, 2px offset, primary token (>= 3:1 on default and paper in both schemes).
