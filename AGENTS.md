@@ -100,32 +100,26 @@ Rules:
 
 ## Client architecture
 
-`client/` is the **Minimal UI `starter-vite-ts` v7.7.0**, vendored unmodified in its own `vendor:` commit and adapted in later commits. Today `client/src` has the starter's structure, shown below. Items marked **(strip)** are removed in the strip slice and must not be used or extended before then. Our own domain code will go in `sections/` and `pages/` as described under Rules.
+`client/` is the **Minimal UI `starter-vite-ts` v7.7.0**, vendored unmodified in its own `vendor:` commit and then stripped and adapted in later commits (see `docs/migration/template-provenance.md`). The strip slice removed auth, mock data, the settings drawer and context, RTL, header widgets, demo pages and assets, and the packages we have not approved. `client/src` today:
 
 ```
 client/src/
-  main.tsx            # entry
-  app.tsx             # app root: theme provider, global styles
-  global-config.ts    # CONFIG: app name, server URL, auth settings (auth settings: strip)
-  global.css
+  main.tsx            # entry: createBrowserRouter + RouterProvider
+  app.tsx             # ThemeProvider (default mode light, mode storage key) and scroll-to-top
+  global-config.ts    # CONFIG: appName, appVersion, assetsDir
+  global.css          # font imports and baseline styles
   vite-env.d.ts
-  _mock/              # (strip) mock data for the template demo
-  assets/             # (strip) demo data, icons, illustrations (keep only what we use)
-  auth/               # (strip) template JWT/Firebase/Auth0/Amplify/Supabase auth: context, guard, hooks, views
-  components/         # template shared UI: animate, custom-popover, file-thumbnail, flag-icon,
-                      #   hook-form, iconify, label, loading-screen, logo, nav-section, progress-bar,
-                      #   scrollbar, search-not-found, settings (settings drawer: strip)
-  layouts/            # auth-split (strip), simple, core, dashboard, components (header widgets: strip),
-                      #   nav-config-*.tsx
-  lib/                # axios.ts (strip; replaced by an apiFetch wrapper)
-  pages/              # auth/ and dashboard/ demo pages (strip), error/
-  routes/             # paths.ts, route sections, hooks, components
-  sections/           # blank, error (our domain folders are added here)
-  theme/              # template theme pipeline (core, with-settings, theme-config.ts, overrides)
-  utils/              # format-time.ts
+  components/         # custom-popover, hook-form (both unused until later slices), iconify, label,
+                      #   loading-screen, logo, nav-section (vertical only), svg-color
+  layouts/            # core/ (layout, header, main sections), dashboard/ (layout, nav-vertical, nav-mobile,
+                      #   content, css-vars), components/menu-button.tsx, nav-config-dashboard.tsx (one item)
+  pages/dashboard/    # one.tsx: the placeholder page at /dashboard
+  routes/             # paths.ts, sections/ (index, dashboard), hooks/, components/ (RouterLink, ErrorBoundary)
+  sections/blank/     # view.tsx: the placeholder view composed by pages/dashboard/one.tsx
+  theme/              # template theme pipeline: core/, theme-config.ts, create-theme.ts, theme-provider.tsx
 ```
 
-Packages the starter ships that are not approved (see "UI") are removed in the strip slice, and our code must not import them before then.
+The shell is a `DashboardLayout` (header with the mobile menu button, a fixed vertical sidebar with one nav item, and main) and one placeholder page. Later slices add our domain folders under `sections/` and `pages/` as described under Rules, and add `lib/` (the `apiFetch` wrapper) when the first feature needs it. There is no settings drawer, no mode toggle yet, and no auth code in the client.
 
 Rules:
 
@@ -146,7 +140,7 @@ Rules:
 - Template licensing rules:
   - The repository must stay private.
   - The starter is committed as a vendor baseline (the `vendor:` commit). The full `vite-ts` demo stays **outside the repository**. Individual files from it are ported as their own `vendor:` commits (unmodified first, then adapted in separate commits).
-  - Demo pages, `_mock` data, and auth views are removed in the strip slice and never used.
+  - Demo pages, `_mock` data, and auth views were removed in the strip slice and are never used.
   - Put our changes in our own override files where possible instead of editing template files in place. Keep `docs/migration/template-provenance.md` up to date with every template file we modify.
   - Keep an accurate license and attribution note in `THIRD_PARTY_NOTICES.md`. Minimal UI is commercially licensed, not open source.
 - Do not use Tailwind, shadcn/ui, or any other UI library. Do not use MUI X Pro or Premium packages (they require a paid license). Theme augmentation imports come from the community packages only (for example `@mui/x-data-grid/themeAugmentation`), never from `-pro` or `-premium`.
