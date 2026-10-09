@@ -111,7 +111,10 @@ client/src/
   vite-env.d.ts
   components/         # template: hook-form (unused until Slice 10), iconify, label, loading-screen,
                       #   nav-section/styles (nav tokens only), svg-color
-                      # ours: eocr-nav/ (primary nav, nav data and role filtering)
+                      # from the full vite-ts demo: custom-dialog/ (ConfirmDialog, adapted)
+                      # ours: eocr-nav/ (primary nav, nav data and role filtering), page-header/,
+                      #   feedback/ (LoadingState, ErrorState, EmptyState), page-loading/, status-chip/,
+                      #   visually-hidden/
   layouts/            # template: core/ (layout, header, main sections), dashboard/ (content and css-vars
                       #   only), components/menu-button.tsx
                       # ours: eocr/ (shell: skip link, header with dark mode toggle and account menu,
@@ -120,12 +123,24 @@ client/src/
   pages/              # requests/list.tsx, requests/new.tsx, admin/software.tsx (placeholders)
   routes/             # paths.ts, route-handle.ts, sections/ (index, eocr), hooks/,
                       #   components/ (RouterLink, RequireAdmin, ErrorBoundary)
-  sections/           # auth/, requests/, software/ (types, api, hooks); blank/view.tsx (template placeholder)
+  sections/           # auth/, requests/ (also status-colors.ts), software/ (types, api, hooks)
   theme/              # template theme pipeline plus our eocr-tokens.ts, eocr-overrides.ts, eocr-components.ts
+  test/               # render helpers for component tests (app theme, memory router)
   utils/              # format.ts (date formatters)
 ```
 
-The shell is a `DashboardLayout` (header with the mobile menu button, a fixed vertical sidebar with one nav item, and main) and one placeholder page. Later slices add our domain folders under `sections/` and `pages/` as described under Rules, and add `lib/` (the `apiFetch` wrapper) when the first feature needs it. There is no settings drawer, no mode toggle yet, and no auth code in the client.
+The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around three placeholder pages. Later slices add our domain folders under `sections/` and `pages/` as described under Rules. There is no settings drawer and no auth code in the client.
+
+Shared components (Slice 8). Use these instead of building one-off versions:
+
+- `PageHeader` (`components/page-header`): every page's heading. It renders the page's only `h1` (styled as the template's `h4`, `tabIndex={-1}` for the route-focus hook, no ring), sets the document title to "documentTitle (or title) - EOCR", and takes optional `description` and `actions`. Breadcrumbs come from the route `handle` (`{ crumb, parent? }`, see `routes/route-handle.ts`) and appear only when the trail has more than one crumb; the last crumb carries `aria-current="page"` and is not a link.
+- `LoadingState`, `ErrorState`, `EmptyState` (`components/feedback`): in-page loading (a polite `role="status"` with visible text), errors (an Alert, `role="alert"`, with Retry when `onRetry` is given), and empty lists.
+- `PageLoading` (`components/page-loading`): page-level loading (route Suspense fallback, access check). It names the template's progress bar "Loading" and announces "Loading page".
+- `StatusChip` (`components/status-chip`): every status display. Pass the code, its label and a color map (`REQUEST_STATUS_COLORS` or `APPROVAL_STATUS_COLORS` in `sections/requests/status-colors.ts`). The label is always shown and is the accessible name (no `aria-label`); unknown codes get the `default` color.
+- `ConfirmDialog` (`components/custom-dialog`): confirmations. It is named by its title and described by its content. Pass `destructive` for actions that delete or cannot be undone: the confirm button turns error-colored and initial focus goes to Cancel; otherwise initial focus goes to the confirm button. Escape closes it and focus returns to the trigger.
+- `VisuallyHidden` (`components/visually-hidden`): text for screen readers only.
+
+Component tests use Testing Library with jsdom, opted in per file with `// @vitest-environment jsdom` (the default test environment stays `node`), and render through `src/test/render-with-theme.tsx`.
 
 Rules:
 
@@ -150,7 +165,7 @@ Rules:
   - Put our changes in our own override files where possible instead of editing template files in place. Keep `docs/migration/template-provenance.md` up to date with every template file we modify.
   - Keep an accurate license and attribution note in `THIRD_PARTY_NOTICES.md`. Minimal UI is commercially licensed, not open source.
 - Do not use Tailwind, shadcn/ui, or any other UI library. Do not use MUI X Pro or Premium packages (they require a paid license). Theme augmentation imports come from the community packages only (for example `@mui/x-data-grid/themeAugmentation`), never from `-pro` or `-premium`.
-- **Approved for the template foundation** (a slice still decides when each is added): `minimal-shared`, `@iconify/react`, `react-hook-form`, `@hookform/resolvers`, `zod` (v4), `es-toolkit`, `vitest` (test runner, dev dependency), and the two self-hosted font packages named under Fonts (`@fontsource-variable/public-sans`, `@fontsource/barlow`).
+- **Approved for the template foundation** (a slice still decides when each is added): `minimal-shared`, `@iconify/react`, `react-hook-form`, `@hookform/resolvers`, `zod` (v4), `es-toolkit`, `vitest` (test runner, dev dependency), `@testing-library/react`, `@testing-library/dom` and `jsdom` (component tests, dev dependencies), and the two self-hosted font packages named under Fonts (`@fontsource-variable/public-sans`, `@fontsource/barlow`).
 - **Not approved** (do not add, and remove from any ported file): the settings drawer and user-facing theme controls, RTL support (`@emotion/cache`, `@mui/stylis-plugin-rtl`, `stylis`), `axios`, `nprogress`, `simplebar-react` (use native scrolling), `@mui/lab`, `@mui/x-date-pickers`, `@mui/x-tree-view`, `@mui/x-charts`, `dayjs`, additional font packages, and `framer-motion`. If a slice needs `framer-motion` for a ported component, the slice must say so, wrap the app in `<MotionConfig reducedMotion="user">`, and avoid infinite or looping animation. Template files that depend on a package that is not approved (for example the date-picker form field) are not ported. A chart may never be the only way to see information: provide a table or text equivalent.
 - **Icons** use the template's `Iconify` wrapper with its bundled offline icon set. Only registered icon names are allowed (the wrapper is typed to them); add any new icon to the registered set instead of loading it from the network. `@mui/icons-material` is being phased out and is removed once its remaining uses are migrated.
 - **Fonts** are self-hosted through npm: Public Sans (`@fontsource-variable/public-sans`) for body text and Barlow (`@fontsource/barlow`, weights 700 and 800) for headings, with no external requests. In the template's typography only `h1`, `h2` and `h3` use Barlow; `h4` to `h6` and body text use Public Sans. Never load fonts, icons, or scripts from an external CDN or API.
@@ -160,7 +175,7 @@ Rules:
 - Navigation items are real React Router links, and the active one carries `aria-current="page"`: implemented in `src/components/eocr-nav` (our nav replaces the template's nav-section) and verified in a browser in Slice 7.
 - Use the plain MUI `Table` (a real HTML `<table>`, with the template's table helpers where useful) for small, static lists. Use the Data Grid for lists that need sorting, filtering, or pagination, such as the user's request list and the admin queue. Every Data Grid needs an `aria-label`, must be keyboard operable, must show status as text, and has no checkbox selection unless a slice calls for it.
 - **Forms** use `react-hook-form` with `zod` and the template's shared field components. Every field has a visible label. Shared field wrappers must: pass `inputRef` so focus moves to the first invalid field on submit; tie each error to its field with `aria-describedby` (including non-TextField controls) and `aria-invalid`; announce errors (an error summary or live region); and must not force `autoComplete="new-password"` (set a correct `autoComplete` per field purpose, or none). Fix these once in the shared wrappers, not per form.
-- **Status display** uses a shared status chip built on the template's `Label`. It always shows the status text, never color alone, with a safe fallback for unknown codes.
+- **Status display** uses the shared `StatusChip` (`src/components/status-chip`), built on the template's soft `Label`. It always shows the status text, never color alone, with a safe fallback for unknown codes. Colors per code live in `src/sections/requests/status-colors.ts`; every color used there passes contrast in both schemes (`docs/migration/theme-contrast.md`).
 
 ### Writing React code
 

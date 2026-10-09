@@ -98,6 +98,26 @@ The active state is also shown by a semibold title (not color alone). Measured i
 
 Later (not built yet): a group that needs to collapse would use the disclosure pattern (a real `<button aria-expanded aria-controls>` controlling the list), not the template's click-to-collapse subheader.
 
+## Slice 8 status chips
+
+`StatusChip` is the template's soft `Label`: the text is the color's `dark` step on its `main` at the soft opacity (0.16), through our `softStyles` mixin. The default (grey) chip has no palette color, so the template leaves its text color inherited; `StatusChip` pins it to `text.primary` so the ratio does not depend on where the chip sits. New guard pairs in `theme-contrast.test.ts` (both schemes): `text.primary` on `grey.500` at `soft.bg` over each surface, 13.5169 / 13.5169 / 12.5938 light and 13.5129 / 11.8585 / 10.0283 dark (default / paper / neutral). The six palette colors were already guarded (soft pairs below).
+
+Colors: Draft, NotReviewed and unknown codes `default`; Submitted, AiReview, HumanReview, UnderReview `info`; MoreInfoNeeded, AwaitingEeaap, ApprovedWithConditions, Expired `warning`; Approved `success`; Denied `error`. Codes that share a color are told apart by their text.
+
+Measured in the browser (headless Edge, computed colors composited down the ancestor chain, every code of `RequestStatus` and `ApprovalStatus` plus an unknown code, on each surface). Ratios are the same for every code with the same color:
+
+| Color (codes) | Light default | Light paper | Light neutral | Dark default | Dark paper | Dark neutral |
+| --- | --- | --- | --- | --- | --- | --- |
+| default (Draft, NotReviewed, unknown) | 13.52 | 13.52 | 12.59 | 13.51 | 11.86 | 10.03 |
+| info (Submitted, AiReview, HumanReview, UnderReview) | 9.50 | 9.50 | 8.83 | 9.94 | 8.72 | 7.39 |
+| warning (MoreInfoNeeded, AwaitingEeaap, ApprovedWithConditions, Expired) | 5.61 | 5.61 | 5.22 | 9.20 | 8.08 | 6.84 |
+| success (Approved) | 5.58 | 5.58 | 5.19 | 9.00 | 7.90 | 6.69 |
+| error (Denied) | 8.50 | 8.50 | 7.88 | 7.71 | 6.83 | 5.80 |
+
+Lowest: 5.19 light (success on neutral), 5.80 dark (error on neutral). The chips are not interactive, so there are no hover or focus states. The browser values match the guard to two decimals.
+
+The `ConfirmDialog` destructive confirm button is the contained `error` button: the guarded pairs error.contrastText on error.main (6.56 light, 5.38 dark) and on error.dark when hovered (11.18, 8.48).
+
 ## Asserted pairs
 
 Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted in that scheme (the `dark` step as text is only used as text in the light scheme).
@@ -215,6 +235,9 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | soft error: error.dark on error.main at soft.hoverBg over background.paper | 4.5 | 7.3411 | 5.9839 |
 | soft error: error.dark on error.main at soft.bg over background.neutral | 4.5 | 7.8824 | 5.7982 |
 | soft error: error.dark on error.main at soft.hoverBg over background.neutral | 4.5 | 6.8333 | 5.1532 |
+| soft default: text.primary on grey.500 at soft.bg over background.default | 4.5 | 13.5169 | 13.5129 |
+| soft default: text.primary on grey.500 at soft.bg over background.paper | 4.5 | 13.5169 | 11.8585 |
+| soft default: text.primary on grey.500 at soft.bg over background.neutral | 4.5 | 12.5938 | 10.0283 |
 | outlined/text hover primary: primary.dark on its hover tint over background.default | 4.5 | 8.6341 | 9.2238 |
 | outlined/text hover primary: primary.dark on its hover tint over background.paper | 4.5 | 8.6341 | 8.0559 |
 | outlined/text hover primary: primary.dark on its hover tint over background.neutral | 4.5 | 7.9905 | 6.7404 |
