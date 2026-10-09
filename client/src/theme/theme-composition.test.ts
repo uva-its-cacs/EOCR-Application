@@ -82,6 +82,8 @@ describe('component overrides keep the template styles', () => {
   it('InputLabel root keeps its variants and adds ours last', () => {
     const { before, after } = expectTemplateSurvives('MuiInputLabel', 'root');
     expect(after.variants?.length).toBe((before.variants?.length ?? 0) + 1);
+    const last = (after.variants as unknown as { style: Record<string, unknown> }[]).at(-1);
+    expect(last?.style).toEqual({ color: ours.vars.palette.text.secondary });
   });
 
   it('Link is underlined at rest with a full currentColor underline', () => {
@@ -160,5 +162,52 @@ describe('soft styles (Label, Chip and Button soft)', () => {
   it('leave the default color alone', () => {
     const before = template.mixins.softStyles(template, 'default');
     expect(ours.mixins.softStyles(ours, 'default')).toEqual(before);
+  });
+});
+
+describe('focus ring rules (MuiCssBaseline)', () => {
+  type Css = Record<string, Record<string, unknown>>;
+  const baseline = (ours.components as Record<string, { styleOverrides?: unknown }>).MuiCssBaseline;
+  const css = (baseline.styleOverrides as (theme: ThemeLike) => Css)(ours);
+  const ruleFor = (fragment: string) =>
+    Object.entries(css).find(([key]) => key.includes(fragment))?.[1];
+
+  it('rings every focus-visible element with 3px and a 2px offset', () => {
+    expect(ruleFor('*:focus-visible:focus-visible')).toMatchObject({
+      outline: `3px solid ${ours.vars.palette.primary.main}`,
+      outlineOffset: '2px',
+    });
+  });
+
+  it('insets the ring on menu and list items so a clipping Paper does not cut it off', () => {
+    expect(ruleFor('.MuiMenuItem-root:focus-visible')).toMatchObject({ outlineOffset: '-3px' });
+    expect(ruleFor('.MuiListItemButton-root:focus-visible')).toMatchObject({
+      outlineOffset: '-3px',
+    });
+  });
+
+  it('draws a 3px inset ring on DataGrid cells and column headers', () => {
+    const rule = ruleFor('.MuiDataGrid-cell:focus');
+    expect(rule).toMatchObject({
+      outline: `3px solid ${ours.vars.palette.primary.main}`,
+      outlineOffset: '-3px',
+    });
+    expect(Object.keys(css).find((key) => key.includes('.MuiDataGrid-cell:focus'))).toContain(
+      '.MuiDataGrid-columnHeader:focus'
+    );
+  });
+
+  it('puts the checkbox, radio and switch ring on the icon or track, not the padded root', () => {
+    expect(ruleFor('.MuiCheckbox-root.Mui-focusVisible >')).toBeDefined();
+    expect(ruleFor('.MuiRadio-root.Mui-focusVisible >')).toBeDefined();
+    expect(ruleFor('.MuiSwitch-track')).toBeDefined();
+  });
+
+  it('keeps inline link rings tight (offset 0)', () => {
+    expect(ruleFor('.MuiLink-root:focus-visible')).toMatchObject({ outlineOffset: '0px' });
+  });
+
+  it('turns motion off under prefers-reduced-motion', () => {
+    expect(ruleFor('prefers-reduced-motion')).toBeDefined();
   });
 });
