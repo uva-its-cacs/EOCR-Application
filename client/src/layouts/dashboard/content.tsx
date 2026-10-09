@@ -6,8 +6,6 @@ import { mergeClasses } from 'minimal-shared/utils';
 import { styled } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 
-import { useSettingsContext } from 'src/components/settings';
-
 import { layoutClasses } from '../core';
 
 // ----------------------------------------------------------------------
@@ -26,14 +24,10 @@ export function DashboardContent({
   layoutQuery = 'lg',
   ...other
 }: DashboardContentProps) {
-  const settings = useSettingsContext();
-
-  const isNavHorizontal = settings.state.navLayout === 'horizontal';
-
   return (
     <Container
       className={mergeClasses([layoutClasses.content, className])}
-      maxWidth={settings.state.compactLayout ? maxWidth : false}
+      maxWidth={maxWidth}
       sx={[
         (theme) => ({
           display: 'flex',
@@ -43,7 +37,6 @@ export function DashboardContent({
           pb: 'var(--layout-dashboard-content-pb)',
           [theme.breakpoints.up(layoutQuery)]: {
             px: 'var(--layout-dashboard-content-px)',
-            ...(isNavHorizontal && { '--layout-dashboard-content-pt': '40px' }),
           },
           ...(disablePadding && {
             p: {

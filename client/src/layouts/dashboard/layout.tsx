@@ -8,8 +8,6 @@ import { useBoolean } from 'minimal-shared/hooks';
 import Alert from '@mui/material/Alert';
 import { useTheme } from '@mui/material/styles';
 
-import { useSettingsContext } from 'src/components/settings';
-
 import { NavMobile } from './nav-mobile';
 import { NavVertical } from './nav-vertical';
 import { MenuButton } from '../components/menu-button';
@@ -41,23 +39,18 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const theme = useTheme();
 
-  const settings = useSettingsContext();
-
-  const navVars = dashboardNavColorVars(theme, settings.state.navColor, settings.state.navLayout);
+  const navVars = dashboardNavColorVars(theme);
 
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
 
   const navData = slotProps?.nav?.data ?? dashboardNavData;
-
-  const isNavMini = settings.state.navLayout === 'mini';
-  const isNavVertical = isNavMini || settings.state.navLayout === 'vertical';
 
   const renderHeader = () => {
     const headerSlotProps: HeaderSectionProps['slotProps'] = {
       container: {
         maxWidth: false,
         sx: {
-          ...(isNavVertical && { px: { [layoutQuery]: 5 } }),
+          px: { [layoutQuery]: 5 },
         },
       },
     };
@@ -83,7 +76,7 @@ export function DashboardLayout({
     return (
       <HeaderSection
         layoutQuery={layoutQuery}
-        disableElevation={isNavVertical}
+        disableElevation
         {...slotProps?.header}
         slots={{ ...headerSlots, ...slotProps?.header?.slots }}
         slotProps={merge(headerSlotProps, slotProps?.header?.slotProps ?? {})}
@@ -93,12 +86,7 @@ export function DashboardLayout({
   };
 
   const renderSidebar = () => (
-    <NavVertical
-      data={navData}
-      isNavMini={isNavMini}
-      layoutQuery={layoutQuery}
-      cssVars={navVars.section}
-    />
+    <NavVertical data={navData} layoutQuery={layoutQuery} cssVars={navVars.section} />
   );
 
   const renderFooter = () => null;
@@ -127,7 +115,7 @@ export function DashboardLayout({
         {
           [`& .${layoutClasses.sidebarContainer}`]: {
             [theme.breakpoints.up(layoutQuery)]: {
-              pl: isNavMini ? 'var(--layout-nav-mini-width)' : 'var(--layout-nav-vertical-width)',
+              pl: 'var(--layout-nav-vertical-width)',
               transition: theme.transitions.create(['padding-left'], {
                 easing: 'var(--layout-transition-easing)',
                 duration: 'var(--layout-transition-duration)',

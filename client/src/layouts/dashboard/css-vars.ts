@@ -1,9 +1,13 @@
 import type { Theme, CSSObject } from '@mui/material/styles';
-import type { SettingsState } from 'src/components/settings';
 
 import { varAlpha } from 'minimal-shared/utils';
 
 import { bulletColor } from 'src/components/nav-section';
+
+// ----------------------------------------------------------------------
+
+type NavColor = 'integrate' | 'apparent';
+type NavLayout = 'vertical' | 'mini' | 'horizontal';
 
 // ----------------------------------------------------------------------
 
@@ -24,8 +28,8 @@ export function dashboardLayoutVars(theme: Theme) {
 
 export function dashboardNavColorVars(
   theme: Theme,
-  navColor: SettingsState['navColor'] = 'integrate',
-  navLayout: SettingsState['navLayout'] = 'vertical'
+  navColor: NavColor = 'integrate',
+  navLayout: NavLayout = 'vertical'
 ): Record<'layout' | 'section', CSSObject | undefined> {
   const {
     vars: { palette },
