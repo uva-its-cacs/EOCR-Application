@@ -32,7 +32,6 @@ export default defineConfig({
   },
   server: {
     port: PORT,
-    host: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5246',
@@ -40,5 +39,5 @@ export default defineConfig({
       },
     },
   },
-  preview: { port: PORT, host: true },
+  preview: { port: PORT },
 });
