@@ -1,6 +1,6 @@
 import { it, expect, describe } from 'vitest';
 
-import { STATUS_GROUPS, getStatusGroup, UNKNOWN_STATUS_GROUP } from './status-groups';
+import { countByGroup, STATUS_GROUPS, getStatusGroup, UNKNOWN_STATUS_GROUP } from './status-groups';
 
 // ----------------------------------------------------------------------
 
@@ -40,4 +40,23 @@ describe('getStatusGroup', () => {
       expect(UNKNOWN_STATUS_GROUP).toBe('Other');
     }
   );
+});
+
+describe('countByGroup', () => {
+  it('counts requests per group in STATUS_GROUPS order, ignoring unknown codes', () => {
+    const counts = countByGroup([
+      { statusCode: 'Draft' },
+      { statusCode: 'AiReview' },
+      { statusCode: 'HumanReview' },
+      { statusCode: 'Denied' },
+      { statusCode: 'Archived' },
+    ]);
+
+    expect(counts).toEqual({ Drafts: 1, 'In review': 2, 'Needs your action': 0, Decided: 1 });
+    expect(Object.keys(counts)).toEqual(Object.keys(STATUS_GROUPS));
+  });
+
+  it('gives zeros for no requests', () => {
+    expect(Object.values(countByGroup([]))).toEqual([0, 0, 0, 0]);
+  });
 });
