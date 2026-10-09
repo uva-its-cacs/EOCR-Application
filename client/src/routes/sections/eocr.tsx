@@ -4,7 +4,7 @@ import type { RouteHandle } from '../route-handle';
 import { Outlet } from 'react-router';
 import { lazy, Suspense } from 'react';
 
-import { DashboardLayout } from 'src/layouts/dashboard';
+import { EocrLayout } from 'src/layouts/eocr';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
@@ -33,9 +33,9 @@ export const eocrRoutes: RouteObject[] = [
   {
     path: '/',
     element: (
-      <DashboardLayout>
+      <EocrLayout>
         <SuspenseOutlet />
-      </DashboardLayout>
+      </EocrLayout>
     ),
     children: [
       {
