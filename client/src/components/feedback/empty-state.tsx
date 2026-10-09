@@ -13,7 +13,9 @@ type Props = {
 export function EmptyState({ title, description, action }: Props) {
   return (
     <Box sx={{ py: 3 }}>
-      <Typography variant="subtitle1">{title}</Typography>
+      <Typography variant="subtitle1" component="p">
+        {title}
+      </Typography>
       {description && (
         <Typography component="div" sx={{ mt: 0.5, color: 'text.secondary' }}>
           {description}

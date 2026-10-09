@@ -52,7 +52,8 @@ describe('EmptyState', () => {
       />
     );
 
-    expect(screen.getByText('No requests yet')).toBeTruthy();
+    expect(screen.getByText('No requests yet').tagName).toBe('P');
+    expect(screen.queryByRole('heading')).toBeNull();
     expect(screen.getByText('Requests you start appear here.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'New request' })).toBeTruthy();
   });
