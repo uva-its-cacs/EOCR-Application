@@ -1,5 +1,5 @@
 export interface RequestSummary {
-  id: number
+  requestId: number
   softwareName: string
   vendor: string
   statusCode: string

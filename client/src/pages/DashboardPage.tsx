@@ -225,6 +225,7 @@ export function DashboardPage() {
             columns={COLUMNS}
             autoHeight
             density="compact"
+            getRowId={(row) => row.requestId}
             columnHeaderHeight={40}
             disableRowSelectionOnClick
             aria-label="Your vetting requests"

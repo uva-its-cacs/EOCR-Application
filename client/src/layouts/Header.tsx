@@ -28,7 +28,7 @@ export function Header() {
           Dashboard
         </Link>
         <Typography color="text.primary" variant="body2" aria-current="page">
-          {pathname === '/' ? 'My Requests' : 'New Request'}
+          {pathname === '/admin/software' ? 'Software' : pathname === '/' ? 'My Requests' : 'New Request'}
         </Typography>
       </Breadcrumbs>
       <ColorModeToggle />

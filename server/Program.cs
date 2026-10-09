@@ -14,6 +14,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<ICurrentUser, DevCurrentUser>();
 builder.Services.AddScoped<IRequestRepo, RequestRepo>();
+builder.Services.AddScoped<ISoftwareRepo, SoftwareRepo>();
+builder.Services.AddScoped<ICodeRepo, CodeRepo>();
 
 var app = builder.Build();
 
