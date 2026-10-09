@@ -5,9 +5,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { PageHeader } from 'src/components/page-header';
 import { VisuallyHidden } from 'src/components/visually-hidden';
 import { ErrorState, LoadingState } from 'src/components/feedback';
+import { PageHeader, focusPageHeading } from 'src/components/page-header';
 
 import { useSoftware } from '../use-software';
 import { SoftwareGrid } from './software-grid';
@@ -39,8 +39,10 @@ export function SoftwareView() {
     setRefreshState(result.isError ? 'idle' : 'done');
   };
 
-  const retry = () => {
-    void software.refetch();
+  // The alert and its Retry button disappear on success, so focus moves to the page heading.
+  const retry = async () => {
+    const result = await software.refetch();
+    if (!result.isError) focusPageHeading();
   };
 
   return (
@@ -80,7 +82,9 @@ export function SoftwareView() {
 
       {software.isError && (
         <ErrorState
-          onRetry={retry}
+          onRetry={() => {
+            void retry();
+          }}
           sx={{ mb: 2 }}
         >
           Software could not be loaded. Retry or check your administrator access.

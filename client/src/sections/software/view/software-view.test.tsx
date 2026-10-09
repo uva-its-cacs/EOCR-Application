@@ -70,6 +70,23 @@ describe('SoftwareView', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
+  it('moves focus to the h1 after a successful Retry (the Retry button disappears)', async () => {
+    mockFetch(serverError, ok([SOFTWARE]));
+    renderView(
+      <main id="main-content">
+        <SoftwareView />
+      </main>
+    );
+
+    const alert = await screen.findByRole('alert');
+    fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
+
+    await screen.findByRole('grid', { name: 'Software administration' });
+    await vi.waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }))
+    );
+  });
+
   it('shows the empty state inside the named grid', async () => {
     mockFetch(ok([]));
     renderView(<SoftwareView />);

@@ -81,6 +81,24 @@ describe('MyRequestsView', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
+  it('moves focus to the h1 after a successful Retry (the Retry button disappears)', async () => {
+    mockFetch(serverError, ok(REQUESTS));
+    renderView(
+      <main id="main-content">
+        <MyRequestsView />
+      </main>
+    );
+
+    const alert = await screen.findByRole('alert');
+    within(alert).getByRole('button', { name: 'Retry' }).focus();
+    fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
+
+    await screen.findByRole('grid', { name: 'Your vetting requests' });
+    await vi.waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }))
+    );
+  });
+
   it('shows the empty state with zero counts', async () => {
     mockFetch(ok([]));
     renderView(<MyRequestsView />);

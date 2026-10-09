@@ -7,8 +7,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { PageHeader } from 'src/components/page-header';
 import { StatCard, StatCardGroup } from 'src/components/stat-card';
+import { PageHeader, focusPageHeading } from 'src/components/page-header';
 import { ErrorState, EmptyState, LoadingState } from 'src/components/feedback';
 
 import { RequestsGrid } from './requests-grid';
@@ -21,6 +21,12 @@ export function MyRequestsView() {
   const { data: requests, isPending, isError, refetch } = useMyRequests();
 
   const counts = requests ? countByGroup(requests) : null;
+
+  // The alert and its Retry button disappear on success, so focus moves to the page heading.
+  const retry = async () => {
+    const result = await refetch();
+    if (!result.isError) focusPageHeading();
+  };
 
   return (
     <DashboardContent maxWidth="xl">
@@ -57,7 +63,7 @@ export function MyRequestsView() {
       {isError && (
         <ErrorState
           onRetry={() => {
-            void refetch();
+            void retry();
           }}
           sx={{ mb: 2 }}
         >
