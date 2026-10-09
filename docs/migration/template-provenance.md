@@ -51,3 +51,6 @@ Removed with `git rm`; the files stay available in the vendor commit `bd436d9`.
 
 Kept but unused until later slices: `src/components/custom-popover/**` (Slice 7) and `src/components/hook-form/**` (Slice 10).
 | Unapproved-package theme and form hooks | `src/theme/core/components/{mui-x-date-picker,mui-x-tree-view,timeline}.tsx`, `src/components/hook-form/rhf-date-picker.tsx`, `src/utils/format-time.ts` | Slice 2 (e) |
+| Demo assets | `src/assets/**` (25 files: countries data, icon and illustration components), `public/assets/**` except `icons/navbar/ic-dashboard.svg` (images, video, backgrounds, illustrations, other icon sets), `public/fonts/Roboto-*.ttf`. 321 files, about 7.7 MB. | Slice 2 (f) |
+
+Kept from `public/`: `favicon.ico`, `logo/*` (4 files, only the two SVGs are referenced), `assets/icons/navbar/ic-dashboard.svg` (the one nav item).
