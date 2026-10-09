@@ -46,6 +46,11 @@ export const eocrThemeOverrides: ThemeOptions = {
         return {
           '*:focus-visible:focus-visible': focusRing,
           // Text fields and selects: ring the whole field, not the inner input.
+          // Links: a 3px band with no gap (offset 0) so it overlaps less of the neighboring words.
+          '.MuiLink-root:focus-visible:focus-visible': {
+            outlineOffset: '0px',
+            borderRadius: '2px',
+          },
           '.MuiInputBase-input:focus-visible:focus-visible': { outline: 'none' },
           '.MuiInputBase-root:has(> .MuiInputBase-input:focus-visible)': focusRing,
           '.MuiInputBase-root:has(> .MuiSelect-select:focus-visible)': focusRing,

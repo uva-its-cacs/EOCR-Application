@@ -71,4 +71,24 @@ describe('component overrides keep the template styles', () => {
     const { before, after } = expectTemplateSurvives('MuiInputLabel', 'root');
     expect(after.variants?.length).toBe((before.variants?.length ?? 0) + 1);
   });
+
+  it('Link is underlined at rest with a full currentColor underline', () => {
+    const link = (
+      ours.components as Record<
+        string,
+        { defaultProps?: Record<string, unknown>; styleOverrides?: Overrides }
+      >
+    ).MuiLink;
+    expect(link.defaultProps?.underline).toBe('always');
+    expect((link.styleOverrides?.root as Rules)['--Link-underlineColor']).toBe('currentColor');
+    // the template's own Link keys are still there
+    expect(Object.keys(slot(ours, 'MuiLink', 'root'))).toEqual(
+      expect.arrayContaining(Object.keys(slot(template, 'MuiLink', 'root')))
+    );
+  });
+
+  it('Breadcrumbs links keep a hover-only underline', () => {
+    const root = slot(ours, 'MuiBreadcrumbs', 'root') as Record<string, Record<string, unknown>>;
+    expect(root['& .MuiLink-underlineAlways'].textDecoration).toBe('none');
+  });
 });

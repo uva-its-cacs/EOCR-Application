@@ -72,4 +72,23 @@ export const eocrComponents: Components<Theme> = {
       })) as never,
     },
   },
+
+  // Inline links are underlined at rest, with the underline at full `currentColor`.
+  // Links in breadcrumbs, navigation and button-like contexts keep a hover-only underline.
+  MuiLink: {
+    defaultProps: { underline: 'always' },
+    styleOverrides: {
+      root: { '--Link-underlineColor': 'currentColor' },
+    },
+  },
+  MuiBreadcrumbs: {
+    styleOverrides: {
+      root: {
+        '& .MuiLink-underlineAlways': {
+          textDecoration: 'none',
+          '&:hover': { textDecoration: 'underline' },
+        },
+      },
+    },
+  },
 };
