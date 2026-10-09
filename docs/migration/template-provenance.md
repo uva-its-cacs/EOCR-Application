@@ -13,17 +13,17 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `client/src/global-config.ts` | `src/global-config.ts` | v7.7.0 | modified | `appName` set to "EOCR". Removed `serverUrl` and the `auth`, `firebase`, `amplify`, `auth0`, `supabase` blocks (including the `skip` flag set in Slice 1) and the `paths` import. |
 | `client/src/routes/paths.ts` | `src/routes/paths.ts` | v7.7.0 | modified | Reduced to `paths.dashboard.root`. Slice 6: `dashboard` replaced by `requests.root` (`/`), `requests.new` (`/requests/new`) and `admin.software` (`/admin/software`). No other use of `paths.dashboard` or `/dashboard` existed in `src/` (checked: `global-config.ts`, the error boundary and the nav files). |
 | `client/src/routes/sections/index.tsx` | `src/routes/sections/index.tsx` | v7.7.0 | modified | Removed auth routes and the 404 page. `/` and `*` both redirect to `/dashboard` (temporary; Slice 9 builds the 404). Slice 6: uses `eocrRoutes` (`routes/sections/eocr.tsx`); `/` is now the My requests page and `*` redirects to `/`. |
-| `client/src/layouts/nav-config-dashboard.tsx` | `src/layouts/nav-config-dashboard.tsx` | v7.7.0 | modified | Reduced to one item ("One", `/dashboard`, icon `ic-dashboard`). Slice 6: the item points at `/` (`paths.requests.root`). |
-| `client/src/layouts/dashboard/layout.tsx` | `src/layouts/dashboard/layout.tsx` | v7.7.0 | modified | Slice 3: `MenuButton` given `aria-label="Open navigation menu"` (jsx-a11y `control-has-associated-label`). Removed header widgets, horizontal nav, mocked user and role checks. Header keeps only the mobile `MenuButton`. Settings context removed: nav color `integrate`, nav layout `vertical`, no mini mode. |
-| `client/src/layouts/dashboard/nav-vertical.tsx` | `src/layouts/dashboard/nav-vertical.tsx` | v7.7.0 | modified | Removed `NavToggleButton`, `onToggleNav`, `NavUpgrade`, and the mini variant (`isNavMini`, `NavSectionMini`). `Scrollbar` replaced by a plain `Box` with `overflowY: auto`. |
-| `client/src/layouts/dashboard/nav-mobile.tsx` | `src/layouts/dashboard/nav-mobile.tsx` | v7.7.0 | modified | Removed `NavUpgrade`. `Scrollbar` replaced by a plain `Box` with `overflowY: auto`. |
+| `client/src/layouts/nav-config-dashboard.tsx` | `src/layouts/nav-config-dashboard.tsx` | v7.7.0 | removed | Removed in Slice 7 (replaced by `src/layouts/eocr/` and `src/components/eocr-nav/`). An upgrade of the template will show this file as deleted by us. |
+| `client/src/layouts/dashboard/layout.tsx` | `src/layouts/dashboard/layout.tsx` | v7.7.0 | removed | Removed in Slice 7 (replaced by `src/layouts/eocr/` and `src/components/eocr-nav/`). An upgrade of the template will show this file as deleted by us. |
+| `client/src/layouts/dashboard/nav-vertical.tsx` | `src/layouts/dashboard/nav-vertical.tsx` | v7.7.0 | removed | Removed in Slice 7 (replaced by `src/layouts/eocr/` and `src/components/eocr-nav/`). An upgrade of the template will show this file as deleted by us. |
+| `client/src/layouts/dashboard/nav-mobile.tsx` | `src/layouts/dashboard/nav-mobile.tsx` | v7.7.0 | removed | Removed in Slice 7 (replaced by `src/layouts/eocr/` and `src/components/eocr-nav/`). An upgrade of the template will show this file as deleted by us. |
 | `client/src/theme/theme-provider.tsx` | `src/theme/theme-provider.tsx` | v7.7.0 | modified | Removed settings context and the `Rtl` wrapper. Keeps `defaultMode` and the mode storage key. |
 | `client/src/theme/create-theme.ts` | `src/theme/create-theme.ts` | v7.7.0 | modified | Removed `settingsState` and `applySettingsTo*`; the theme is `baseTheme` plus overrides. With default settings the result is the same as before (typography already sets the primary font). |
 | `client/src/layouts/dashboard/css-vars.ts` | `src/layouts/dashboard/css-vars.ts` | v7.7.0 | modified | `SettingsState` types replaced by local `NavColor` and `NavLayout` types. |
 | `client/src/layouts/dashboard/content.tsx` | `src/layouts/dashboard/content.tsx` | v7.7.0 | modified | Removed settings context: `compactLayout` fixed at its shipped default (`true`), horizontal-nav padding removed. |
 | `client/src/global.css` | `src/global.css` | v7.7.0 | modified | Barlow restored for headings: only the 700 and 800 weights (used by `h1` to `h3`). Slice 4: removed the Barlow, DM Sans, Inter and Nunito Sans font imports; DM Sans, Inter and Nunito Sans stay removed. Removed the `@import` of the scrollbar styles (the component was removed). The now-empty "Plugins" comment block is left as shipped. |
 | `client/src/components/loading-screen/index.ts` | `src/components/loading-screen/index.ts` | v7.7.0 | modified | Barrel no longer exports `splash-screen`. |
-| `client/src/components/nav-section/index.ts` | `src/components/nav-section/index.ts` | v7.7.0 | modified | Barrel no longer exports `mini` and `horizontal`. `styles/` still contains the mini and horizontal css-vars and class names, unchanged. |
+| `client/src/components/nav-section/index.ts` | `src/components/nav-section/index.ts` | v7.7.0 | modified | Slice 7: exports `./styles` only (the nav tokens our nav and `layouts/dashboard/css-vars.ts` use); `vertical`, `components`, `utils` and `types` were removed. |
 | `client/src/theme/core/components/index.ts` | `src/theme/core/components/index.ts` | v7.7.0 | modified | Removed the `timeline`, `treeView` and `datePicker` imports and spreads. |
 | `client/src/theme/core/components/text-field.tsx` | `src/theme/core/components/text-field.tsx` | v7.7.0 | modified | `PickerTextFieldOwnerState` (from `@mui/x-date-pickers`) replaced by the local type `Partial<InputBaseProps> & { inputSize?: FilledInputProps['size'] }` for `InputSizeProps.ownerState`. The `Pickers*InputVariants` aliases (which referenced `MuiPickers*` theme keys) removed; the `satisfies` clauses use the plain MUI variant types. The `picker` input context and `inputSize` checks are unchanged (now unused). |
 | `client/src/theme/extend-theme-types.d.ts` | `src/theme/extend-theme-types.d.ts` | v7.7.0 | modified | Removed the `@mui/lab`, `@mui/x-tree-view` and `@mui/x-date-pickers` theme augmentation imports. |
@@ -48,6 +48,13 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `client/src/routes/components/require-admin.tsx` | n/a | n/a | ours-only | Slice 6: route guard for admin pages (three views: not signed in, no access, could not check; loading uses the template's `LoadingScreen`, whose progress bar has no accessible name yet: Slice 8 fixes it). |
 | `client/src/routes/sections/eocr.tsx` | n/a | n/a | ours-only | Slice 6: our route table (`/`, `/requests/new`, `/admin/software`) inside the template's `DashboardLayout`, with `handle.crumb`. |
 | `client/src/pages/requests/list.tsx`, `client/src/pages/requests/new.tsx`, `client/src/pages/admin/software.tsx` | n/a | n/a | ours-only | Slice 6: placeholder pages (they render the unchanged template `BlankView`). They have no `h1` until Slice 9. |
+| `client/src/layouts/dashboard/index.ts` | `src/layouts/dashboard/index.ts` | v7.7.0 | modified | Slice 7: no longer exports `./layout` (removed); still exports `./content`. |
+| `client/index.html` | `index.html` | v7.7.0 | modified | Slice 7: inline no-flash color scheme script (the exact output of MUI `InitColorSchemeScript` for our config, guarded by `src/theme/color-scheme-script.test.ts`; a strict CSP needs a nonce or hash for it); favicon link changed to `/favicon.svg`. |
+| `client/public/assets/icons/navbar/ic-file.svg`, `ic-blank.svg`, `ic-course.svg` | `public/assets/icons/navbar/` | v7.7.0 | verbatim | Slice 7: vendored nav icons (commit `vendor: nav icons from Minimal v7.7.0 (unmodified)`). |
+| `client/src/components/eocr-nav/` | n/a | n/a | ours-only | Slice 7: primary nav (`primary-nav.tsx`, `nav-item.tsx`), nav data and pure role filtering and active matching (`nav-data.ts`), `use-nav-groups.ts`, tests. Uses the template's nav tokens from `nav-section/styles`. |
+| `client/src/layouts/eocr/` | n/a | n/a | ours-only | Slice 7: the shell (`layout.tsx` composed from `layouts/core`), `skip-link.tsx`, `nav-sidebar.tsx`, `nav-drawer.tsx`, `wordmark.tsx`, `color-mode-toggle.tsx`, `account-menu.tsx`, `use-route-focus.ts` and `route-focus.ts` (with tests). |
+| `client/src/theme/color-scheme-script.test.ts` | n/a | n/a | ours-only | Slice 7: guards the inline script in `index.html` against MUI's `InitColorSchemeScript`. |
+| `client/public/favicon.svg` | n/a | n/a | ours-only | Slice 7: placeholder favicon (the letter E). Real branding is still needed. |
 | `client/yarn.lock` | `yarn.lock` | v7.7.0 | deleted | npm is the package manager. `package-lock.json` is unchanged (`npm ci` succeeded). |
 | `client/.env.example` | n/a | n/a | ours-only | Only `VITE_ASSETS_DIR` (the one variable still read, by `global-config.ts`), empty. |
 | `client/.gitattributes` | n/a | n/a | ours-only | Line-ending rules, committed before the vendor commit. |
@@ -67,6 +74,9 @@ Kept but unused until later slices: `src/components/custom-popover/**` (Slice 7)
 | Unapproved-package theme and form hooks | `src/theme/core/components/{mui-x-date-picker,mui-x-tree-view,timeline}.tsx`, `src/components/hook-form/rhf-date-picker.tsx`, `src/utils/format-time.ts` | Slice 2 (e) |
 | Demo assets | `src/assets/**` (25 files: countries data, icon and illustration components), `public/assets/**` except `icons/navbar/ic-dashboard.svg` (images, video, backgrounds, illustrations, other icon sets), `public/fonts/Roboto-*.ttf`. 321 files, about 7.7 MB. | Slice 2 (f) |
 | Dashboard demo routes and page | `src/routes/sections/dashboard.tsx`, `src/pages/dashboard/one.tsx` | Slice 6 (replaced by `routes/sections/eocr.tsx` and the three placeholder pages; `src/sections/blank/view.tsx` stays and is reused unchanged) |
+| Template dashboard layout and nav | `src/layouts/dashboard/{layout,nav-vertical,nav-mobile}.tsx`, `src/layouts/nav-config-dashboard.tsx`, `src/components/nav-section/{vertical,components,utils}/**`, `src/components/nav-section/types.ts`, `public/assets/icons/navbar/ic-dashboard.svg` | Slice 7 (replaced by our own files). An upgrade of the template will show these as deleted by us. |
+| Custom popover | `src/components/custom-popover/**` | Slice 7 (the account menu uses MUI `Popover`). Deleted by us on upgrade. |
+| Minimal logo and favicon | `src/components/logo/**`, `public/logo/*`, `public/favicon.ico` | Slice 7 (replaced by the "EOCR Application" wordmark and a placeholder favicon; real branding needed). Deleted by us on upgrade. |
 
 Kept from `public/`: `favicon.ico`, `logo/*` (4 files, only the two SVGs are referenced), `assets/icons/navbar/ic-dashboard.svg` (the one nav item).
 
@@ -76,10 +86,7 @@ File-scoped exceptions for template files that violate the rules we enabled (Sli
 
 | Files | Rule turned off | Removed in |
 | --- | --- | --- |
-| `src/components/custom-popover/custom-popover.tsx` | `react-hooks/refs` | Slice 7 |
-| `src/components/custom-popover/hooks.ts` | `react-hooks/set-state-in-effect` | Slice 7 |
 | `src/components/hook-form/form-provider.tsx`, `src/components/hook-form/rhf-autocomplete.tsx` | `@typescript-eslint/no-explicit-any` | Slice 10 |
-| `src/components/nav-section/utils/create-nav-item.ts` | `@typescript-eslint/no-explicit-any` | Slice 7 |
 | `src/routes/components/error-boundary.tsx` | `@typescript-eslint/no-explicit-any` | Slice 9 |
 
 The `control-has-associated-label` override for the Slice 7 files was removed in Slice 4 (it suppressed nothing).
@@ -102,3 +109,7 @@ Read with `git show mui-template:client/src/<path>`. They are ours, so they are 
 | `src/routes/route-handle.ts` | `routes/route-handle.ts` | `useMatches` imported from `react-router` (not `react-router-dom`). |
 
 Not ported: `use-software-editor.ts` (Slice 10) and every UI component, page, layout and theme file.
+
+Slice 7 removed the overrides for `custom-popover/custom-popover.tsx`, `custom-popover/hooks.ts` and `nav-section/utils/create-nav-item.ts` (the files are gone). The `hook-form` and `error-boundary` overrides stay.
+
+Note (Slice 6, unchanged): the template `LoadingScreen` progress bar has no accessible name yet; Slice 8 fixes it.

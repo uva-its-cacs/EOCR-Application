@@ -267,16 +267,6 @@ const eocrRules = {
  */
 const eocrOverrides = [
   {
-    // Remove in Slice 7 (custom-popover is rewritten).
-    files: ['src/components/custom-popover/custom-popover.tsx'],
-    rules: { 'react-hooks/refs': 0 },
-  },
-  {
-    // Remove in Slice 7 (custom-popover is rewritten).
-    files: ['src/components/custom-popover/hooks.ts'],
-    rules: { 'react-hooks/set-state-in-effect': 0 },
-  },
-  {
     // Remove in Slice 10 (hook-form wrappers are rewritten).
     files: ['src/components/hook-form/form-provider.tsx'],
     rules: { '@typescript-eslint/no-explicit-any': 0 },
@@ -284,11 +274,6 @@ const eocrOverrides = [
   {
     // Remove in Slice 10 (hook-form wrappers are rewritten).
     files: ['src/components/hook-form/rhf-autocomplete.tsx'],
-    rules: { '@typescript-eslint/no-explicit-any': 0 },
-  },
-  {
-    // Remove in Slice 7 (nav-section is rewritten).
-    files: ['src/components/nav-section/utils/create-nav-item.ts'],
     rules: { '@typescript-eslint/no-explicit-any': 0 },
   },
   {

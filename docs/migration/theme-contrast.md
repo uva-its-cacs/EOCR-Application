@@ -82,6 +82,22 @@ Rules:
 - **Placeholders** are never the only instruction: visible labels stay required.
 - **Disabled controls** are exempt from contrast (WCAG 1.4.3) and are not guarded.
 
+## Slice 7 nav pairs
+
+The primary nav (`src/components/eocr-nav`) uses the template's vertical nav tokens on `background.default`. Asserted in `theme-contrast.test.ts`:
+
+| Pair | Light | Dark |
+| --- | --- | --- |
+| Item text (`text.secondary`) at rest | 8.33 | 10.87 |
+| Item text on hover (`action.hover` tint) | 7.78 | 9.65 |
+| Active item text on its 8% primary tint (light `primary.main`, dark `primary.light`) | 4.84 | 9.77 |
+| Active item on hover, 16% tint (light `primary.dark`, was `primary.main` at 4.31; dark `primary.light`) | 7.88 | 8.60 |
+| Group label and caption (`text.secondary`, was `text.disabled` at 2.73 / 3.58) | 8.33 | 10.87 |
+
+The active state is also shown by a semibold title (not color alone). Measured in the browser (Slice 7 evidence): nav icon 8.33 / 10.87 (UI 3:1); focus ring 3px, inset 3px on nav items (offset -3px, so the scroll container never clips it): 4.84 on the active tint and 5.41 / 6.09 on the nav background; header buttons and the skip link 5.41 / 6.09. The dark mode toggle's pressed fill (`text.primary`) against the header: 17.51 in the dark scheme (the only scheme in which it is pressed); its light-scheme equivalent would be 15.52.
+
+Later (not built yet): a group that needs to collapse would use the disclosure pattern (a real `<button aria-expanded aria-controls>` controlling the list), not the template's click-to-collapse subheader.
+
 ## Asserted pairs
 
 Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted in that scheme (the `dark` step as text is only used as text in the light scheme).
@@ -295,11 +311,10 @@ Method: a throwaway page rendered every in-scope component in rest, forced hover
 
 ## Known failures (not asserted)
 
-In-scope components have no known failures left. These remain, all for components we do not use yet; fix them in the slice that first uses the component.
+In-scope components have no known failures left. The nav caption and subheader failure is fixed in Slice 7 (our nav sets them to `text.secondary`). These remain, all for components we do not use yet; fix them in the slice that first uses the component.
 
 | Item | Where it comes from | Measured | Fixing slice |
 | --- | --- | --- | --- |
-| Nav caption and subheader | `text.disabled` in `components/nav-section/styles/css-vars.ts` | 2.52 light, 2.66 dark (needs 4.5) | Slice 7 |
 | Switch track | grey 500 at 48% (`switch.tsx`) | 1.50 light, 2.22 dark (needs 3) | first slice that uses a Switch |
 | Slider rail | primary at 38% (`slider.tsx`) | 1.73 light, 1.78 dark (needs 3) | first slice that uses a Slider |
 | Slider mark labels | `text.disabled` (`slider.tsx`) | as above | first slice that uses a Slider |
