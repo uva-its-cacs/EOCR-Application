@@ -100,30 +100,32 @@ Rules:
 
 ## Client architecture
 
-The client is migrating onto the Minimal UI template's conventions. Until a slice moves a folder, existing paths stay where they are. Target structure:
+`client/` is the **Minimal UI `starter-vite-ts` v7.7.0**, vendored unmodified in its own `vendor:` commit and adapted in later commits. Today `client/src` has the starter's structure, shown below. Items marked **(strip)** are removed in the strip slice and must not be used or extended before then. Our own domain code will go in `sections/` and `pages/` as described under Rules.
 
 ```
 client/src/
-  main.tsx            # entry: createBrowserRouter + RouterProvider
-  app.tsx             # providers (QueryClientProvider, ThemeProvider) and global styles
-  global-config.ts    # CONFIG: app name and app-wide constants
+  main.tsx            # entry
+  app.tsx             # app root: theme provider, global styles
+  global-config.ts    # CONFIG: app name, server URL, auth settings (auth settings: strip)
   global.css
-  routes/             # paths.ts, route sections (lazy pages), route hooks, RouterLink, ErrorBoundary
-  pages/              # thin route-level components; each composes one section view
-  sections/           # one folder per domain (requests/, software/, ...)
-    <domain>/
-      api.ts          # fetch functions for this domain
-      types.ts
-      use-*.ts        # TanStack Query hooks
-      components/
-      view/           # *-view.tsx composed by pages
-  components/         # shared reusable UI (label, hook-form fields, dialogs, table helpers, iconify, ...)
-  layouts/            # template layout core, dashboard layout, nav config
-  theme/              # template theme pipeline with fixed configuration
-  hooks/
-  utils/
-  lib/                # api.ts (apiFetch wrapper), queryClient.ts
+  vite-env.d.ts
+  _mock/              # (strip) mock data for the template demo
+  assets/             # (strip) demo data, icons, illustrations (keep only what we use)
+  auth/               # (strip) template JWT/Firebase/Auth0/Amplify/Supabase auth: context, guard, hooks, views
+  components/         # template shared UI: animate, custom-popover, file-thumbnail, flag-icon,
+                      #   hook-form, iconify, label, loading-screen, logo, nav-section, progress-bar,
+                      #   scrollbar, search-not-found, settings (settings drawer: strip)
+  layouts/            # auth-split (strip), simple, core, dashboard, components (header widgets: strip),
+                      #   nav-config-*.tsx
+  lib/                # axios.ts (strip; replaced by an apiFetch wrapper)
+  pages/              # auth/ and dashboard/ demo pages (strip), error/
+  routes/             # paths.ts, route sections, hooks, components
+  sections/           # blank, error (our domain folders are added here)
+  theme/              # template theme pipeline (core, with-settings, theme-config.ts, overrides)
+  utils/              # format-time.ts
 ```
+
+Packages the starter ships that are not approved (see "UI") are removed in the strip slice, and our code must not import them before then.
 
 Rules:
 
@@ -140,11 +142,13 @@ Rules:
 ### UI (Material UI and Minimal UI)
 
 - UI is **Material UI** (`@mui/material`, v9) with the **MUI X Data Grid community** package (`@mui/x-data-grid`). Styling is Emotion, through the theme in `src/theme/` and the `sx` prop.
-- The foundation is **Minimal UI** (a purchased, commercially licensed template; the TypeScript Vite starter is the base and its full `vite-ts` demo is a reference for patterns). Its theme pipeline, layout core, dashboard layout, navigation, and shared components are the basis for this app. Port only what a slice names. The template source lives **outside this repository**.
+- The foundation is **Minimal UI** (a purchased, commercially licensed template; the TypeScript Vite starter is the base and its full `vite-ts` demo is a reference for patterns). Its theme pipeline, layout core, dashboard layout, navigation, and shared components are the basis for this app. Port only what a slice names. The full demo source lives **outside this repository**; only the starter is vendored.
 - Template licensing rules:
   - The repository must stay private.
-  - Never commit the template itself, its demo pages, its `_mock` data, its auth views, or modules we do not use.
-  - Keep an accurate license and attribution note in `THIRD_PARTY_NOTICES.md`. Minimal UI is commercially licensed, not open source. Any remaining MIT-licensed MUI Dashboard template code keeps its MIT attribution until it is removed.
+  - The starter is committed as a vendor baseline (the `vendor:` commit). The full `vite-ts` demo stays **outside the repository**. Individual files from it are ported as their own `vendor:` commits (unmodified first, then adapted in separate commits).
+  - Demo pages, `_mock` data, and auth views are removed in the strip slice and never used.
+  - Put our changes in our own override files where possible instead of editing template files in place. Keep `docs/migration/template-provenance.md` up to date with every template file we modify.
+  - Keep an accurate license and attribution note in `THIRD_PARTY_NOTICES.md`. Minimal UI is commercially licensed, not open source.
 - Do not use Tailwind, shadcn/ui, or any other UI library. Do not use MUI X Pro or Premium packages (they require a paid license). Theme augmentation imports come from the community packages only (for example `@mui/x-data-grid/themeAugmentation`), never from `-pro` or `-premium`.
 - **Approved for the template foundation** (a slice still decides when each is added): `minimal-shared`, `@iconify/react`, `react-hook-form`, `@hookform/resolvers`, `zod` (v4), `es-toolkit`, and the single self-hosted font package named below.
 - **Not approved** (do not add, and remove from any ported file): the settings drawer and user-facing theme controls, RTL support (`@emotion/cache`, `@mui/stylis-plugin-rtl`, `stylis`), `axios`, `nprogress`, `simplebar-react` (use native scrolling), `@mui/lab`, `@mui/x-date-pickers`, `@mui/x-tree-view`, `@mui/x-charts`, `dayjs`, additional font packages, and `framer-motion`. If a slice needs `framer-motion` for a ported component, the slice must say so, wrap the app in `<MotionConfig reducedMotion="user">`, and avoid infinite or looping animation. Template files that depend on a package that is not approved (for example the date-picker form field) are not ported. A chart may never be the only way to see information: provide a table or text equivalent.
@@ -203,7 +207,7 @@ Status changes happen only through the repo layer, never by writing the column d
 - Do not remove or rename `/api/health` or `/api/me`, or change the `/api` prefix.
 - Do not introduce enums, records for DTOs, or `sealed` classes.
 - Do not reintroduce Tailwind or shadcn/ui.
-- Do not commit the Minimal UI template itself, its demo pages, its `_mock` data, its auth scaffolding, or template modules that no slice has named. Do not copy template files into the repo wholesale.
+- Do not copy template files into the repo wholesale beyond the vendored starter, and do not port demo pages, `_mock` data, auth views, or template modules that no slice has named. Do not import packages the starter ships that are not approved.
 - Do not add a settings drawer, user-facing theme controls, or right-to-left support.
 - Do not load fonts, icons, or scripts from external hosts, and do not use Iconify icon names that are not in the registered offline set.
 - Do not use a template color, variant, or component state that fails the contrast rules above, even if it is the template's default.
