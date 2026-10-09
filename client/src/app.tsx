@@ -1,9 +1,11 @@
 import 'src/global.css';
 
 import { useEffect } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { usePathname } from 'src/routes/hooks';
 
+import { queryClient } from 'src/lib/query-client';
 import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
@@ -22,7 +24,7 @@ export default function App({ children }: AppProps) {
       defaultMode={themeConfig.defaultMode}
       themeOverrides={eocrThemeOverrides}
     >
-      {children}
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </ThemeProvider>
   );
 }
