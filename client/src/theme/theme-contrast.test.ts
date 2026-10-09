@@ -73,6 +73,15 @@ const GRID = GRID_SURFACES.map((s) => ({
   min: TEXT,
 }));
 
+// Default (grey) soft Label, as StatusChip renders it: text.primary on grey 500 at the soft opacity.
+const DEFAULT_SOFT = SURFACES.map((s) => ({
+  name: `soft default: text.primary on grey.500 at soft.bg over ${s}`,
+  schemes: BOTH,
+  fg: 'text.primary',
+  bg: { top: 'grey.500', on: s, opacity: 'soft.bg' as OpacityKey },
+  min: TEXT,
+}));
+
 // Avatar letters (`text.secondary`) on the default avatar fill (grey 300 light, grey 700 dark).
 const AVATAR: Pair[] = [
   {
@@ -221,6 +230,7 @@ export const PAIRS: Pair[] = [
     }))
   ),
   ...SOFT,
+  ...DEFAULT_SOFT,
   ...NAV,
   ...HOVER,
   ...GRID,
