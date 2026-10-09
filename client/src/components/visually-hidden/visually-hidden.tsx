@@ -1,10 +1,20 @@
 import Box from '@mui/material/Box';
 
+// ----------------------------------------------------------------------
+
+type Props = {
+  children: React.ReactNode;
+  // The element to render (default span), for example 'h2' for a hidden heading.
+  component?: React.ElementType;
+  id?: string;
+};
+
 // Visually hidden but announced by screen readers
-export function VisuallyHidden({ children }: { children: React.ReactNode }) {
+export function VisuallyHidden({ children, component = 'span', id }: Props) {
   return (
     <Box
-      component="span"
+      component={component}
+      id={id}
       sx={{
         position: 'absolute',
         width: '1px',
