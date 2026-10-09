@@ -6,7 +6,7 @@ import { lazy, Suspense } from 'react';
 
 import { EocrLayout } from 'src/layouts/eocr';
 
-import { LoadingScreen } from 'src/components/loading-screen';
+import { PageLoading } from 'src/components/page-loading';
 
 import { paths } from '../paths';
 import { usePathname } from '../hooks';
@@ -23,7 +23,7 @@ const SoftwarePage = lazy(() => import('src/pages/admin/software'));
 function SuspenseOutlet() {
   const pathname = usePathname();
   return (
-    <Suspense key={pathname} fallback={<LoadingScreen />}>
+    <Suspense key={pathname} fallback={<PageLoading />}>
       <Outlet />
     </Suspense>
   );

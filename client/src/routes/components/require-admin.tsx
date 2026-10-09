@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { LoadingScreen } from 'src/components/loading-screen';
+import { PageLoading } from 'src/components/page-loading';
 
 import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
@@ -24,7 +24,7 @@ import { RouterLink } from './router-link';
 export function RequireAdmin() {
   const current = useCurrentUser();
 
-  if (current.status === 'loading') return <LoadingScreen />;
+  if (current.status === 'loading') return <PageLoading />;
 
   if (current.status === 'unauthenticated') {
     return (
