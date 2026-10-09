@@ -18,19 +18,21 @@ export const NAV_ITEM_CLASS = 'eocr-nav__item';
 type Props = {
   item: NavItemData;
   active: boolean;
+  onClick?: () => void;
 };
 
 /**
  * One nav link. The visible title is its accessible name (no aria-label), the icon is decorative, and the
  * active link carries aria-current="page". Styling uses the template's nav tokens (--nav-* CSS variables).
  */
-export function NavItem({ item, active }: Props) {
+export function NavItem({ item, active, onClick }: Props) {
   return (
     <ButtonBase
       component={RouterLink}
       href={item.path}
       className={NAV_ITEM_CLASS}
       aria-current={active ? 'page' : undefined}
+      onClick={onClick}
       sx={itemRootSx}
     >
       <ItemIcon aria-hidden>

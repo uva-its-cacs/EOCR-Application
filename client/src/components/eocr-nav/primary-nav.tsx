@@ -17,6 +17,8 @@ import { isActivePath } from './nav-data';
 
 type Props = {
   groups: NavGroupData[];
+  // Called when a nav link is activated (the drawer uses it to hand focus to the new page).
+  onItemClick?: (path: string) => void;
   sx?: SxProps<Theme>;
 };
 
@@ -26,7 +28,7 @@ type Props = {
  * Uses the template's vertical nav tokens; caption and subheader text use text.secondary instead of the
  * template's text.disabled, which fails contrast.
  */
-export function PrimaryNav({ groups, sx }: Props) {
+export function PrimaryNav({ groups, onItemClick, sx }: Props) {
   const theme = useTheme();
   const pathname = usePathname();
   const idPrefix = useId();
@@ -76,7 +78,11 @@ export function PrimaryNav({ groups, sx }: Props) {
             >
               {group.items.map((item) => (
                 <li key={item.path}>
-                  <NavItem item={item} active={isActivePath(pathname, item.path)} />
+                  <NavItem
+                    item={item}
+                    active={isActivePath(pathname, item.path)}
+                    onClick={onItemClick ? () => onItemClick(item.path) : undefined}
+                  />
                 </li>
               ))}
             </Box>
