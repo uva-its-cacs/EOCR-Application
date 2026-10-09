@@ -6,15 +6,14 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | --- | --- | --- | --- | --- |
 | `client/` (whole starter) | `starter-vite-ts/` | v7.7.0 | verbatim | Vendored in commit `vendor: Minimal starter-vite-ts v7.7.0 (unmodified)`. SHA-256 compared with the source: 673 files identical (excluding `node_modules`, `.env`, `.gitattributes`). `.vscode/settings.json` is not tracked because the starter's `.gitignore` ignores `.vscode`. |
 | `client/vite.config.ts` | `vite.config.ts` | v7.7.0 | modified | Port 8081 changed to 5173 (server and preview); added `/api` proxy to `http://localhost:5246`. `host: true` removed from server and preview so the dev server listens on localhost only (Slice 3). |
-| `client/package.json` | `package.json` | v7.7.0 | modified | `@fontsource/barlow` (`^5.2.8`) added back. Slice 4: removed `@fontsource-variable/dm-sans`, `@fontsource-variable/inter`, `@fontsource-variable/nunito-sans`, `@fontsource/barlow`; added `vitest` (5.0.3) and the `test` script. Slice 3: added `eslint-plugin-jsx-a11y` (devDependency), `lint` script now `eslint --max-warnings 0 ...`, `react-router` floor `^7.18.4`, `vite` floor `^8.0.16`. Removed `packageManager` and the `clean`, `re:dev`, `re:build`, `re:build-npm` scripts (yarn and `rm -rf`). |
+| `client/package.json` | `package.json` | v7.7.0 | modified | `@fontsource/barlow` (`^5.2.8`) added back. Slice 4: removed `@fontsource-variable/dm-sans`, `@fontsource-variable/inter`, `@fontsource-variable/nunito-sans`, `@fontsource/barlow`; added `vitest` (5.0.3) and the `test` script. Slice 3: added `eslint-plugin-jsx-a11y` (devDependency), `lint` script now `eslint --max-warnings 0 ...`, `react-router` floor `^7.18.4`, `vite` floor `^8.0.16`. Removed `packageManager` and the `clean`, `re:dev`, `re:build`, `re:build-npm` scripts (yarn and `rm -rf`). Slice 6: added `@tanstack/react-query` (`^5.104.1`). |
 | `client/.gitignore` | `.gitignore` | v7.7.0 | modified | Added `!.env.example` after `.env*`. |
 | `client/src/global-config.ts` | `src/global-config.ts` | v7.7.0 | modified | `auth.skip` changed from `false` to `true` to bypass the auth guard until the strip slice. |
-| `client/src/app.tsx` | `src/app.tsx` | v7.7.0 | modified | Removed `AuthProvider`, `SettingsProvider`, `SettingsDrawer`, `MotionLazy` and `ProgressBar`. Slice 4: passes `themeOverrides={eocrThemeOverrides}` to `ThemeProvider` (the one wiring edit for our theme). |
+| `client/src/app.tsx` | `src/app.tsx` | v7.7.0 | modified | Removed `AuthProvider`, `SettingsProvider`, `SettingsDrawer`, `MotionLazy` and `ProgressBar`. Slice 4: passes `themeOverrides={eocrThemeOverrides}` to `ThemeProvider` (the one wiring edit for our theme). Slice 6: `children` wrapped in `QueryClientProvider` (`src/lib/query-client.ts`). |
 | `client/src/global-config.ts` | `src/global-config.ts` | v7.7.0 | modified | `appName` set to "EOCR". Removed `serverUrl` and the `auth`, `firebase`, `amplify`, `auth0`, `supabase` blocks (including the `skip` flag set in Slice 1) and the `paths` import. |
-| `client/src/routes/paths.ts` | `src/routes/paths.ts` | v7.7.0 | modified | Reduced to `paths.dashboard.root`. |
-| `client/src/routes/sections/index.tsx` | `src/routes/sections/index.tsx` | v7.7.0 | modified | Removed auth routes and the 404 page. `/` and `*` both redirect to `/dashboard` (temporary; Slice 9 builds the 404). |
-| `client/src/routes/sections/dashboard.tsx` | `src/routes/sections/dashboard.tsx` | v7.7.0 | modified | Removed `AuthGuard`, the `CONFIG.auth.skip` branch and pages two to six. |
-| `client/src/layouts/nav-config-dashboard.tsx` | `src/layouts/nav-config-dashboard.tsx` | v7.7.0 | modified | Reduced to one item ("One", `/dashboard`, icon `ic-dashboard`). |
+| `client/src/routes/paths.ts` | `src/routes/paths.ts` | v7.7.0 | modified | Reduced to `paths.dashboard.root`. Slice 6: `dashboard` replaced by `requests.root` (`/`), `requests.new` (`/requests/new`) and `admin.software` (`/admin/software`). No other use of `paths.dashboard` or `/dashboard` existed in `src/` (checked: `global-config.ts`, the error boundary and the nav files). |
+| `client/src/routes/sections/index.tsx` | `src/routes/sections/index.tsx` | v7.7.0 | modified | Removed auth routes and the 404 page. `/` and `*` both redirect to `/dashboard` (temporary; Slice 9 builds the 404). Slice 6: uses `eocrRoutes` (`routes/sections/eocr.tsx`); `/` is now the My requests page and `*` redirects to `/`. |
+| `client/src/layouts/nav-config-dashboard.tsx` | `src/layouts/nav-config-dashboard.tsx` | v7.7.0 | modified | Reduced to one item ("One", `/dashboard`, icon `ic-dashboard`). Slice 6: the item points at `/` (`paths.requests.root`). |
 | `client/src/layouts/dashboard/layout.tsx` | `src/layouts/dashboard/layout.tsx` | v7.7.0 | modified | Slice 3: `MenuButton` given `aria-label="Open navigation menu"` (jsx-a11y `control-has-associated-label`). Removed header widgets, horizontal nav, mocked user and role checks. Header keeps only the mobile `MenuButton`. Settings context removed: nav color `integrate`, nav layout `vertical`, no mini mode. |
 | `client/src/layouts/dashboard/nav-vertical.tsx` | `src/layouts/dashboard/nav-vertical.tsx` | v7.7.0 | modified | Removed `NavToggleButton`, `onToggleNav`, `NavUpgrade`, and the mini variant (`isNavMini`, `NavSectionMini`). `Scrollbar` replaced by a plain `Box` with `overflowY: auto`. |
 | `client/src/layouts/dashboard/nav-mobile.tsx` | `src/layouts/dashboard/nav-mobile.tsx` | v7.7.0 | modified | Removed `NavUpgrade`. `Scrollbar` replaced by a plain `Box` with `overflowY: auto`. |
@@ -33,7 +32,7 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `client/src/components/hook-form/fields.tsx` | `src/components/hook-form/fields.tsx` | v7.7.0 | modified | Removed `DatePicker`, `TimePicker` and `DateTimePicker` from `Field`. |
 | `client/src/components/hook-form/schema-utils.ts` | `src/components/hook-form/schema-utils.ts` | v7.7.0 | modified | Removed `schemaUtils.date` and the `dayjs` import. |
 | `client/package.json` | `package.json` | v7.7.0 | modified | Identity: `name` is `eocr-client`, `author` and `description` updated. Also removed the dependencies `axios`, `nprogress`, `simplebar-react`, `framer-motion`, `@mui/lab`, `@mui/x-date-pickers`, `@mui/x-tree-view`, `dayjs`, `autosuggest-highlight`, `@emotion/cache`, `@mui/stylis-plugin-rtl`, `stylis` and the types for `nprogress`, `autosuggest-highlight`, `stylis`. |
-| `client/package-lock.json` | `package-lock.json` | v7.7.0 | modified | Updated by `npm uninstall` for the removed packages; package `name` changed to `eocr-client`. Slice 4: updated for the font removals and `vitest`. Slice 3: updated for `eslint-plugin-jsx-a11y`, `react-router` 7.18.4, and in-range security updates to dev tooling (vite 8.0.16 and others); `npm audit` reports 0. |
+| `client/package-lock.json` | `package-lock.json` | v7.7.0 | modified | Updated by `npm uninstall` for the removed packages; package `name` changed to `eocr-client`. Slice 4: updated for the font removals and `vitest`. Slice 3: updated for `eslint-plugin-jsx-a11y`, `react-router` 7.18.4, and in-range security updates to dev tooling (vite 8.0.16 and others); `npm audit` reports 0. Slice 6: `@tanstack/react-query`. |
 | `client/index.html` | `index.html` | v7.7.0 | modified | Title set to "EOCR". |
 | `client/eslint.config.mjs` | `eslint.config.mjs` | v7.7.0 | modified | Slice 4: removed the `control-has-associated-label` file override (it suppressed nothing, and the rule now applies to the Slice 7 files). Slice 3: appended our own blocks at the end (template blocks unchanged, including `react/jsx-key: 0`): jsx-a11y recommended rules as errors with a component mapping (`Button`, `IconButton`, `MenuButton` to `button`; `Link`, `RouterLink` to `a`) and `control-has-associated-label`; `react/jsx-key`, `no-explicit-any` and the react-hooks compiler rules as errors; file-scoped overrides (see below). Added the `eslint-plugin-jsx-a11y` import. |
 | `client/prettier.config.mjs` | `prettier.config.mjs` | v7.7.0 | modified | Slice 3: added an `overrides` entry with `singleAttributePerLine: true` for `src/sections/**` and `src/pages/**`, excluding the vendored `src/pages/dashboard/one.tsx` and `src/sections/blank/view.tsx`. Template options unchanged. |
@@ -45,6 +44,10 @@ Where files in `client/` come from. Template: Minimal UI `starter-vite-ts`, vers
 | `docs/migration/theme-contrast.md` | n/a | n/a | ours-only | Slice 4: ratio table, token sources, known failures. |
 | `client/src/theme/eocr-components.ts` | n/a | n/a | ours-only | Slice 5: component overrides composed with the template's (`extend()`): field placeholder and label colors, Link, Breadcrumbs, Button, Chip, Avatar, and the `softStyles` mixin override. No template file is edited. |
 | `client/src/theme/theme-composition.test.ts` | n/a | n/a | ours-only | Slice 5: proves the template's styles survive composition, and guards each fix and the focus-ring rules. |
+| `client/src/routes/components/index.ts` | `src/routes/components/index.ts` | v7.7.0 | modified | Slice 6: the barrel also exports `require-admin`. |
+| `client/src/routes/components/require-admin.tsx` | n/a | n/a | ours-only | Slice 6: route guard for admin pages (three views: not signed in, no access, could not check; loading uses the template's `LoadingScreen`, whose progress bar has no accessible name yet: Slice 8 fixes it). |
+| `client/src/routes/sections/eocr.tsx` | n/a | n/a | ours-only | Slice 6: our route table (`/`, `/requests/new`, `/admin/software`) inside the template's `DashboardLayout`, with `handle.crumb`. |
+| `client/src/pages/requests/list.tsx`, `client/src/pages/requests/new.tsx`, `client/src/pages/admin/software.tsx` | n/a | n/a | ours-only | Slice 6: placeholder pages (they render the unchanged template `BlankView`). They have no `h1` until Slice 9. |
 | `client/yarn.lock` | `yarn.lock` | v7.7.0 | deleted | npm is the package manager. `package-lock.json` is unchanged (`npm ci` succeeded). |
 | `client/.env.example` | n/a | n/a | ours-only | Only `VITE_ASSETS_DIR` (the one variable still read, by `global-config.ts`), empty. |
 | `client/.gitattributes` | n/a | n/a | ours-only | Line-ending rules, committed before the vendor commit. |
@@ -63,6 +66,7 @@ Removed with `git rm`; the files stay available in the vendor commit `bd436d9`.
 Kept but unused until later slices: `src/components/custom-popover/**` (Slice 7) and `src/components/hook-form/**` (Slice 10).
 | Unapproved-package theme and form hooks | `src/theme/core/components/{mui-x-date-picker,mui-x-tree-view,timeline}.tsx`, `src/components/hook-form/rhf-date-picker.tsx`, `src/utils/format-time.ts` | Slice 2 (e) |
 | Demo assets | `src/assets/**` (25 files: countries data, icon and illustration components), `public/assets/**` except `icons/navbar/ic-dashboard.svg` (images, video, backgrounds, illustrations, other icon sets), `public/fonts/Roboto-*.ttf`. 321 files, about 7.7 MB. | Slice 2 (f) |
+| Dashboard demo routes and page | `src/routes/sections/dashboard.tsx`, `src/pages/dashboard/one.tsx` | Slice 6 (replaced by `routes/sections/eocr.tsx` and the three placeholder pages; `src/sections/blank/view.tsx` stays and is reused unchanged) |
 
 Kept from `public/`: `favicon.ico`, `logo/*` (4 files, only the two SVGs are referenced), `assets/icons/navbar/ic-dashboard.svg` (the one nav item).
 
@@ -79,3 +83,22 @@ File-scoped exceptions for template files that violate the rules we enabled (Sli
 | `src/routes/components/error-boundary.tsx` | `@typescript-eslint/no-explicit-any` | Slice 9 |
 
 The `control-has-associated-label` override for the Slice 7 files was removed in Slice 4 (it suppressed nothing).
+
+## Ported from mui-template (our own code, not template code)
+
+Read with `git show mui-template:client/src/<path>`. They are ours, so they are not `vendor:` commits. Adapted to the current structure (kebab-case, `src/` imports, template ESLint and Prettier rules).
+
+| Our path | Source path | Changes |
+| --- | --- | --- |
+| `src/lib/api.ts` | `lib/api.ts` | Rewritten: `ApiError` (status and ProblemDetails), 204 handling, network failure as status 0, abort rethrown as is. |
+| `src/lib/query-client.ts` | `lib/query-client.ts` | As is. |
+| `src/sections/auth/types.ts` | `sections/auth/types.ts` | `MeDto` corrected to the server (`userId`, was `id`); added `ADMIN_ROLE_CODE`. |
+| `src/sections/auth/use-current-user.ts` | `sections/auth/use-current-user.ts` | Typed result (`loading`, `authenticated`, `unauthenticated`, `error`), `refetch`, no retries, 10 minute `staleTime`. |
+| `src/sections/requests/api.ts`, `types.ts` | `sections/requests/api.ts`, `types.ts` | As is. |
+| `src/sections/requests/status-groups.ts` | `sections/requests/status-groups.ts` | Added `getStatusGroup` and `UNKNOWN_STATUS_GROUP`; existing exports unchanged. |
+| `src/sections/software/api.ts`, `use-software.ts` | `sections/software/api.ts`, `use-software.ts` | As is. |
+| `src/sections/software/types.ts` | `sections/software/types.ts` | `SoftwareDraft` and `SoftwareFieldErrors` left out (only the editor, rewritten in Slice 10, uses them). |
+| `src/utils/format.ts` | `utils/format.ts` | As is. |
+| `src/routes/route-handle.ts` | `routes/route-handle.ts` | `useMatches` imported from `react-router` (not `react-router-dom`). |
+
+Not ported: `use-software-editor.ts` (Slice 10) and every UI component, page, layout and theme file.
