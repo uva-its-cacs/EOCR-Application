@@ -74,7 +74,11 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
       <LayoutSection
         headerSection={header}
         sidebarSection={<NavSidebar groups={navGroups} layoutQuery={layoutQuery} />}
-        cssVars={{ ...dashboardLayoutVars(theme), ...navVars.layout }}
+        cssVars={{
+          ...dashboardLayoutVars(theme),
+          ...navVars.layout,
+          '--layout-nav-bg': theme.vars.palette.grey[900],
+        }}
         sx={{
           [`& .${layoutClasses.sidebarContainer}`]: {
             [theme.breakpoints.up(layoutQuery)]: { pl: 'var(--layout-nav-vertical-width)' },

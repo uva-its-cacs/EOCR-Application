@@ -61,7 +61,7 @@ export function NavDrawer({ id, open, onClose, groups }: Props) {
         },
       }}
     >
-      <Box ref={contentRef}>
+      <Box ref={contentRef} data-color-scheme="dark">
         <Box sx={{ pl: 3.5, pt: 2.5, pb: 1 }}>
           <Wordmark />
         </Box>

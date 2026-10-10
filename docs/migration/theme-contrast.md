@@ -8,6 +8,26 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 - **Browser pairs:** some pairs need real CSS (alpha tints, `color-mix`, hover states, DOM structure). They are measured in a real browser (see "Browser measurements") and the code that produces them is guarded by `src/theme/theme-composition.test.ts`.
 - **Not changed on purpose:** `text.disabled`, `divider` and `shared.paperOutlined`.
 
+## Grid and light-background refinement (2026-10-09)
+
+Current values supersede the historical measurements below wherever the page background or light primary color is involved. `background.default` is now template grey 200 (`#F4F6F8`) in light mode; `background.paper` stays white. Dark default/paper remain `#141A21` / `#1C252E`. Both schemes are explicit tokens with regenerated background channels in EOCR's overrides; no template files changed.
+
+Light `primary.main` changed from `#007867` to `#007565`: its active-nav text on the 8% tint over the new background initially measured 4.4791:1 (failed AA), and now measures 4.65:1. All existing contrast assertions pass with the new surfaces.
+
+| Pair | Light | Dark | Minimum |
+| --- | --- | --- | --- |
+| Primary text on page | 14.32 | 17.51 | 4.5 |
+| Secondary text on page | 7.68 | 10.87 | 4.5 |
+| Focus ring on page | 5.19 | 6.09 | 3 |
+| Primary text on Card | 15.52 | 15.52 | 4.5 |
+| Secondary text on Card | 8.33 | 9.63 | 4.5 |
+| Focus ring on Card | 5.63 | 5.40 | 3 |
+| Input outline on page | 4.51 | 6.41 | 3 |
+| Input outline on Card | 4.88 | 5.68 | 3 |
+| Active navigation text on 8% tint | 4.65 | 9.77 | 4.5 |
+
+Ratios calculated from the color tokens without rounding before comparison; the existing real-theme contrast suite guards all surfaces and color variants. Headless Chrome verification at 1440px and 390px: software grid is inside a template-styled Card; document scroll width equals viewport width; arrow-key navigation reaches the next cell with a 3px outline in both modes; seeded statuses remain readable. The WCAG text-spacing override (line height 1.5, letter spacing 0.12em, word spacing 0.16em) produced no vertically clipped cells in the six-row software sample. `EocrDataGrid` uses automatic row heights and wrapping text/labels to address the earlier grid-truncation finding. Future custom cell renderers still require verification.
+
 ## Token sources
 
 "Template" = value shipped by the Minimal starter, unchanged. "Ramp" = another step of the template's own ramp for that color. "Derived" = computed by us: the template color's hue and saturation kept, lightness moved the least amount that passes.
@@ -16,7 +36,7 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 
 | Token | Value | Template value | Source |
 | --- | --- | --- | --- |
-| primary.main | #007867 | #00A76F | Ramp (template `dark`) |
+| primary.main | #007565 | #00A76F | Derived from template `dark` (#007867), slightly darker for the gray page surface |
 | primary.dark | #004B50 | #007867 | Ramp (template `darker`) |
 | secondary.main | #8E33FF | #8E33FF | Template |
 | secondary.dark | #5119B7 | #5119B7 | Template |
@@ -361,3 +381,20 @@ Corrections to the Slice 4 version of this list: "Dark-scheme filled chip" was t
 ## Template dependence
 
 The contrast test reads the real theme, so a template update that changes a template override is caught if it breaks an asserted pair. The composition tests fail if a template slot we extend stops being a function or object we can compose.
+
+## Permanent dark template menu (2026-10-09)
+
+The purchased `NavSectionVertical` runs inside scoped dark-scheme variables on the desktop sidebar and mobile drawer. The menu background is template grey 900 (`#141A21`) in both page modes; light page background/Card surfaces remain gray/white. Item and section text use grey 500 (`#919EAB`), instead of the inaccessible grey 600 section labels in the template's apparent-navigation defaults. The rendered header typography is the template's 11px overline; specificity is increased to prevent MUI ListSubheader's later 14px/black defaults from winning.
+
+| Permanent-menu pair (same in light and dark page modes) | Ratio | Minimum |
+| --- | --- | --- |
+| Item/section text on background | 6.41 | 4.5 |
+| Item text on 8% hover tint | 5.69 | 4.5 |
+| Active text on 8% primary tint | 9.77 | 4.5 |
+| Active text on 16% hover tint | 8.60 | 4.5 |
+| Focus ring on background | 6.09 | 3 |
+| Focus ring on active tint | 5.49 | 3 |
+
+Real-theme guards cover permanent menu text, hover, and active-tint focus contrast. Browser checks verified the scoped dark drawer background and rendered grey-500 headings in both modes, the template's keyboard-operable links, a 3px focus ring, and drawer close on leaf activation. No page palette tokens changed in this slice. Historical integrate-nav measurements above no longer describe the current sidebar.
+
+The section headers are real collapse buttons. Their chevrons appear on hover and keyboard focus; the labels and chevrons then use white on grey 900 (17.51:1 in both page modes). Native Enter and Space collapse and expand the sections independently, with a 3px focus ring retained. Collapsed links are removed from keyboard navigation, and reduced-motion users receive an immediate collapse.

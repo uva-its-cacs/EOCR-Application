@@ -33,12 +33,10 @@ describe('filterNavGroups', () => {
     expect(filterNavGroups(groups, 'Admin').map((group) => group.id)).toEqual(['a']);
   });
 
-  it('keeps the Administration label only together with its items', () => {
-    const admin = filterNavGroups(NAV_GROUPS, 'Admin').find(
-      (group) => group.id === 'administration'
-    );
-    expect(admin?.label).toBe('Administration');
-    expect(filterNavGroups(NAV_GROUPS, 'User').some((group) => group.id === 'administration')).toBe(
+  it('keeps the Management label only together with its items', () => {
+    const admin = filterNavGroups(NAV_GROUPS, 'Admin').find((group) => group.id === 'management');
+    expect(admin?.label).toBe('Management');
+    expect(filterNavGroups(NAV_GROUPS, 'User').some((group) => group.id === 'management')).toBe(
       false
     );
   });

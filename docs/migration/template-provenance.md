@@ -139,3 +139,19 @@ Not ported: `use-software-editor.ts` (Slice 10) and every UI component, page, la
 Slice 7 removed the overrides for `custom-popover/custom-popover.tsx`, `custom-popover/hooks.ts` and `nav-section/utils/create-nav-item.ts` (the files are gone). The `hook-form` and `error-boundary` overrides stay.
 
 Note (Slice 6): the template `LoadingScreen` progress bar had no accessible name. Fixed in Slice 8 by `PageLoading`, without editing the template file.
+
+## Restored template navigation (2026-10-09)
+
+The actual `NavSectionVertical` replaces the EOCR-built menu. These files are restored from `starter-vite-ts/src/components/nav-section/` in the purchased v7.7.0 source. Their existing starter vendor baseline (`bd436d9`), rather than the full-demo source, remains their provenance. No full-demo modules or new packages were copied, and no commits were created.
+
+- Restored unchanged: `types.ts`, `vertical/index.ts`, `components/nav-collapse.tsx`, `components/nav-elements.tsx`, `utils/index.ts`.
+- Restored/adapted `vertical/nav-section-vertical.tsx`: collapsible Overview/Management sections with accessible list names, real header buttons, expanded state and persistent controls IDs. Collapsed content is inert and unmounted; reduced motion skips collapse transitions. Parent items still use the template's nested navigation.
+- Restored/adapted `vertical/nav-list.tsx`: complete effect dependencies without an inline lint suppression; parent disclosure state and controls IDs.
+- Restored/adapted `vertical/nav-item.tsx`: leaf `aria-current`, no redundant title aria-label, disabled state forwarded to ButtonBase.
+- Restored/adapted `utils/create-nav-item.ts`: `unknown` replaces `any`; parent items use real buttons rather than divs.
+- Restored/adapted `components/nav-subheader.tsx`: doubled specificity preserves the shipped 11px typography/colors against MUI ListSubheader defaults. Native buttons reveal the template chevron on hover or keyboard focus and retain the visible focus ring.
+- Adapted barrels: `components/index.ts` exports only vertical dependencies (no dropdown); `index.ts` exports vertical navigation, styles, and types. Mini/horizontal navigation and popover dependencies remain removed.
+- EOCR `PrimaryNav` now only maps existing filtered data/icons to the template and reports link activation to the drawer. The custom EOCR nav-item/nav-group implementations were removed. Existing role filtering remains in `useNavGroups` and `nav-data`.
+- Sidebar and drawer content use scoped dark color-scheme variables in both page modes. `--layout-nav-bg` is template grey 900 in both modes. Focus CSS targets the restored template item class.
+
+This restoration supersedes the earlier rows describing vertical navigation/components/utils/types as removed. The commercially licensed starter remains the source; the repository must remain private.

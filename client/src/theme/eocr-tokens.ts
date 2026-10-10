@@ -5,7 +5,8 @@
 
 export const eocrTokens = {
   light: {
-    primary: { main: '#007867', dark: '#004B50', contrastText: '#FFFFFF' },
+    background: { default: '#F4F6F8', paper: '#FFFFFF' },
+    primary: { main: '#007565', dark: '#004B50', contrastText: '#FFFFFF' },
     secondary: { main: '#8E33FF', dark: '#5119B7', contrastText: '#FFFFFF' },
     info: { main: '#006C9C', dark: '#003768', contrastText: '#FFFFFF' },
     success: { main: '#108150', dark: '#0D6740', contrastText: '#FFFFFF' },
@@ -16,6 +17,7 @@ export const eocrTokens = {
     buttonOutlined: '#637381',
   },
   dark: {
+    background: { default: '#141A21', paper: '#1C252E' },
     primary: { main: '#00AE74', dark: '#5BE49B', contrastText: '#1C252E' },
     secondary: { main: '#B67BFF', dark: '#EFD6FF', contrastText: '#1C252E' },
     info: { main: '#00B8D9', dark: '#61F3F3', contrastText: '#1C252E' },

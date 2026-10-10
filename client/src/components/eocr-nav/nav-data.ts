@@ -22,15 +22,16 @@ export type NavGroupData = {
 
 export const NAV_GROUPS: NavGroupData[] = [
   {
-    id: 'requests',
+    id: 'overview',
+    label: 'Overview',
     items: [
       { title: 'My requests', path: paths.requests.root, icon: 'ic-file' },
       { title: 'New request', path: paths.requests.new, icon: 'ic-blank' },
     ],
   },
   {
-    id: 'administration',
-    label: 'Administration',
+    id: 'management',
+    label: 'Management',
     requiredRole: ADMIN_ROLE_CODE,
     items: [{ title: 'Software', path: paths.admin.software, icon: 'ic-course' }],
   },

@@ -21,6 +21,7 @@ type Props = {
 export function NavSidebar({ groups, layoutQuery }: Props) {
   return (
     <Box
+      data-color-scheme="dark"
       sx={(theme) => ({
         top: 0,
         left: 0,

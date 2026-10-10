@@ -154,6 +154,28 @@ const NAV: Pair[] = [
 // ----------------------------------------------------------------------
 
 export const PAIRS: Pair[] = [
+  // The sidebar and mobile drawer always use dark-scheme variables, even on a light page.
+  {
+    name: 'permanent dark navigation: item and section text on sidebar',
+    schemes: BOTH,
+    fg: 'grey.500',
+    bg: 'grey.900',
+    min: TEXT,
+  },
+  {
+    name: 'permanent dark navigation: item text on hover',
+    schemes: BOTH,
+    fg: 'grey.500',
+    bg: { top: 'action.hover', on: 'grey.900' },
+    min: TEXT,
+  },
+  {
+    name: 'permanent dark navigation: focus ring on active tint',
+    schemes: ['dark'],
+    fg: 'primary.main',
+    bg: { top: 'primary.main', on: 'grey.900', alpha: 0.08 },
+    min: UI,
+  },
   // Text on a filled color: contained buttons, filled chips (rest and hover).
   ...COLORS.flatMap((c) => [
     {
