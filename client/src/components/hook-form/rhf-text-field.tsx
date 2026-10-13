@@ -1,5 +1,6 @@
 import type { TextFieldProps } from '@mui/material/TextField';
 
+import { useId } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { transformValue, transformValueOnBlur, transformValueOnChange } from 'minimal-shared/utils';
 
@@ -13,12 +14,15 @@ export type RHFTextFieldProps = TextFieldProps & {
 
 export function RHFTextField({
   name,
+  id,
   helperText,
   slotProps,
   type = 'text',
   ...other
 }: RHFTextFieldProps) {
   const { control } = useFormContext();
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
 
   const isNumberType = type === 'number';
 
@@ -26,9 +30,11 @@ export function RHFTextField({
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState: { error } }) => (
+      render={({ field: { ref, ...field }, fieldState: { error } }) => (
         <TextField
           {...field}
+          id={inputId}
+          inputRef={ref}
           fullWidth
           value={isNumberType ? transformValue(field.value) : field.value}
           onChange={(event) => {
@@ -44,6 +50,7 @@ export function RHFTextField({
               : event.target.value;
 
             field.onChange(transformedValue);
+            field.onBlur();
           }}
           type={isNumberType ? 'text' : type}
           error={!!error}
@@ -56,7 +63,7 @@ export function RHFTextField({
                 inputMode: 'decimal',
                 pattern: '[0-9]*\\.?[0-9]*',
               }),
-              autoComplete: 'new-password', // Disable autocomplete and autofill
+              'aria-invalid': !!error,
             },
           }}
           {...other}

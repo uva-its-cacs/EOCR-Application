@@ -1,6 +1,10 @@
 import type { GridColDef } from '@mui/x-data-grid';
 import type { Software } from '../types';
 
+import { useMemo } from 'react';
+
+import Button from '@mui/material/Button';
+
 import { formatDateOnly } from 'src/utils/format';
 
 import { StatusChip } from 'src/components/status-chip';
@@ -14,7 +18,6 @@ import { SoftwareGridToolbar } from './software-grid-toolbar';
 
 const NOT_SET = 'Not set';
 
-// Read-only in this slice: the Edit column and dialog arrive in Slice 10.
 const COLUMNS: GridColDef<Software>[] = [
   {
     field: 'softwareName',
@@ -75,15 +78,39 @@ type Props = {
   rows: Software[];
   // Shows the grid's loading overlay (a refresh while rows are shown).
   loading?: boolean;
+  onEdit: (software: Software, trigger: HTMLButtonElement) => void;
 };
 
-export function SoftwareGrid({ rows, loading = false }: Props) {
+export function SoftwareGrid({ rows, loading = false, onEdit }: Props) {
+  const columns = useMemo<GridColDef<Software>[]>(
+    () => [
+      ...COLUMNS,
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 90,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params) => (
+          <Button
+            tabIndex={params.hasFocus ? 0 : -1}
+            aria-label={`Edit ${params.row.softwareName}`}
+            onClick={(event) => onEdit(params.row, event.currentTarget)}
+          >
+            Edit
+          </Button>
+        ),
+      },
+    ],
+    [onEdit]
+  );
   return (
     <EocrDataGrid
       aria-label="Software administration"
       emptyTitle="No software has been added yet."
       rows={rows}
-      columns={COLUMNS}
+      columns={columns}
       getRowId={getRowId}
       loading={loading}
       slots={{ toolbar: SoftwareGridToolbar }}

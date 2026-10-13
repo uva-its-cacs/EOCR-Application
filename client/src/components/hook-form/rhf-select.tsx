@@ -6,6 +6,7 @@ import type { InputLabelProps } from '@mui/material/InputLabel';
 import type { FormControlProps } from '@mui/material/FormControl';
 import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 
+import { useId } from 'react';
 import { merge } from 'es-toolkit';
 import { Controller, useFormContext } from 'react-hook-form';
 
@@ -29,6 +30,7 @@ type RHFSelectProps = TextFieldProps & {
 
 export function RHFSelect({
   name,
+  id,
   children,
   helperText,
   slotProps = {},
@@ -36,10 +38,13 @@ export function RHFSelect({
 }: RHFSelectProps) {
   const { control } = useFormContext();
 
-  const labelId = `${name}-select`;
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const labelId = `${inputId}-label`;
 
   const baseSlotProps: TextFieldProps['slotProps'] = {
     select: {
+      labelId,
       sx: { textTransform: 'capitalize' },
       MenuProps: {
         slotProps: {
@@ -49,22 +54,28 @@ export function RHFSelect({
         },
       },
     },
-    htmlInput: { id: labelId },
-    inputLabel: { htmlFor: labelId },
+    inputLabel: { id: labelId },
   };
 
   return (
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState: { error } }) => (
+      render={({ field: { ref, ...field }, fieldState: { error } }) => (
         <TextField
           {...field}
+          id={inputId}
+          inputRef={ref}
           select
           fullWidth
           error={!!error}
           helperText={error?.message ?? helperText}
-          slotProps={merge(baseSlotProps, slotProps)}
+          slotProps={merge(merge(baseSlotProps, slotProps), {
+            select: {
+              'aria-invalid': !!error,
+              'aria-describedby': error || helperText ? `${inputId}-helper-text` : undefined,
+            },
+          })}
           {...other}
         >
           {children}

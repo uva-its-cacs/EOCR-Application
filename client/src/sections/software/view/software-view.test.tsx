@@ -104,7 +104,7 @@ describe('SoftwareView', () => {
     expect(within(grid).getByText('Approved with conditions')).toBeTruthy();
     expect(within(grid).getByText('Mar 31, 2027')).toBeTruthy();
     expect(within(grid).getAllByText('Not set')).toHaveLength(2);
-    expect(within(grid).queryByText('Edit')).toBeNull();
+    expect(within(grid).getByRole('button', { name: 'Edit Sample Tracker' })).toBeTruthy();
     expect(screen.getByLabelText('Search software')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Columns' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy();

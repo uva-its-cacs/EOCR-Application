@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import type { Software } from '../types';
+
+import { useRef, useState, useCallback } from 'react';
 
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -11,6 +13,7 @@ import { PageHeader, focusPageHeading } from 'src/components/page-header';
 
 import { useSoftware } from '../use-software';
 import { SoftwareGrid } from './software-grid';
+import { SoftwareEditorDrawer } from './software-editor-drawer';
 
 // ----------------------------------------------------------------------
 
@@ -26,6 +29,21 @@ export function SoftwareView() {
   // Admin access is checked by RequireAdmin before this view renders.
   const software = useSoftware(true);
   const busy = software.isFetching;
+  const [editing, setEditing] = useState<Software | null>(null);
+  const [saveMessage, setSaveMessage] = useState('');
+  const editTrigger = useRef<HTMLButtonElement | null>(null);
+  const handleEdit = useCallback((row: Software, trigger: HTMLButtonElement) => {
+    editTrigger.current = trigger;
+    setSaveMessage('');
+    setEditing(row);
+  }, []);
+  const closeEditor = () => {
+    setEditing(null);
+    requestAnimationFrame(() => {
+      if (editTrigger.current?.isConnected) editTrigger.current.focus();
+      else focusPageHeading();
+    });
+  };
 
   // Only a refresh the user asked for is announced, not the initial load.
   const [refreshState, setRefreshState] = useState<RefreshState>('idle');
@@ -76,6 +94,7 @@ export function SoftwareView() {
 
       <VisuallyHidden>
         <span role="status">{REFRESH_MESSAGES[refreshState]}</span>
+        <span role="status">{saveMessage}</span>
       </VisuallyHidden>
 
       {software.isPending && <LoadingState message="Loading software..." />}
@@ -95,6 +114,18 @@ export function SoftwareView() {
         <SoftwareGrid
           rows={software.data}
           loading={busy}
+          onEdit={handleEdit}
+        />
+      )}
+      {editing && (
+        <SoftwareEditorDrawer
+          key={editing.softwareId}
+          software={editing}
+          onClose={closeEditor}
+          onSaved={() => {
+            setSaveMessage('Software changes saved.');
+            closeEditor();
+          }}
         />
       )}
     </DashboardContent>

@@ -155,3 +155,13 @@ The actual `NavSectionVertical` replaces the EOCR-built menu. These files are re
 - Sidebar and drawer content use scoped dark color-scheme variables in both page modes. `--layout-nav-bg` is template grey 900 in both modes. Focus CSS targets the restored template item class.
 
 This restoration supersedes the earlier rows describing vertical navigation/components/utils/types as removed. The commercially licensed starter remains the source; the repository must remain private.
+## Software drawer editing (2026-10-13)
+
+Software administration now edits existing rows in `src/sections/software/view/software-editor-drawer.tsx`. The purchased starter's `components/settings/drawer/settings-drawer.tsx` is a layout reference for the right anchor, header/close control, padded scrolling body and paper surface. The software drawer is an EOCR component using the existing MUI Drawer: no settings module, context, theme controls, Scrollbar dependency or demo code was restored. Its form is 520px on desktop and full width on small screens, with fixed Save/Cancel actions, native scrolling and reduced-motion support.
+
+Adapted shared starter fields:
+
+- `src/components/hook-form/rhf-text-field.tsx`: stable input/helper IDs, controller ref passed through `inputRef`, blur forwarded, explicit invalid state, and no forced `autoComplete="new-password"`. The caller chooses autocomplete appropriate to the field.
+- `src/components/hook-form/rhf-select.tsx` (`RHFSelect`): stable select/label IDs, controller input ref, helper/error description on the actual combobox, and invalid state. The unused multi-select implementation remains unchanged.
+
+The form uses existing react-hook-form, Zod and TanStack Query packages and the existing admin update/options endpoints. Current inactive selections are preserved. Client and server validation, stale-update conflicts and loss of administrator access retain the user's edits. Successful saves update and invalidate the software list. Dirty drawer dismissal requires the existing destructive ConfirmDialog; closing or saving restores row focus (or the page heading if the row disappeared). No server, authorization, palette or package changes were needed.

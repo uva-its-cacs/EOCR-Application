@@ -384,17 +384,18 @@ The contrast test reads the real theme, so a template update that changes a temp
 
 ## Permanent dark template menu (2026-10-09)
 
-The purchased `NavSectionVertical` runs inside scoped dark-scheme variables on the desktop sidebar and mobile drawer. The menu background is template grey 900 (`#141A21`) in both page modes; light page background/Card surfaces remain gray/white. Item and section text use grey 500 (`#919EAB`), instead of the inaccessible grey 600 section labels in the template's apparent-navigation defaults. The rendered header typography is the template's 11px overline; specificity is increased to prevent MUI ListSubheader's later 14px/black defaults from winning.
+The purchased `NavSectionVertical` runs inside scoped dark-scheme variables on the desktop sidebar and mobile drawer. The menu background is template grey 900 (`#141A21`) in both page modes; light page background/Card surfaces remain gray/white. Item text uses grey 500 (`#919EAB`). Section headings use grey 500 softened to 88% opacity over the sidebar, which gives them a quieter appearance while meeting normal-text contrast; the template's dark grey 600 heading color would measure only 3.58:1. The rendered header typography is the template's 11px overline; specificity is increased to prevent MUI ListSubheader's later 14px/black defaults from winning.
 
 | Permanent-menu pair (same in light and dark page modes) | Ratio | Minimum |
 | --- | --- | --- |
-| Item/section text on background | 6.41 | 4.5 |
+| Item text on background | 6.41 | 4.5 |
+| Section heading (grey 500 at 88%) on background | 5.16 | 4.5 |
 | Item text on 8% hover tint | 5.69 | 4.5 |
 | Active text on 8% primary tint | 9.77 | 4.5 |
 | Active text on 16% hover tint | 8.60 | 4.5 |
 | Focus ring on background | 6.09 | 3 |
 | Focus ring on active tint | 5.49 | 3 |
 
-Real-theme guards cover permanent menu text, hover, and active-tint focus contrast. Browser checks verified the scoped dark drawer background and rendered grey-500 headings in both modes, the template's keyboard-operable links, a 3px focus ring, and drawer close on leaf activation. No page palette tokens changed in this slice. Historical integrate-nav measurements above no longer describe the current sidebar.
+Real-theme guards cover permanent menu text, the softened section heading, hover, and active-tint focus contrast. Browser checks verified the scoped dark drawer background and rendered heading contrast in both modes, the template's keyboard-operable links, a 3px focus ring, and drawer close on leaf activation. No page palette tokens changed in this slice. Historical integrate-nav measurements above no longer describe the current sidebar.
 
 The section headers are real collapse buttons. Their chevrons appear on hover and keyboard focus; the labels and chevrons then use white on grey 900 (17.51:1 in both page modes). Native Enter and Space collapse and expand the sections independently, with a 3px focus ring retained. Collapsed links are removed from keyboard navigation, and reduced-motion users receive an immediate collapse.

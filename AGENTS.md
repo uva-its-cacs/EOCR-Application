@@ -234,3 +234,31 @@ Status changes happen only through the repo layer, never by writing the column d
 - Do not add a settings drawer, user-facing theme controls, or right-to-left support.
 - Do not load fonts, icons, or scripts from external hosts, and do not use Iconify icon names that are not in the registered offline set.
 - Do not use a template color, variant, or component state that fails the contrast rules above, even if it is the template's default.
+
+
+# Project Instructions
+
+## Technology
+- Backend: ASP.NET Core, C#, EF Core
+- Frontend: React, TypeScript, MUI
+- JSON: System.Text.Json
+
+## Development
+- Follow existing architecture and conventions.
+- Reuse existing components and services.
+- Prefer small, targeted changes.
+- Avoid unrelated refactoring.
+- Do not add dependencies without justification.
+
+## Efficiency
+- Inspect only files relevant to the task.
+- Do not read the entire repository unnecessarily.
+- Use targeted builds and tests.
+- Avoid repeating successful commands.
+- Keep explanations concise.
+- Ask before making large architectural changes.
+
+## Validation
+- Check affected code for errors.
+- Run relevant tests when available.
+- Report any validation not performed.

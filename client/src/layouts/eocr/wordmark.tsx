@@ -6,7 +6,7 @@ import { RouterLink } from 'src/routes/components';
 // ----------------------------------------------------------------------
 
 // Text wordmark in place of the template's Minimal logo. Placeholder until real branding exists.
-export function Wordmark() {
+export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       component={RouterLink}
@@ -18,7 +18,7 @@ export function Wordmark() {
         color: theme.vars.palette.text.primary,
       })}
     >
-      EOCR Application
+      {compact ? 'EOCR' : 'EOCR Application'}
     </Link>
   );
 }

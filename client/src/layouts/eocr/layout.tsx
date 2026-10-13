@@ -36,7 +36,9 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
   const theme = useTheme();
   const navGroups = useNavGroups();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [navCompact, setNavCompact] = useState(false);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const toggleNavCompact = useCallback(() => setNavCompact((compact) => !compact), []);
 
   useRouteFocus(MAIN_CONTENT_ID);
 
@@ -73,11 +75,19 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
 
       <LayoutSection
         headerSection={header}
-        sidebarSection={<NavSidebar groups={navGroups} layoutQuery={layoutQuery} />}
+        sidebarSection={
+          <NavSidebar
+            groups={navGroups}
+            layoutQuery={layoutQuery}
+            compact={navCompact}
+            onToggleCompact={toggleNavCompact}
+          />
+        }
         cssVars={{
           ...dashboardLayoutVars(theme),
           ...navVars.layout,
           '--layout-nav-bg': theme.vars.palette.grey[900],
+          '--layout-nav-vertical-width': navCompact ? 'var(--layout-nav-mini-width)' : '300px',
         }}
         sx={{
           [`& .${layoutClasses.sidebarContainer}`]: {

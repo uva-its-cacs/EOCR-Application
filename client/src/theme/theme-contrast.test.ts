@@ -163,6 +163,13 @@ export const PAIRS: Pair[] = [
     min: TEXT,
   },
   {
+    name: 'permanent dark navigation: softened section heading on sidebar',
+    schemes: BOTH,
+    fg: { top: 'grey.500', on: 'grey.900', alpha: 0.88 },
+    bg: 'grey.900',
+    min: TEXT,
+  },
+  {
     name: 'permanent dark navigation: item text on hover',
     schemes: BOTH,
     fg: 'grey.500',
