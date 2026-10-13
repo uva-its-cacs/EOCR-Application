@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from 'src/lib/api';
 
+import { useToast } from 'src/components/toast/toast-provider';
+
 import { SOFTWARE_QUERY_KEY } from './use-software';
 import { updateSoftware, fetchSoftwareOptions } from './api';
 import {
@@ -17,6 +19,7 @@ import {
 } from './software-editor-schema';
 
 export function useSoftwareEditor(software: Software, onSaved: () => void) {
+  const toast = useToast();
   const client = useQueryClient();
   const [saveError, setSaveError] = useState('');
   const methods = useForm<SoftwareEditorValues>({
@@ -36,6 +39,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
         rows?.map((row) => (row.softwareId === saved.softwareId ? saved : row))
       );
       void client.invalidateQueries({ queryKey: SOFTWARE_QUERY_KEY });
+      toast.showSuccess('Software changes saved.');
     },
   });
   const submit = methods.handleSubmit(
@@ -61,7 +65,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
               first = false;
             }
           }
-          setSaveError(
+          toast.showError(
             error.status === 409
               ? 'Another administrator changed this software. Your edits are still here. Cancel, refresh the list, and reopen the editor before saving.'
               : error.status === 403 || error.status === 401
@@ -70,7 +74,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
                   'Software could not be saved. Check the fields or try again.')
           );
         } else {
-          setSaveError('Software could not be saved. Your edits are still here. Try again.');
+          toast.showError('Software could not be saved. Your edits are still here. Try again.');
         }
       }
     },

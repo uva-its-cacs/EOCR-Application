@@ -9,6 +9,8 @@ import { queryClient } from 'src/lib/query-client';
 import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
+import { ToastProvider } from 'src/components/toast/toast-provider';
+
 // ----------------------------------------------------------------------
 
 type AppProps = {
@@ -24,7 +26,9 @@ export default function App({ children }: AppProps) {
       defaultMode={themeConfig.defaultMode}
       themeOverrides={eocrThemeOverrides}
     >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>{children}</ToastProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
 }

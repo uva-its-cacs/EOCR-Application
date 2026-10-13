@@ -30,11 +30,9 @@ export function SoftwareView() {
   const software = useSoftware(true);
   const busy = software.isFetching;
   const [editing, setEditing] = useState<Software | null>(null);
-  const [saveMessage, setSaveMessage] = useState('');
   const editTrigger = useRef<HTMLButtonElement | null>(null);
   const handleEdit = useCallback((row: Software, trigger: HTMLButtonElement) => {
     editTrigger.current = trigger;
-    setSaveMessage('');
     setEditing(row);
   }, []);
   const closeEditor = () => {
@@ -94,7 +92,6 @@ export function SoftwareView() {
 
       <VisuallyHidden>
         <span role="status">{REFRESH_MESSAGES[refreshState]}</span>
-        <span role="status">{saveMessage}</span>
       </VisuallyHidden>
 
       {software.isPending && <LoadingState message="Loading software..." />}
@@ -122,10 +119,7 @@ export function SoftwareView() {
           key={editing.softwareId}
           software={editing}
           onClose={closeEditor}
-          onSaved={() => {
-            setSaveMessage('Software changes saved.');
-            closeEditor();
-          }}
+          onSaved={closeEditor}
         />
       )}
     </DashboardContent>

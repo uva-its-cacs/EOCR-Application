@@ -54,9 +54,9 @@ export function primaryNavStyles(theme: Theme): CSSObject {
       opacity: 0,
     },
     [`& ${specificSubheaderSelector}:hover ${iconSelector}`]: {
-      opacity: 0,
+      opacity: 1,
     },
-    [`& ${specificSubheaderSelector}:focus-visible ${iconSelector}`]: {
+    [`& ${specificSubheaderSelector}:focus ${iconSelector}`]: {
       opacity: 1,
     },
     ...compactItemStyles,

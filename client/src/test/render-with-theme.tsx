@@ -7,6 +7,8 @@ import { RouterProvider, createMemoryRouter } from 'react-router';
 import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
+import { ToastProvider } from 'src/components/toast/toast-provider';
+
 // ----------------------------------------------------------------------
 
 // Component tests render inside the app theme, as the app does (template components read theme.vars).
@@ -17,7 +19,7 @@ export function renderWithTheme(ui: React.ReactElement): RenderResult {
       defaultMode={themeConfig.defaultMode}
       themeOverrides={eocrThemeOverrides}
     >
-      {ui}
+      <ToastProvider>{ui}</ToastProvider>
     </ThemeProvider>
   );
 }
