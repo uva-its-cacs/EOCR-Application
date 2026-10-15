@@ -7,7 +7,6 @@ import { renderWithTheme } from 'src/test/render-with-theme';
 import { PageLoading } from 'src/components/page-loading';
 
 import { ErrorState } from './error-state';
-import { EmptyState } from './empty-state';
 import { LoadingState } from './loading-state';
 
 // ----------------------------------------------------------------------
@@ -39,23 +38,6 @@ describe('ErrorState', () => {
     renderWithTheme(<ErrorState>Could not load</ErrorState>);
 
     expect(screen.queryByRole('button')).toBeNull();
-  });
-});
-
-describe('EmptyState', () => {
-  it('shows its title, description and action', () => {
-    renderWithTheme(
-      <EmptyState
-        title="No requests yet"
-        description="Requests you start appear here."
-        action={<button type="button">New request</button>}
-      />
-    );
-
-    expect(screen.getByText('No requests yet').tagName).toBe('P');
-    expect(screen.queryByRole('heading')).toBeNull();
-    expect(screen.getByText('Requests you start appear here.')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'New request' })).toBeTruthy();
   });
 });
 

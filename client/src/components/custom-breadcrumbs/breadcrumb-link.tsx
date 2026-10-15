@@ -55,7 +55,8 @@ const ItemRoot = styled('div', {
   ...(disabled && {
     cursor: 'default',
     pointerEvents: 'none',
-    color: theme.vars.palette.text.disabled,
+    // EOCR: text.secondary (the template's text.disabled is below 4.5:1).
+    color: theme.vars.palette.text.secondary,
   }),
 }));
 

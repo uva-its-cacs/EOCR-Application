@@ -37,12 +37,23 @@ const REQUESTS: RequestSummary[] = [
   },
 ];
 
+// Count text of each analytics card in the Summary region, keyed by the card's heading.
 function summaryValues() {
   const summary = screen.getByRole('region', { name: 'Summary' });
-  const terms = within(summary).getAllByRole('term');
-  const definitions = within(summary).getAllByRole('definition');
-  return Object.fromEntries(terms.map((t, i) => [t.textContent, definitions[i].textContent]));
+  return Object.fromEntries(
+    within(summary)
+      .getAllByRole('heading', { level: 3 })
+      .map((heading) => [heading.textContent, heading.nextElementSibling?.textContent])
+  );
 }
+
+const table = () => screen.getByRole('table', { name: 'Your vetting requests' });
+// Data rows only: the header row and the template's empty filler rows have fewer cells.
+const dataRows = () =>
+  within(table())
+    .getAllByRole('row')
+    .slice(1)
+    .filter((row) => within(row).queryAllByRole('cell').length > 1);
 
 afterEach(() => {
   cleanup();
@@ -50,7 +61,7 @@ afterEach(() => {
 });
 
 describe('MyRequestsView', () => {
-  it('shows the loading status, and an em dash with "Loading" in each card', async () => {
+  it('shows loading in the table, and an em dash with "Loading" in each summary card', async () => {
     mockFetch(pending);
     renderView(<MyRequestsView />);
 
@@ -61,6 +72,7 @@ describe('MyRequestsView', () => {
     const summary = screen.getByRole('region', { name: 'Summary' });
     expect(summary.getAttribute('aria-busy')).toBe('true');
     expect(Object.values(summaryValues())).toEqual([
+      '—Loading',
       '—Loading',
       '—Loading',
       '—Loading',
@@ -93,42 +105,66 @@ describe('MyRequestsView', () => {
     within(alert).getByRole('button', { name: 'Retry' }).focus();
     fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
 
-    await screen.findByRole('grid', { name: 'Your vetting requests' });
+    await screen.findByText('Sample Suite');
     await vi.waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }))
     );
   });
 
-  it('shows the empty state with zero counts', async () => {
+  it('shows the empty state and zero counts', async () => {
     mockFetch(ok([]));
     renderView(<MyRequestsView />);
 
     expect(await screen.findByText('You have no requests yet.')).toBeTruthy();
     expect(summaryValues()).toEqual({
-      Drafts: '0',
-      'In review': '0',
-      'Needs your action': '0',
-      Decided: '0',
+      Total: '0 items',
+      Drafts: '0 items',
+      'In review': '0 items',
+      'Needs your action': '0 items',
+      Decided: '0 items',
     });
     expect(screen.getByRole('region', { name: 'Summary' }).getAttribute('aria-busy')).toBe('false');
-    expect(screen.queryByRole('grid')).toBeNull();
+    expect(dataRows()).toHaveLength(0);
   });
 
-  it('shows the counts and the named grid with status chips', async () => {
+  it('shows the counts and the rows with status text, newest first', async () => {
     mockFetch(ok(REQUESTS));
     renderView(<MyRequestsView />);
 
-    const grid = await screen.findByRole('grid', { name: 'Your vetting requests' });
-
-    expect(within(grid).getByText('Human review')).toBeTruthy();
-    expect(within(grid).getByText('More info needed')).toBeTruthy();
-    expect(within(grid).getByText('Sample Suite')).toBeTruthy();
+    await screen.findByText('Sample Suite');
+    expect(within(table()).getByText('Human review')).toBeTruthy();
+    expect(within(table()).getByText('More info needed')).toBeTruthy();
+    expect(dataRows().map((row) => within(row).getAllByRole('cell')[0].textContent)).toEqual([
+      'DDemo BoardsDemo Systems',
+      'EExample FormsExample LLC',
+      'SSample SuiteSample Vendor',
+    ]);
     expect(summaryValues()).toEqual({
-      Drafts: '0',
-      'In review': '2',
-      'Needs your action': '1',
-      Decided: '0',
+      Total: '3 items',
+      Drafts: '0 items',
+      'In review': '2 items',
+      'Needs your action': '1 item',
+      Decided: '0 items',
     });
+  });
+
+  it('filters by status tab and by search, and clears the filters', async () => {
+    mockFetch(ok(REQUESTS));
+    renderView(<MyRequestsView />);
+    await screen.findByText('Sample Suite');
+
+    fireEvent.click(screen.getByRole('tab', { name: 'More info needed (1)' }));
+    expect(dataRows()).toHaveLength(1);
+    expect(
+      screen.getByRole('button', { name: 'Remove status filter: More info needed' })
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search requests' }), {
+      target: { value: 'demo systems' },
+    });
+    expect(dataRows()).toHaveLength(1);
+    expect(dataRows()[0].textContent).toContain('Demo Boards');
   });
 
   it('has one h1 and a New request link', async () => {

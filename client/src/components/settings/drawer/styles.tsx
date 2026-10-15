@@ -1,8 +1,8 @@
 import type { ButtonBaseProps } from '@mui/material/ButtonBase';
 
+import { useId } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 
-import Tooltip from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import ButtonBase from '@mui/material/ButtonBase';
 
@@ -10,9 +10,10 @@ import { Iconify } from '../../iconify';
 
 // ----------------------------------------------------------------------
 
+// EOCR: the reset icon is a named button ("Reset <title>"), and the hover-only info tooltip is removed
+// (the template's only use is "Dashboard only"). The block is a group named by its title.
 type LargeBlockProps = React.ComponentProps<typeof LargeBlockRoot> & {
   title: string;
-  tooltip?: string;
   canReset?: boolean;
   onReset?: () => void;
 };
@@ -43,33 +44,23 @@ const LargeLabel = styled('span')(({ theme }) => ({
   }),
 }));
 
-export function LargeBlock({
-  sx,
-  title,
-  tooltip,
-  children,
-  canReset,
-  onReset,
-  ...other
-}: LargeBlockProps) {
+export function LargeBlock({ sx, title, children, canReset, onReset, ...other }: LargeBlockProps) {
+  const titleId = useId();
+
   return (
-    <LargeBlockRoot sx={sx} {...other}>
+    <LargeBlockRoot role="group" aria-labelledby={titleId} sx={sx} {...other}>
       <LargeLabel>
         {canReset && (
-          <ButtonBase disableRipple onClick={onReset} sx={{ ml: -0.5, mr: 0.5 }}>
+          <ButtonBase
+            disableRipple
+            aria-label={`Reset ${title}`}
+            onClick={onReset}
+            sx={{ ml: -0.5, mr: 0.5 }}
+          >
             <Iconify width={14} icon="solar:restart-bold" sx={{ opacity: 0.64 }} />
           </ButtonBase>
         )}
-        {title}
-        {tooltip && (
-          <Tooltip title={tooltip} placement="right" arrow>
-            <Iconify
-              width={14}
-              icon="eva:info-outline"
-              sx={{ ml: 0.5, mr: -0.5, opacity: 0.48, cursor: 'pointer' }}
-            />
-          </Tooltip>
-        )}
+        <span id={titleId}>{title}</span>
       </LargeLabel>
 
       {children}
@@ -119,13 +110,24 @@ const SmallLabel = styled(ButtonBase, {
   ],
 }));
 
+// EOCR: the template's label is always a ButtonBase (a button that does nothing until resettable). Here
+// it is plain text, and a button named "Reset <label>" only when there is something to reset. The block
+// is a group named by its label.
 export function SmallBlock({ label, canReset, onReset, sx, children, ...other }: SmallBlockProps) {
+  const labelId = useId();
+
   return (
-    <SmallBlockRoot sx={sx} {...other}>
-      <SmallLabel disableRipple canReset={canReset} onClick={canReset ? onReset : undefined}>
-        {canReset && <Iconify width={14} icon="solar:restart-bold" />}
-        {label}
-      </SmallLabel>
+    <SmallBlockRoot role="group" aria-labelledby={labelId} sx={sx} {...other}>
+      {canReset ? (
+        <SmallLabel disableRipple canReset aria-label={`Reset ${label}`} onClick={onReset}>
+          <Iconify width={14} icon="solar:restart-bold" />
+          <span id={labelId}>{label}</span>
+        </SmallLabel>
+      ) : (
+        <SmallLabel as="span" disableRipple id={labelId}>
+          {label}
+        </SmallLabel>
+      )}
       {children}
     </SmallBlockRoot>
   );
@@ -133,6 +135,7 @@ export function SmallBlock({ label, canReset, onReset, sx, children, ...other }:
 
 // ----------------------------------------------------------------------
 
+// EOCR: the selected state is exposed as aria-pressed (the template shows it visually only).
 export type OptionButtonProps = ButtonBaseProps & {
   selected?: boolean;
 };
@@ -141,12 +144,14 @@ export function OptionButton({ selected, sx, children, ...other }: OptionButtonP
   return (
     <ButtonBase
       disableRipple
+      aria-pressed={!!selected}
       sx={[
         (theme) => ({
           width: 1,
           borderRadius: 1.5,
           lineHeight: '18px',
-          color: 'text.disabled',
+          // EOCR: text.secondary (the template's text.disabled icons are below 3:1).
+          color: 'text.secondary',
           border: `solid 1px transparent`,
           fontWeight: 'fontWeightSemiBold',
           fontSize: theme.typography.pxToRem(13),

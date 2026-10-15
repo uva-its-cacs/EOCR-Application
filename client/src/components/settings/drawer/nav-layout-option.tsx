@@ -9,9 +9,12 @@ import { OptionButton } from './styles';
 
 // ----------------------------------------------------------------------
 
+// EOCR: each option has a `label` (its accessible name; the template's options are icon-only), and
+// NavColorOptions is removed with the nav color setting.
 export type NavLayoutOptionProps = BoxProps & {
   value: SettingsState['navLayout'];
   options: {
+    label: string;
     value: SettingsState['navLayout'];
     icon: React.ReactNode;
   }[];
@@ -31,7 +34,7 @@ export function NavLayoutOptions({
         {
           gap: 1.5,
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: `repeat(${options.length}, 1fr)`,
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
@@ -44,6 +47,7 @@ export function NavLayoutOptions({
           <OptionButton
             key={option.value}
             selected={selected}
+            aria-label={option.label}
             onClick={() => onChangeOption(option.value)}
             sx={[
               (theme) => ({
@@ -53,56 +57,6 @@ export function NavLayoutOptions({
             ]}
           >
             {option.icon}
-          </OptionButton>
-        );
-      })}
-    </Box>
-  );
-}
-
-// ----------------------------------------------------------------------
-
-export type NavColorOptionProps = BoxProps & {
-  value: SettingsState['navColor'];
-  options: {
-    label: string;
-    value: SettingsState['navColor'];
-    icon: React.ReactNode;
-  }[];
-  onChangeOption: (newOption: SettingsState['navColor']) => void;
-};
-
-export function NavColorOptions({
-  sx,
-  value,
-  options,
-  onChangeOption,
-  ...other
-}: NavColorOptionProps) {
-  return (
-    <Box
-      sx={[
-        {
-          gap: 1.5,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-      {...other}
-    >
-      {options.map((option) => {
-        const selected = value === option.value;
-
-        return (
-          <OptionButton
-            key={option.value}
-            selected={selected}
-            onClick={() => onChangeOption(option.value)}
-            sx={{ gap: 1.5, height: 56 }}
-          >
-            {option.icon}
-            {option.label}
           </OptionButton>
         );
       })}

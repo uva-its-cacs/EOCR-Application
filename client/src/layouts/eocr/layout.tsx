@@ -5,21 +5,40 @@ import { useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
+import { paths } from 'src/routes/paths';
+
+import { Iconify } from 'src/components/iconify';
+import { useSettingsContext } from 'src/components/settings';
 import { useNavGroups } from 'src/components/eocr-nav/use-nav-groups';
 
 import { SkipLink } from './skip-link';
 import { NavDrawer } from './nav-drawer';
 import { NavSidebar } from './nav-sidebar';
-import { AccountMenu } from './account-menu';
 import { useRouteFocus } from './use-route-focus';
 import { ColorModeToggle } from './color-mode-toggle';
 import { MenuButton } from '../components/menu-button';
+import { SettingsButton } from '../components/settings-button';
+import { AccountPopover } from '../components/account-popover';
 import { MainSection, HeaderSection, LayoutSection, layoutClasses } from '../core';
 import { dashboardLayoutVars, dashboardNavColorVars } from '../dashboard/css-vars';
 
 // ----------------------------------------------------------------------
 
 export const MAIN_CONTENT_ID = 'main-content';
+
+// Links in the account popover (the template's nav-config-account.tsx, reduced to EOCR's pages).
+const ACCOUNT_LINKS = [
+  {
+    label: 'Software catalog',
+    href: paths.catalog.root,
+    icon: <Iconify icon="solar:home-angle-bold-duotone" />,
+  },
+  {
+    label: 'My requests',
+    href: paths.requests.root,
+    icon: <Iconify icon="solar:notes-bold-duotone" />,
+  },
+];
 const NAV_DRAWER_ID = 'primary-nav-drawer';
 
 type Props = {
@@ -36,9 +55,13 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
   const theme = useTheme();
   const navGroups = useNavGroups();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isNavMini, setIsNavMini] = useState(false);
+  const settings = useSettingsContext();
+  const isNavMini = settings.state.navLayout === 'mini';
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-  const toggleNav = useCallback(() => setIsNavMini((mini) => !mini), []);
+  const toggleNav = useCallback(
+    () => settings.setState({ navLayout: isNavMini ? 'vertical' : 'mini' }),
+    [isNavMini, settings]
+  );
 
   useRouteFocus(MAIN_CONTENT_ID);
 
@@ -62,7 +85,8 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
         rightArea: (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 0.75 } }}>
             <ColorModeToggle />
-            <AccountMenu />
+            <SettingsButton />
+            <AccountPopover data={ACCOUNT_LINKS} />
           </Box>
         ),
       }}

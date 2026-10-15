@@ -15,6 +15,12 @@ export const BreadcrumbsHeading = styled('h6')(({ theme }) => ({
   display: 'inline-flex',
 }));
 
+// EOCR: holds the back link and the heading side by side.
+export const BreadcrumbsHeadingRow = styled('div')(() => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+}));
+
 export const BreadcrumbsContainer = styled('div')(({ theme }) => ({
   display: 'flex',
   flexWrap: 'wrap',

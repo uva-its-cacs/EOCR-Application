@@ -162,6 +162,21 @@ export const PAIRS: Pair[] = [
     bg: { top: 'primary.main', on: NAV_BG, alpha: 0.08 },
     min: UI,
   },
+  // Settings drawer block labels ("Nav", "Font"): the template's LargeLabel, inverse text on text.primary.
+  {
+    name: 'settings block label: common.white on text.primary',
+    schemes: ['light'],
+    fg: 'common.white',
+    bg: 'text.primary',
+    min: TEXT,
+  },
+  {
+    name: 'settings block label: grey.800 on text.primary',
+    schemes: ['dark'],
+    fg: 'grey.800',
+    bg: 'text.primary',
+    min: TEXT,
+  },
   // Text on a filled color: contained buttons, filled chips (rest and hover).
   ...COLORS.flatMap((c) => [
     {

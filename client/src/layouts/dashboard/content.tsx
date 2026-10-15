@@ -1,10 +1,13 @@
 import type { Breakpoint } from '@mui/material/styles';
 import type { ContainerProps } from '@mui/material/Container';
 
+import { use } from 'react';
 import { mergeClasses } from 'minimal-shared/utils';
 
 import { styled } from '@mui/material/styles';
 import Container from '@mui/material/Container';
+
+import { SettingsContext } from 'src/components/settings/context/settings-context';
 
 import { layoutClasses } from '../core';
 
@@ -24,10 +27,15 @@ export function DashboardContent({
   layoutQuery = 'lg',
   ...other
 }: DashboardContentProps) {
+  // EOCR: the settings context is optional (views render without it in tests), defaulting to compact.
+  // There is no horizontal nav, so the template's horizontal-nav padding is not needed.
+  const settings = use(SettingsContext);
+  const compactLayout = settings?.state.compactLayout ?? true;
+
   return (
     <Container
       className={mergeClasses([layoutClasses.content, className])}
-      maxWidth={maxWidth}
+      maxWidth={compactLayout ? maxWidth : false}
       sx={[
         (theme) => ({
           display: 'flex',

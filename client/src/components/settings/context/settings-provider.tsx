@@ -36,7 +36,8 @@ export function SettingsProvider({
     resetState(defaultSettings);
   }, [defaultSettings, resetState]);
 
-  // Version check and reset handling
+  // Version check and reset handling. EOCR: complete dependencies instead of an inline lint
+  // suppression; the values are stable, so it still runs once.
   useEffect(() => {
     const storedValue = getStorageValue<SettingsState>(storageKey);
 
@@ -49,8 +50,7 @@ export function SettingsProvider({
         onReset();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storageKey, defaultSettings.version, onReset]);
 
   const memoizedValue = useMemo(
     () => ({

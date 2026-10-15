@@ -7,14 +7,16 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
+import { VisuallyHidden } from 'src/components/visually-hidden';
 
 // ----------------------------------------------------------------------
 
 // Adapted from the template's invoice-analytic.tsx: a count and a share of the catalog instead of an
 // invoice total. The icon and rings are decorative (aria-hidden); the title, count and percent are text.
+// `total` is null while the data loads: an em dash (read as "Loading"), never a 0 for data not yet here.
 type Props = {
   title: string;
-  total: number;
+  total: number | null;
   color?: string;
   percent: number;
   icon: IconifyName;
@@ -85,14 +87,21 @@ export function SoftwareAnalytic({ title, total, icon, color, percent }: Props) 
           // text.secondary: the template's text.disabled is below 4.5:1.
           sx={{ my: 0.5, display: 'block', typography: 'body2', color: 'text.secondary' }}
         >
-          {total} {total === 1 ? 'item' : 'items'}
+          {total === null ? (
+            <>
+              <span aria-hidden>—</span>
+              <VisuallyHidden>Loading</VisuallyHidden>
+            </>
+          ) : (
+            `${total} ${total === 1 ? 'item' : 'items'}`
+          )}
         </Box>
 
         <Box
           component="span"
           sx={{ typography: 'subtitle2' }}
         >
-          {Math.round(percent)}%
+          {total === null ? <span aria-hidden>—</span> : `${Math.round(percent)}%`}
         </Box>
       </div>
     </Box>

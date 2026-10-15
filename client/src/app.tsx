@@ -10,6 +10,7 @@ import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
 import { ToastProvider } from 'src/components/toast/toast-provider';
+import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/components/settings';
 
 // ----------------------------------------------------------------------
 
@@ -21,15 +22,20 @@ export default function App({ children }: AppProps) {
   useScrollToTop();
 
   return (
-    <ThemeProvider
-      modeStorageKey={themeConfig.modeStorageKey}
-      defaultMode={themeConfig.defaultMode}
-      themeOverrides={eocrThemeOverrides}
-    >
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>{children}</ToastProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <SettingsProvider defaultSettings={defaultSettings}>
+      <ThemeProvider
+        modeStorageKey={themeConfig.modeStorageKey}
+        defaultMode={themeConfig.defaultMode}
+        themeOverrides={eocrThemeOverrides}
+      >
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <SettingsDrawer defaultSettings={defaultSettings} />
+            {children}
+          </ToastProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </SettingsProvider>
   );
 }
 

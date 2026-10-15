@@ -1,28 +1,36 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
+import { useId } from 'react';
 import { usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
+import Skeleton from '@mui/material/Skeleton';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
-import { paths } from 'src/routes/paths';
-import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
 import { Label } from 'src/components/label';
 import { CustomPopover } from 'src/components/custom-popover';
 
-import { useMockedUser } from 'src/auth/hooks';
-
-import { AccountButton } from './account-button';
-import { SignOutButton } from './sign-out-button';
+import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
+import { useCurrentUser } from 'src/sections/auth/use-current-user';
 
 // ----------------------------------------------------------------------
 
+// Adapted from the template's layouts/components/account-popover.tsx. EOCR changes:
+// - The signed-in user comes from GET /api/me (useCurrentUser) instead of the mocked auth user, with
+//   loading, error (Retry) and signed-out states.
+// - The template's AccountButton (framer-motion AnimateBorder) is replaced by a static ring of the same
+//   40px size; the button is named "Account" and reports its popup.
+// - The popover is a dialog named "Account". The email wraps instead of being truncated, and each menu
+//   item is the link itself (the template nests a Link inside a MenuItem).
+// - No sign-out yet: the identity provider is undecided.
 export type AccountPopoverProps = IconButtonProps & {
   data?: {
     label: string;
@@ -33,51 +41,74 @@ export type AccountPopoverProps = IconButtonProps & {
 };
 
 export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps) {
-  const pathname = usePathname();
-
   const { open, anchorEl, onClose, onOpen } = usePopover();
+  const popoverId = useId();
 
-  const { user } = useMockedUser();
+  const current = useCurrentUser();
+  const user = current.status === 'authenticated' ? current.user : null;
+
+  const renderUser = () => {
+    switch (current.status) {
+      case 'authenticated':
+        return (
+          <>
+            <Typography variant="subtitle2">{current.user.name}</Typography>
+
+            <Typography variant="body2" sx={{ color: 'text.secondary', wordBreak: 'break-all' }}>
+              {current.user.email}
+            </Typography>
+
+            <Label
+              color={current.user.roleCode === ADMIN_ROLE_CODE ? 'primary' : 'default'}
+              sx={{ mt: 1 }}
+            >
+              {current.user.roleLabel}
+            </Label>
+          </>
+        );
+      case 'unauthenticated':
+        return <Typography variant="body2">You are not signed in</Typography>;
+      case 'error':
+        return (
+          <>
+            <Typography variant="body2">We could not load your account</Typography>
+            <Button size="small" variant="outlined" onClick={current.refetch} sx={{ mt: 1.5 }}>
+              Retry
+            </Button>
+          </>
+        );
+      default:
+        return <Typography variant="body2">Loading your account</Typography>;
+    }
+  };
 
   const renderMenuActions = () => (
     <CustomPopover
+      id={popoverId}
       open={open}
       anchorEl={anchorEl}
       onClose={onClose}
-      slotProps={{ paper: { sx: { p: 0, width: 200 } } }}
+      slotProps={{
+        paper: { role: 'dialog', 'aria-label': 'Account', sx: { p: 0, width: 220 } },
+      }}
     >
-      <Box sx={{ p: 2, pb: 1.5 }}>
-        <Typography variant="subtitle2" noWrap>
-          {user?.displayName}
-        </Typography>
+      <Box sx={{ p: 2, pb: 1.5 }}>{renderUser()}</Box>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-          {user?.email}
-        </Typography>
-      </Box>
+      {!!data.length && (
+        <>
+          <Divider sx={{ borderStyle: 'dashed' }} />
 
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      <MenuList sx={{ p: 1, my: 1, '& li': { p: 0 } }}>
-        {data.map((option) => {
-          const rootLabel = pathname.includes('/dashboard') ? 'Home' : 'Dashboard';
-          const rootHref = pathname.includes('/dashboard') ? '/' : paths.dashboard.root;
-
-          return (
-            <MenuItem key={option.label}>
-              <Link
+          <MenuList aria-label="Account links" sx={{ p: 1, my: 1 }}>
+            {data.map((option) => (
+              <MenuItem
+                key={option.label}
                 component={RouterLink}
-                href={option.label === 'Home' ? rootHref : option.href}
-                color="inherit"
-                underline="none"
+                href={option.href}
                 onClick={onClose}
                 sx={{
                   px: 1,
                   py: 0.75,
-                  width: 1,
-                  display: 'flex',
                   typography: 'body2',
-                  alignItems: 'center',
                   color: 'text.secondary',
                   '& svg': { width: 24, height: 24 },
                   '&:hover': { color: 'text.primary' },
@@ -86,7 +117,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
                 {option.icon}
 
                 <Box component="span" sx={{ ml: 2 }}>
-                  {option.label === 'Home' ? rootLabel : option.label}
+                  {option.label}
                 </Box>
 
                 {option.info && (
@@ -94,34 +125,44 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
                     {option.info}
                   </Label>
                 )}
-              </Link>
-            </MenuItem>
-          );
-        })}
-      </MenuList>
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      <Box sx={{ p: 1 }}>
-        <SignOutButton
-          size="medium"
-          variant="text"
-          onClose={onClose}
-          sx={{ display: 'block', textAlign: 'left' }}
-        />
-      </Box>
+              </MenuItem>
+            ))}
+          </MenuList>
+        </>
+      )}
     </CustomPopover>
   );
 
   return (
     <>
-      <AccountButton
+      <IconButton
+        aria-label="Account"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={open ? popoverId : undefined}
         onClick={onOpen}
-        photoURL={user?.photoURL}
-        displayName={user?.displayName}
-        sx={sx}
+        sx={[{ p: 0 }, ...(Array.isArray(sx) ? sx : [sx])]}
         {...other}
-      />
+      >
+        <Box
+          sx={{
+            p: '3px',
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            border: 1,
+            borderColor: 'primary.main',
+          }}
+        >
+          {current.status === 'loading' ? (
+            <Skeleton variant="circular" sx={{ width: 1, height: 1 }} />
+          ) : (
+            <Avatar alt="" sx={{ width: 1, height: 1 }}>
+              {user?.name.trim().charAt(0).toUpperCase()}
+            </Avatar>
+          )}
+        </Box>
+      </IconButton>
 
       {renderMenuActions()}
     </>

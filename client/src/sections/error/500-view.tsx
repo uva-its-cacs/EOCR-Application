@@ -1,46 +1,65 @@
-import { m } from 'framer-motion';
-
 import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
 import { RouterLink } from 'src/routes/components';
 
-import { SimpleLayout } from 'src/layouts/simple';
+import { CONFIG } from 'src/global-config';
 import { ServerErrorIllustration } from 'src/assets/illustrations';
 
-import { varBounce, MotionContainer } from 'src/components/animate';
+import { ErrorContent } from './error-content';
 
 // ----------------------------------------------------------------------
 
-export function View500() {
+// Adapted from the template's sections/error/500-view.tsx: the framer-motion bounce is removed (framer-motion is
+// not approved) and the page renders inside EOCR's layout (ErrorContent replaces SimpleLayout). The
+// heading is the page's only h1 (styled as the template's h3), focusable by the route-focus hook, and
+// the page sets its document title. `description` and `action` replace the default text and button.
+type Props = {
+  title?: string;
+  // Browser tab title (without the " - EOCR" suffix).
+  documentTitle?: string;
+  description?: React.ReactNode;
+  action?: React.ReactNode;
+};
+
+export function View500({
+  title = '500 Internal server error',
+  documentTitle = 'Something went wrong',
+  description,
+  action,
+}: Props) {
   return (
-    <SimpleLayout
-      slotProps={{
-        content: { compact: true },
-      }}
-    >
-      <Container component={MotionContainer}>
-        <m.div variants={varBounce('in')}>
-          <Typography variant="h3" sx={{ mb: 2 }}>
-            500 Internal server error
-          </Typography>
-        </m.div>
+    <ErrorContent>
+      <title>{`${documentTitle} - ${CONFIG.appName}`}</title>
 
-        <m.div variants={varBounce('in')}>
-          <Typography sx={{ color: 'text.secondary' }}>
-            There was an error, please try again later.
-          </Typography>
-        </m.div>
+      <Typography
+        variant="h3"
+        component="h1"
+        tabIndex={-1}
+        sx={{ mb: 2, outline: 'none' }}
+      >
+        {title}
+      </Typography>
 
-        <m.div variants={varBounce('in')}>
-          <ServerErrorIllustration sx={{ my: { xs: 5, sm: 10 } }} />
-        </m.div>
+      <Typography
+        component="div"
+        sx={{ color: 'text.secondary' }}
+      >
+        {description ?? 'There was an error, please try again later.'}
+      </Typography>
 
-        <Button component={RouterLink} href="/" size="large" variant="contained">
+      <ServerErrorIllustration sx={{ my: { xs: 5, sm: 10 } }} />
+
+      {action ?? (
+        <Button
+          component={RouterLink}
+          href="/"
+          size="large"
+          variant="contained"
+        >
           Go to home
         </Button>
-      </Container>
-    </SimpleLayout>
+      )}
+    </ErrorContent>
   );
 }

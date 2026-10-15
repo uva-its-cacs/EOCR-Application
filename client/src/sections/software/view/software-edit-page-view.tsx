@@ -1,5 +1,7 @@
 import { useParams } from 'react-router';
 
+import { paths } from 'src/routes/paths';
+
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { PageHeader } from 'src/components/page-header';
@@ -20,6 +22,8 @@ export function SoftwareEditPageView() {
       <PageHeader
         title="Edit software"
         documentTitle="Edit software"
+        backHref={paths.catalog.root}
+        backLabel="Back to Software catalog"
         description={software?.softwareName ?? 'Update software and accessibility review details.'}
       />
       {softwareQuery.isPending && <LoadingState message="Loading software details..." />}

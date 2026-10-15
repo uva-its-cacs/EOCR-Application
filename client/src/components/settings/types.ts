@@ -1,20 +1,15 @@
 import type { Theme, SxProps } from '@mui/material/styles';
-import type { ThemeConfig } from 'src/theme/theme-config';
-import type { ThemeColorPreset } from 'src/theme/with-settings';
 
 // ----------------------------------------------------------------------
 
+// EOCR: only the options that cannot break WCAG AA are kept (see settings-config.ts). The template's
+// contrast, primaryColor, navColor, direction and fontFamily settings are removed, and navLayout has no
+// 'horizontal' option. The color mode stays with MUI's color scheme (useColorScheme), not in settings.
 export type SettingsState = {
   version: string;
   fontSize: number;
-  fontFamily: string;
   compactLayout: boolean;
-  contrast: 'default' | 'high';
-  primaryColor: ThemeColorPreset;
-  mode: ThemeConfig['defaultMode'];
-  navColor: 'integrate' | 'apparent';
-  direction: ThemeConfig['direction'];
-  navLayout: 'vertical' | 'horizontal' | 'mini';
+  navLayout: 'vertical' | 'mini';
 };
 
 export type SettingsContextValue = {

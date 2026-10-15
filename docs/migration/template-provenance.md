@@ -196,3 +196,37 @@ The software catalog and the app shell now follow the full demo's invoice sectio
 | `client/src/sections/software/software-create-edit-status-date.tsx` | `src/sections/invoice/invoice-create-edit-status-date.tsx` | modified | Approval status from the server plus native date fields (no date pickers). |
 
 Ours, changed to match the template shell: `layouts/eocr/layout.tsx` (integrate nav colors, the template's widths and padding transition, header gap), `layouts/eocr/nav-sidebar.tsx` (structure of `layouts/dashboard/nav-vertical.tsx`, Logo, NavToggleButton, mini nav), `layouts/eocr/nav-drawer.tsx` (Logo, light background), `components/eocr-nav/primary-nav.tsx` and `primary-nav.styles.ts` (template tokens; only the section heading color changes), and `theme/eocr-tokens.ts` (light `background.default` white). `layouts/eocr/wordmark.tsx`, `sections/software/view/software-catalog-view.tsx`, `software-grid.tsx`, `software-grid-toolbar.tsx` and `software-editor-view.tsx` were removed.
+
+## Breadcrumbs, settings, error views and account popover (2026-10-15)
+
+Copied unmodified from `Minimal_TypeScript_v7.7.0/vite-ts` in commit `bcfb9f2` ("vendor: Minimal UI v7.7.0 breadcrumbs, settings, error views and account popover (unmodified)"), then adapted. This section supersedes the "Removed groups" row for "Settings and RTL" (the settings context and drawer are back with safe options only; RTL stays out) and the "Header widgets" row for `settings-button` and `account-popover`.
+
+| Our path | Template path (`vite-ts/`) | Status | Changes |
+| --- | --- | --- | --- |
+| `client/src/components/custom-breadcrumbs/custom-breadcrumbs.tsx` | `src/components/custom-breadcrumbs/custom-breadcrumbs.tsx` | modified | Breadcrumbs named "Breadcrumb"; the current crumb is text with `aria-current="page"` (no link); the back arrow is its own link named by `backLabel`, beside the heading (the template links the whole heading). |
+| `client/src/components/custom-breadcrumbs/styles.tsx` | same | modified | Added `BreadcrumbsHeadingRow` (back link and heading side by side). |
+| `client/src/components/custom-breadcrumbs/breadcrumb-link.tsx` | same | modified | Current crumb in `text.secondary` (template `text.disabled` is below 4.5:1). |
+| `client/src/components/custom-breadcrumbs/back-link.tsx` | same | modified | Icon `aria-hidden`; the caller names the link. |
+| `client/src/components/custom-breadcrumbs/{index,more-links}.ts(x)` | same | verbatim | |
+| `client/src/components/settings/types.ts`, `settings-config.ts` | `src/components/settings/*` | modified | State reduced to `fontSize`, `compactLayout`, `navLayout` (`vertical` or `mini`) and `version`; mode stays with MUI's color scheme. `FONT_SIZE_RANGE` is 16 to 20. |
+| `client/src/components/settings/context/settings-provider.tsx` | same | modified | The inline `eslint-disable` replaced by complete effect dependencies. |
+| `client/src/components/settings/context/{index,settings-context,use-settings-context}.ts` | same | verbatim | |
+| `client/src/components/settings/drawer/settings-drawer.tsx` | same | modified | Only dark mode, compact, nav layout and font size; a dialog named by its heading; named Reset all and Close buttons; native scrolling instead of `Scrollbar`. |
+| `client/src/components/settings/drawer/base-option.tsx` | same | modified | A `<label>` around a real `Switch` (the template nests a Switch in a ButtonBase); the switch is named by the option label and described by the former tooltip text. |
+| `client/src/components/settings/drawer/styles.tsx` | same | modified | Blocks are named groups; reset icons are buttons named "Reset …"; the small label is text unless resettable; hover-only tooltips removed; option buttons expose `aria-pressed` and use `text.secondary` when unselected. |
+| `client/src/components/settings/drawer/nav-layout-option.tsx` | same | modified | Options have labels (accessible names); `NavColorOptions` removed. |
+| `client/src/components/settings/drawer/font-options.tsx` | same | modified | `FontFamilyOptions` removed; the slider is named "Font size" and speaks px. |
+| `client/src/components/settings/drawer/fullscreen-button.tsx` | same | modified | Named "Fullscreen" with `aria-pressed`. |
+| `client/src/components/settings/drawer/{index,icons}.ts(x)`, `components/settings/index.ts` | same | verbatim | |
+| `client/src/components/settings/drawer/presets-options.tsx` | same | removed | Color presets are not offered. |
+| `client/src/theme/with-settings/update-components.ts` | `src/theme/with-settings/update-components.ts` | modified | Returns global styles for a `GlobalStyles` element (EOCR's `MuiCssBaseline` override is a function and would drop an object override); scales the browser's text size as a percentage, only above the default; the high-contrast card shadow removed. |
+| `client/src/theme/with-settings/index.ts` | same | modified | Exports `update-components` only. |
+| `client/src/theme/with-settings/{update-core,color-presets}.ts` | same | removed | Only used by the options that are not offered. `right-to-left.tsx` was never copied (RTL packages are not approved). |
+| `client/src/layouts/components/settings-button.tsx` | same | modified | No framer-motion: tap and hover scaling and the endlessly rotating gear removed; named "Settings" with `aria-haspopup="dialog"` and `aria-expanded`. |
+| `client/src/layouts/components/account-popover.tsx` | same | modified | Fed by `/api/me` (loading, error, signed-out states) instead of the mocked user; the framer-motion `AccountButton` replaced by a static 40px ring; a dialog named "Account"; the email wraps; menu items are the links; no sign-out yet. `account-button.tsx` was not copied. |
+| `client/src/sections/error/{not-found-view,403-view,500-view}.tsx` | `src/sections/error/*` | modified | framer-motion bounce removed; rendered inside EOCR's layout (`ErrorContent`, ours, copies `SimpleCompactContent`'s 448px column) instead of `SimpleLayout`; the heading is the page's `h1` (styled `h3`, focusable); `title`, `documentTitle`, `description` and `action` props. |
+| `client/src/assets/illustrations/{background-shape,page-not-found,forbidden,server-error}-illustration.tsx` | `src/assets/illustrations/*` | verbatim | Decorative (`SvgIcon` is `aria-hidden` without a title). |
+| `client/src/assets/illustrations/index.ts` | same | ours | Exports the three illustrations used. |
+| `client/public/assets/illustrations/characters/character-{question,reject,study}.webp` | `public/assets/...` | verbatim | |
+
+Ours, changed to use these: `components/page-header/page-header.tsx` (built on CustomBreadcrumbs), `pages/not-found.tsx`, `routes/components/require-admin.tsx` and `eocr-error-boundary.tsx` (the error views), `layouts/eocr/layout.tsx` (settings button, account popover, nav layout from settings), `layouts/dashboard/content.tsx` (compact layout from settings again, as in the template), `theme/theme-provider.tsx` (settings font size), `app.tsx` (SettingsProvider and SettingsDrawer), `sections/requests/view/my-requests-view.tsx` plus `request-table-{row,toolbar,filters-result}.tsx` (the invoice list layout, as the catalog) and `new-request-view.tsx` (the invoice create-view framing). Removed: `layouts/eocr/account-menu.tsx`, `sections/requests/view/requests-grid.tsx`, `components/stat-card/**` and `components/feedback/empty-state.tsx` (replaced by the template's analytic and EmptyContent).

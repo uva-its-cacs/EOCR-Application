@@ -8,6 +8,7 @@ import { Iconify, iconifyClasses } from '../iconify';
 
 // ----------------------------------------------------------------------
 
+// EOCR: the link holds only the arrow and is named by `aria-label` (the caller's "Back to ...").
 export type BackLinkProps = LinkProps & {
   label?: string;
 };
@@ -43,7 +44,7 @@ export function BackLink({ sx, label, ...other }: BackLinkProps) {
       ]}
       {...other}
     >
-      <Iconify width={18} icon="eva:arrow-ios-back-fill" />
+      <Iconify width={18} icon="eva:arrow-ios-back-fill" aria-hidden />
       {label}
     </Link>
   );

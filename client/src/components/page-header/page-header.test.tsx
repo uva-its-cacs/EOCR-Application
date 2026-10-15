@@ -20,6 +20,11 @@ const routes = [
         element: <PageHeader title="My requests" description="Your software requests." />,
       },
       {
+        path: 'edit',
+        handle: { crumb: 'Edit', parent: { crumb: 'My requests', path: '/' } },
+        element: <PageHeader title="Edit" backHref="/" backLabel="Back to My requests" />,
+      },
+      {
         path: 'requests/new',
         handle: { crumb: 'New request', parent: { crumb: 'My requests', path: '/' } },
         element: <PageHeader title="New request" documentTitle="Request software" />,
@@ -74,5 +79,16 @@ describe('PageHeader', () => {
     expect(current.getAttribute('aria-current')).toBe('page');
     expect(current.closest('a')).toBeNull();
     expect(within(nav).getAllByRole('link')).toHaveLength(1);
+  });
+
+  it('renders the back arrow as its own named link beside the heading', async () => {
+    renderRoutes(routes, '/edit');
+
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Edit' });
+    const back = screen.getByRole('link', { name: 'Back to My requests' });
+
+    expect(back.getAttribute('href')).toBe('/');
+    expect(back.textContent).toBe('');
+    expect(heading.contains(back)).toBe(false);
   });
 });

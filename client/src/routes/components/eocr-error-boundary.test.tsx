@@ -37,7 +37,7 @@ describe('EocrErrorBoundary', () => {
     expect(document.activeElement).toBe(heading);
     expect(document.title).toBe('Something went wrong - EOCR');
     expect(screen.getByRole('button', { name: 'Reload' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Go to My requests' }).getAttribute('href')).toBe('/');
+    expect(screen.getByRole('link', { name: 'Go to home' }).getAttribute('href')).toBe('/');
     expect(consoleError.mock.calls.some((args) => args[0] instanceof Error)).toBe(true);
   });
 

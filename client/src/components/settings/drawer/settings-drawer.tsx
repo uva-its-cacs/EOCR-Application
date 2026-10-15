@@ -1,7 +1,7 @@
-import type { SettingsState, SettingsDrawerProps } from '../types';
+import type { SettingsDrawerProps } from '../types';
 
-import { useEffect, useCallback } from 'react';
-import { hasKeys, varAlpha } from 'minimal-shared/utils';
+import { useId, useCallback } from 'react';
+import { varAlpha } from 'minimal-shared/utils';
 
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
@@ -13,44 +13,35 @@ import Typography from '@mui/material/Typography';
 import { useColorScheme } from '@mui/material/styles';
 
 import { themeConfig } from 'src/theme/theme-config';
-import { primaryColorPresets } from 'src/theme/with-settings';
 
 import { Label } from '../../label';
 import { settingIcons } from './icons';
 import { Iconify } from '../../iconify';
 import { BaseOption } from './base-option';
-import { Scrollbar } from '../../scrollbar';
+import { FontSizeOptions } from './font-options';
 import { SmallBlock, LargeBlock } from './styles';
-import { PresetsOptions } from './presets-options';
+import { FONT_SIZE_RANGE } from '../settings-config';
+import { NavLayoutOptions } from './nav-layout-option';
 import { FullScreenButton } from './fullscreen-button';
-import { FontSizeOptions, FontFamilyOptions } from './font-options';
 import { useSettingsContext } from '../context/use-settings-context';
-import { NavColorOptions, NavLayoutOptions } from './nav-layout-option';
 
 // ----------------------------------------------------------------------
 
+/**
+ * Adapted from the template's settings drawer with only the options that keep the app within WCAG AA:
+ * mode, compact layout, nav layout (vertical or mini) and a larger font size. Removed: contrast,
+ * right-to-left, color presets, nav color, font family and the horizontal nav. EOCR changes:
+ * - The color mode is MUI's color scheme (shared with the header toggle), not a separate setting.
+ * - The drawer is a dialog named by its "Settings" heading; native scrolling replaces Scrollbar.
+ * - Switch cards, named nav layout buttons with aria-pressed, named reset buttons (BaseOption, styles).
+ */
 export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
   const settings = useSettingsContext();
   const { mode, setMode, colorScheme } = useColorScheme();
+  const titleId = useId();
 
-  // Visible options by default settings
-  const visibility = {
-    mode: hasKeys(defaultSettings, ['mode']),
-    contrast: hasKeys(defaultSettings, ['contrast']),
-    navColor: hasKeys(defaultSettings, ['navColor']),
-    fontSize: hasKeys(defaultSettings, ['fontSize']),
-    direction: hasKeys(defaultSettings, ['direction']),
-    navLayout: hasKeys(defaultSettings, ['navLayout']),
-    fontFamily: hasKeys(defaultSettings, ['fontFamily']),
-    primaryColor: hasKeys(defaultSettings, ['primaryColor']),
-    compactLayout: hasKeys(defaultSettings, ['compactLayout']),
-  };
-
-  useEffect(() => {
-    if (mode !== undefined && mode !== settings.state.mode) {
-      settings.setState({ mode });
-    }
-  }, [mode, settings]);
+  const modeChanged = mode !== undefined && mode !== themeConfig.defaultMode;
+  const canReset = settings.canReset || modeChanged;
 
   const handleReset = useCallback(() => {
     settings.onReset();
@@ -67,22 +58,22 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
         alignItems: 'center',
       }}
     >
-      <Typography variant="h6" sx={{ flexGrow: 1 }}>
+      <Typography id={titleId} variant="h6" component="h2" sx={{ flexGrow: 1 }}>
         Settings
       </Typography>
 
       <FullScreenButton />
 
       <Tooltip title="Reset all">
-        <IconButton onClick={handleReset}>
-          <Badge color="error" variant="dot" invisible={!settings.canReset}>
+        <IconButton aria-label="Reset all" onClick={handleReset}>
+          <Badge color="error" variant="dot" invisible={!canReset}>
             <Iconify icon="solar:restart-bold" />
           </Badge>
         </IconButton>
       </Tooltip>
 
       <Tooltip title="Close">
-        <IconButton onClick={settings.onCloseDrawer}>
+        <IconButton aria-label="Close settings" onClick={settings.onCloseDrawer}>
           <Iconify icon="mingcute:close-line" />
         </IconButton>
       </Tooltip>
@@ -91,8 +82,8 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
 
   const renderMode = () => (
     <BaseOption
-      label="Mode"
-      selected={settings.state.mode === 'dark'}
+      label="Dark mode"
+      selected={colorScheme === 'dark'}
       icon={<SvgIcon>{settingIcons.moon}</SvgIcon>}
       action={
         mode === 'system' ? (
@@ -110,39 +101,14 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
       }
       onChangeOption={() => {
         setMode(colorScheme === 'light' ? 'dark' : 'light');
-        settings.setState({ mode: colorScheme === 'light' ? 'dark' : 'light' });
-      }}
-    />
-  );
-
-  const renderContrast = () => (
-    <BaseOption
-      label="Contrast"
-      selected={settings.state.contrast === 'high'}
-      icon={<SvgIcon>{settingIcons.contrast}</SvgIcon>}
-      onChangeOption={() => {
-        settings.setState({
-          contrast: settings.state.contrast === 'default' ? 'high' : 'default',
-        });
-      }}
-    />
-  );
-
-  const renderDirection = () => (
-    <BaseOption
-      label="Right to left"
-      selected={settings.state.direction === 'rtl'}
-      icon={<SvgIcon>{settingIcons.alignRight}</SvgIcon>}
-      onChangeOption={() => {
-        settings.setState({ direction: settings.state.direction === 'ltr' ? 'rtl' : 'ltr' });
       }}
     />
   );
 
   const renderCompactLayout = () => (
     <BaseOption
-      tooltip="Dashboard only and available at large resolutions > 1600px (xl)"
       label="Compact"
+      description="Limits the page width on large screens."
       selected={!!settings.state.compactLayout}
       icon={<SvgIcon>{settingIcons.autofitWidth}</SvgIcon>}
       onChangeOption={() => {
@@ -151,152 +117,68 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
     />
   );
 
-  const renderPresets = () => (
-    <LargeBlock
-      title="Presets"
-      canReset={settings.state.primaryColor !== defaultSettings.primaryColor}
-      onReset={() => {
-        settings.setState({ primaryColor: defaultSettings.primaryColor });
-      }}
-    >
-      <PresetsOptions
-        icon={<SvgIcon sx={{ width: 28, height: 28 }}>{settingIcons.siderbarDuotone}</SvgIcon>}
-        options={(Object.keys(primaryColorPresets) as SettingsState['primaryColor'][]).map(
-          (key) => ({
-            name: key,
-            value: primaryColorPresets[key].main,
-          })
-        )}
-        value={settings.state.primaryColor}
-        onChangeOption={(newOption) => {
-          settings.setState({ primaryColor: newOption });
-        }}
-      />
-    </LargeBlock>
-  );
-
   const renderNav = () => (
-    <LargeBlock title="Nav" tooltip="Dashboard only" sx={{ gap: 2.5 }}>
-      {visibility.navLayout && (
-        <SmallBlock
-          label="Layout"
-          canReset={settings.state.navLayout !== defaultSettings.navLayout}
-          onReset={() => {
-            settings.setState({ navLayout: defaultSettings.navLayout });
+    <LargeBlock title="Nav" sx={{ gap: 2.5 }}>
+      <SmallBlock
+        label="Layout"
+        canReset={settings.state.navLayout !== defaultSettings.navLayout}
+        onReset={() => {
+          settings.setState({ navLayout: defaultSettings.navLayout });
+        }}
+      >
+        <NavLayoutOptions
+          value={settings.state.navLayout}
+          onChangeOption={(newOption) => {
+            settings.setState({ navLayout: newOption });
           }}
-        >
-          <NavLayoutOptions
-            value={settings.state.navLayout}
-            onChangeOption={(newOption) => {
-              settings.setState({ navLayout: newOption });
-            }}
-            options={[
-              {
-                value: 'vertical',
-                icon: (
-                  <SvgIcon sx={{ width: 1, height: 'auto' }}>{settingIcons.navVertical}</SvgIcon>
-                ),
-              },
-              {
-                value: 'horizontal',
-                icon: (
-                  <SvgIcon sx={{ width: 1, height: 'auto' }}>{settingIcons.navHorizontal}</SvgIcon>
-                ),
-              },
-              {
-                value: 'mini',
-                icon: <SvgIcon sx={{ width: 1, height: 'auto' }}>{settingIcons.navMini}</SvgIcon>,
-              },
-            ]}
-          />
-        </SmallBlock>
-      )}
-      {visibility.navColor && (
-        <SmallBlock
-          label="Color"
-          canReset={settings.state.navColor !== defaultSettings.navColor}
-          onReset={() => {
-            settings.setState({ navColor: defaultSettings.navColor });
-          }}
-        >
-          <NavColorOptions
-            value={settings.state.navColor}
-            onChangeOption={(newOption) => {
-              settings.setState({ navColor: newOption });
-            }}
-            options={[
-              {
-                label: 'Integrate',
-                value: 'integrate',
-                icon: <SvgIcon>{settingIcons.sidebarOutline}</SvgIcon>,
-              },
-              {
-                label: 'Apparent',
-                value: 'apparent',
-                icon: <SvgIcon>{settingIcons.sidebarFill}</SvgIcon>,
-              },
-            ]}
-          />
-        </SmallBlock>
-      )}
+          options={[
+            {
+              label: 'Vertical',
+              value: 'vertical',
+              icon: <SvgIcon sx={{ width: 1, height: 'auto' }}>{settingIcons.navVertical}</SvgIcon>,
+            },
+            {
+              label: 'Mini',
+              value: 'mini',
+              icon: <SvgIcon sx={{ width: 1, height: 'auto' }}>{settingIcons.navMini}</SvgIcon>,
+            },
+          ]}
+        />
+      </SmallBlock>
     </LargeBlock>
   );
 
   const renderFont = () => (
     <LargeBlock title="Font" sx={{ gap: 2.5 }}>
-      {visibility.fontFamily && (
-        <SmallBlock
-          label="Family"
-          canReset={settings.state.fontFamily !== defaultSettings.fontFamily}
-          onReset={() => {
-            settings.setState({ fontFamily: defaultSettings.fontFamily });
+      <SmallBlock
+        label="Size"
+        canReset={settings.state.fontSize !== defaultSettings.fontSize}
+        onReset={() => {
+          settings.setState({ fontSize: defaultSettings.fontSize });
+        }}
+        sx={{ gap: 5 }}
+      >
+        <FontSizeOptions
+          options={FONT_SIZE_RANGE}
+          value={settings.state.fontSize}
+          onChangeOption={(newOption) => {
+            settings.setState({ fontSize: newOption });
           }}
-        >
-          <FontFamilyOptions
-            value={settings.state.fontFamily}
-            onChangeOption={(newOption) => {
-              settings.setState({ fontFamily: newOption });
-            }}
-            options={[
-              themeConfig.fontFamily.primary,
-              'Inter Variable',
-              'DM Sans Variable',
-              'Nunito Sans Variable',
-            ]}
-            icon={<SvgIcon sx={{ width: 28, height: 28 }}>{settingIcons.font}</SvgIcon>}
-          />
-        </SmallBlock>
-      )}
-      {visibility.fontSize && (
-        <SmallBlock
-          label="Size"
-          canReset={settings.state.fontSize !== defaultSettings.fontSize}
-          onReset={() => {
-            settings.setState({ fontSize: defaultSettings.fontSize });
-          }}
-          sx={{ gap: 5 }}
-        >
-          <FontSizeOptions
-            options={[12, 20]}
-            value={settings.state.fontSize}
-            onChangeOption={(newOption) => {
-              settings.setState({ fontSize: newOption });
-            }}
-          />
-        </SmallBlock>
-      )}
+        />
+      </SmallBlock>
     </LargeBlock>
   );
 
   return (
     <Drawer
-      aria-hidden={!settings.openDrawer}
       anchor="right"
       open={settings.openDrawer}
       onClose={settings.onCloseDrawer}
       slotProps={{
         backdrop: { invisible: true },
         paper: {
+          role: 'dialog',
+          'aria-labelledby': titleId,
           sx: [
             (theme) => ({
               ...theme.mixins.paperStyles(theme, {
@@ -311,9 +193,11 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
     >
       {renderHead()}
 
-      <Scrollbar>
+      {/* Native scrolling replaces the template's Scrollbar (simplebar-react is not approved). */}
+      <Box sx={{ flex: '1 1 auto', overflowY: 'auto' }}>
         <Box
           sx={{
+            pt: 1,
             pb: 5,
             gap: 6,
             px: 2.5,
@@ -322,17 +206,14 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
           }}
         >
           <Box sx={{ gap: 2, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
-            {visibility.mode && renderMode()}
-            {visibility.contrast && renderContrast()}
-            {visibility.direction && renderDirection()}
-            {visibility.compactLayout && renderCompactLayout()}
+            {renderMode()}
+            {renderCompactLayout()}
           </Box>
 
-          {(visibility.navColor || visibility.navLayout) && renderNav()}
-          {visibility.primaryColor && renderPresets()}
-          {(visibility.fontFamily || visibility.fontSize) && renderFont()}
+          {renderNav()}
+          {renderFont()}
         </Box>
-      </Scrollbar>
+      </Box>
     </Drawer>
   );
 }

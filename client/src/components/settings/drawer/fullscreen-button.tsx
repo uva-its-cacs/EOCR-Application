@@ -22,7 +22,13 @@ export function FullScreenButton() {
 
   return (
     <Tooltip title={fullscreen ? 'Exit' : 'Fullscreen'}>
-      <IconButton onClick={handleToggleFullscreen} color={fullscreen ? 'primary' : 'default'}>
+      {/* EOCR: aria-pressed exposes the state the template shows by color only. */}
+      <IconButton
+        aria-label="Fullscreen"
+        aria-pressed={fullscreen}
+        onClick={handleToggleFullscreen}
+        color={fullscreen ? 'primary' : 'default'}
+      >
         <Iconify
           icon={
             fullscreen

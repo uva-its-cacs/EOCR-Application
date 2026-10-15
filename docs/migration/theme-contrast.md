@@ -8,6 +8,17 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 - **Browser pairs:** some pairs need real CSS (alpha tints, `color-mix`, hover states, DOM structure). They are measured in a real browser (see "Browser measurements") and the code that produces them is guarded by `src/theme/theme-composition.test.ts`.
 - **Not changed on purpose:** `text.disabled`, `divider` and `shared.paperOutlined`.
 
+## Template settings drawer, breadcrumbs and error views (2026-10-15)
+
+New template pieces reuse tokens already guarded below: the current breadcrumb and unselected settings options use `text.secondary` (the template's `text.disabled` is replaced), the account role and status tabs use soft Labels, and the error-view illustrations are decorative. The settings drawer's block labels ("Nav", "Font") are new pairs, now asserted:
+
+| Pair | Min | Light | Dark |
+| --- | --- | --- | --- |
+| settings block label: common.white on text.primary | 4.5 | 15.5159 | n/a |
+| settings block label: grey.800 on text.primary | 4.5 | n/a | 15.5159 |
+
+The drawer paper is `background.default` at 90% with a blur, so up to 10% of the content behind shows through. Worst case for its lowest-contrast text (`text.secondary`), computed: 6.64:1 in light mode (black content behind) and 8.16:1 in dark mode (white content behind), both above 4.5:1. The font-size option only enlarges text (16 to 20px), which does not lower any ratio.
+
 ## Template shell match: white page and light sidebar (2026-10-15)
 
 To match the Minimal template's dashboard, light `background.default` is white (`#FFFFFF`) again, and the sidebar and mobile drawer use the template's "integrate" nav colors (they sit on `background.default`) instead of a permanently dark `grey.900` menu. The "permanent dark navigation" pairs are removed from the guard; the nav pairs below (Slice 7) now cover the sidebar in both schemes, plus a focus ring check on the active item tint. Light `primary.main` stays `#007565` (it passes on white too).
@@ -171,6 +182,8 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | Pair | Min | Light | Dark |
 | --- | --- | --- | --- |
 | navigation: focus ring on the active item tint | 3 | 5.0221 | 5.4860 |
+| settings block label: common.white on text.primary | 4.5 | 15.5159 | n/a |
+| settings block label: grey.800 on text.primary | 4.5 | n/a | 15.5159 |
 | primary.contrastText on primary.main | 4.5 | 5.6264 | 5.3985 |
 | primary.contrastText on primary.dark (hover) | 4.5 | 9.8951 | 9.6165 |
 | secondary.contrastText on secondary.main | 4.5 | 5.1626 | 5.3686 |
