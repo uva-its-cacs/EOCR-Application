@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 
 import { Logo } from 'src/components/logo';
+import { Scrollbar } from 'src/components/scrollbar';
 import { PrimaryNav } from 'src/components/eocr-nav/primary-nav';
 
 import { layoutClasses } from '../core';
@@ -26,7 +27,7 @@ type Props = {
 /**
  * Fixed sidebar from the layout breakpoint up (the drawer takes over below it), following the
  * template's layouts/dashboard/nav-vertical.tsx: Logo, toggle button, and the vertical nav (or the mini
- * nav when collapsed). Native scrolling replaces the template's Scrollbar, and there is no NavUpgrade.
+ * nav when collapsed), with the template's Scrollbar around the vertical nav. There is no NavUpgrade.
  */
 export function NavSidebar({ groups, layoutQuery, isNavMini, onToggleNav }: Props) {
   return (
@@ -53,18 +54,22 @@ export function NavSidebar({ groups, layoutQuery, isNavMini, onToggleNav }: Prop
         </Box>
       )}
 
-      <Box
-        sx={(theme) => ({
-          ...(isNavMini && theme.mixins.hideScrollY),
-          flex: '1 1 auto',
-          minHeight: 0,
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-        })}
-      >
-        <PrimaryNav id={NAV_ID} groups={groups} compact={isNavMini} sx={{ flex: '1 1 auto' }} />
-      </Box>
+      {isNavMini ? (
+        <Box
+          sx={(theme) => ({
+            ...theme.mixins.hideScrollY,
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+          })}
+        >
+          <PrimaryNav id={NAV_ID} groups={groups} compact />
+        </Box>
+      ) : (
+        <Scrollbar fillContent>
+          <PrimaryNav id={NAV_ID} groups={groups} sx={{ flex: '1 1 auto' }} />
+        </Scrollbar>
+      )}
     </NavRoot>
   );
 }

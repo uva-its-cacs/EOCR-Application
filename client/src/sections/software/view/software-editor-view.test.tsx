@@ -3,7 +3,7 @@ import type { Software } from '../types';
 
 import { it, vi, expect, describe, afterEach } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
+import { screen, within, cleanup, waitFor, fireEvent } from '@testing-library/react';
 
 import { paths } from 'src/routes/paths';
 
@@ -120,9 +120,11 @@ describe('software editor page', () => {
     const nameInput = await screen.findByRole('textbox', { name: /Software name/ });
     fireEvent.change(nameInput, { target: { value: 'Keep my edit' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      'no longer have administrator access'
-    );
+    // The template's toaster announces it politely in its "Notifications" region and keeps it on screen.
+    const notifications = await screen.findByRole('region', { name: /Notifications/ });
+    expect(
+      await within(notifications).findByText(/no longer have administrator access/)
+    ).toBeTruthy();
     expect((nameInput as HTMLInputElement).value).toBe('Keep my edit');
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to software catalog' }));

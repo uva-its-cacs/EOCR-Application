@@ -9,7 +9,8 @@ import { queryClient } from 'src/lib/query-client';
 import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
-import { ToastProvider } from 'src/components/toast/toast-provider';
+import { Snackbar } from 'src/components/snackbar';
+import { MotionLazy } from 'src/components/animate/motion-lazy';
 import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/components/settings';
 
 // ----------------------------------------------------------------------
@@ -29,10 +30,11 @@ export default function App({ children }: AppProps) {
         themeOverrides={eocrThemeOverrides}
       >
         <QueryClientProvider client={queryClient}>
-          <ToastProvider>
+          <MotionLazy>
+            <Snackbar />
             <SettingsDrawer defaultSettings={defaultSettings} />
             {children}
-          </ToastProvider>
+          </MotionLazy>
         </QueryClientProvider>
       </ThemeProvider>
     </SettingsProvider>

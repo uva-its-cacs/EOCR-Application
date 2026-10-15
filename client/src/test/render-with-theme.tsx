@@ -7,7 +7,8 @@ import { RouterProvider, createMemoryRouter } from 'react-router';
 import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
-import { ToastProvider } from 'src/components/toast/toast-provider';
+import { Snackbar } from 'src/components/snackbar';
+import { MotionLazy } from 'src/components/animate/motion-lazy';
 
 // ----------------------------------------------------------------------
 
@@ -19,7 +20,10 @@ export function renderWithTheme(ui: React.ReactElement): RenderResult {
       defaultMode={themeConfig.defaultMode}
       themeOverrides={eocrThemeOverrides}
     >
-      <ToastProvider>{ui}</ToastProvider>
+      <MotionLazy>
+        <Snackbar />
+        {ui}
+      </MotionLazy>
     </ThemeProvider>
   );
 }

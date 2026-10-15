@@ -7,6 +7,8 @@ import Button from '@mui/material/Button';
 import { themeConfig, ThemeProvider } from 'src/theme';
 import { eocrThemeOverrides } from 'src/theme/eocr-overrides';
 
+import { MotionLazy } from 'src/components/animate/motion-lazy';
+
 import { View500 } from 'src/sections/error/500-view';
 
 import { routeErrorMessage } from './route-error-message';
@@ -35,28 +37,30 @@ export function EocrErrorBoundary() {
       defaultMode={themeConfig.defaultMode}
       themeOverrides={eocrThemeOverrides}
     >
-      <Box
-        component="main"
-        id="main-content"
-        tabIndex={-1}
-        sx={{ minHeight: '100vh', display: 'flex', outline: 'none' }}
-      >
-        <View500
-          title="Something went wrong"
-          description={routeErrorMessage(error, import.meta.env.DEV)}
-          action={
-            <Box sx={{ gap: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Button size="large" variant="contained" onClick={() => window.location.reload()}>
-                Reload
-              </Button>
-              {/* A full page load, not a router link: client routing may be what broke. */}
-              <Button size="large" variant="outlined" color="inherit" href="/">
-                Go to home
-              </Button>
-            </Box>
-          }
-        />
-      </Box>
+      <MotionLazy>
+        <Box
+          component="main"
+          id="main-content"
+          tabIndex={-1}
+          sx={{ minHeight: '100vh', display: 'flex', outline: 'none' }}
+        >
+          <View500
+            title="Something went wrong"
+            description={routeErrorMessage(error, import.meta.env.DEV)}
+            action={
+              <Box sx={{ gap: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <Button size="large" variant="contained" onClick={() => window.location.reload()}>
+                  Reload
+                </Button>
+                {/* A full page load, not a router link: client routing may be what broke. */}
+                <Button size="large" variant="outlined" color="inherit" href="/">
+                  Go to home
+                </Button>
+              </Box>
+            }
+          />
+        </Box>
+      </MotionLazy>
     </ThemeProvider>
   );
 }

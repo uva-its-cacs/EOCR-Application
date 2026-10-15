@@ -9,7 +9,6 @@ import { useMemo, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useSetState } from 'minimal-shared/hooks';
 
-import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
 import Tabs from '@mui/material/Tabs';
@@ -22,6 +21,7 @@ import TableCell from '@mui/material/TableCell';
 import { useTheme } from '@mui/material/styles';
 
 import { Label } from 'src/components/label';
+import { Scrollbar } from 'src/components/scrollbar';
 import { LoadingState } from 'src/components/feedback';
 import { PageHeader } from 'src/components/page-header';
 import { VisuallyHidden } from 'src/components/visually-hidden';
@@ -47,7 +47,7 @@ import { SoftwareTableFiltersResult } from '../software-table-filters-result';
 
 // Adapted from the template's invoice-list-view.tsx, with catalog rows from the API instead of mock
 // data. Not ported: checkbox selection and bulk actions (no selection), Delete (no endpoint), date
-// filters (date pickers are not approved) and the Scrollbar (native scrolling).
+// filters (date pickers are not approved).
 
 const BASE_TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'softwareName', label: 'Software' },
@@ -163,12 +163,9 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
       />
 
       <Card sx={{ mb: { xs: 3, md: 5 } }}>
-        {/* Native scrolling replaces the template's Scrollbar; focusable so keyboard users can scroll. */}
-        <Box
-          role="region"
-          aria-labelledby="software-summary-heading"
-          tabIndex={0}
-          sx={{ minHeight: 108, overflowX: 'auto' }}
+        <Scrollbar
+          label="Approval summary"
+          sx={{ minHeight: 108 }}
         >
           <VisuallyHidden
             component="h2"
@@ -205,7 +202,7 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
               />
             ))}
           </Stack>
-        </Box>
+        </Scrollbar>
       </Card>
 
       <Card>
@@ -273,12 +270,9 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
           <span role="status">{loading ? '' : `${dataFiltered.length} results found`}</span>
         </VisuallyHidden>
 
-        {/* Native scrolling replaces the template's Scrollbar; focusable so keyboard users can scroll. */}
-        <Box
-          role="region"
-          aria-label="Software catalog table"
-          tabIndex={0}
-          sx={{ minHeight: 444, overflowX: 'auto' }}
+        <Scrollbar
+          label="Software catalog table"
+          sx={{ minHeight: 444 }}
         >
           <Table
             aria-label="Software catalog"
@@ -324,7 +318,7 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
               />
             </TableBody>
           </Table>
-        </Box>
+        </Scrollbar>
 
         <TablePaginationCustom
           page={table.page}

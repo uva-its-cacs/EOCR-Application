@@ -6,6 +6,9 @@ import { snackbarClasses } from './classes';
 
 // ----------------------------------------------------------------------
 
+// The template's toaster (sonner): a polite live region named "Notifications" (Alt+T moves focus to it),
+// a named close button on each toast, and no motion under prefers-reduced-motion (sonner's own CSS).
+// EOCR: error toasts must not time out (WCAG 2.2.1): raise them with `{ duration: Infinity }`.
 export function Snackbar() {
   return (
     <Portal>

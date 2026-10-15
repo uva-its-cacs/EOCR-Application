@@ -9,6 +9,7 @@ import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
 
 import { Logo } from 'src/components/logo';
+import { Scrollbar } from 'src/components/scrollbar';
 import { PrimaryNav } from 'src/components/eocr-nav/primary-nav';
 
 // ----------------------------------------------------------------------
@@ -71,7 +72,9 @@ export function NavDrawer({ id, open, onClose, groups }: Props) {
         <Box sx={{ pl: 3.5, pt: 2.5, pb: 1 }}>
           <Logo onClick={() => handleLinkClick(paths.catalog.root)} />
         </Box>
-        <PrimaryNav groups={groups} onItemClick={handleLinkClick} sx={{ px: 2 }} />
+        <Scrollbar fillContent>
+          <PrimaryNav groups={groups} onItemClick={handleLinkClick} sx={{ px: 2 }} />
+        </Scrollbar>
       </Box>
     </Drawer>
   );

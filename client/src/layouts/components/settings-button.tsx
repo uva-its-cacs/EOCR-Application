@@ -1,21 +1,28 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
+import { m } from 'framer-motion';
+
 import Badge from '@mui/material/Badge';
 import SvgIcon from '@mui/material/SvgIcon';
 import IconButton from '@mui/material/IconButton';
 
 import { useSettingsContext } from 'src/components/settings';
+import { varTap, varHover, transitionTap } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
-// Adapted from the template's settings-button.tsx: framer-motion is not approved, so the tap and hover
-// scaling and the endlessly rotating gear are removed (AGENTS.md: no infinite animation); the icon is
-// static. The button is named "Settings" and reports the drawer as a dialog popup.
+// Adapted from the template's settings-button.tsx: the tap and hover scaling are kept (no movement
+// under reduced motion), but the endlessly rotating gear is static (AGENTS.md: no infinite animation).
+// The button is named "Settings" and reports the drawer as a dialog popup.
 export function SettingsButton({ sx, ...other }: IconButtonProps) {
   const settings = useSettingsContext();
 
   return (
     <IconButton
+      component={m.button}
+      whileTap={varTap(0.96)}
+      whileHover={varHover(1.04)}
+      transition={transitionTap()}
       aria-label="Settings"
       aria-haspopup="dialog"
       aria-expanded={settings.openDrawer}

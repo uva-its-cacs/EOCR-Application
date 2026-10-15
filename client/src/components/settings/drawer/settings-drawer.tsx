@@ -18,6 +18,7 @@ import { Label } from '../../label';
 import { settingIcons } from './icons';
 import { Iconify } from '../../iconify';
 import { BaseOption } from './base-option';
+import { Scrollbar } from '../../scrollbar';
 import { FontSizeOptions } from './font-options';
 import { SmallBlock, LargeBlock } from './styles';
 import { FONT_SIZE_RANGE } from '../settings-config';
@@ -32,7 +33,7 @@ import { useSettingsContext } from '../context/use-settings-context';
  * mode, compact layout, nav layout (vertical or mini) and a larger font size. Removed: contrast,
  * right-to-left, color presets, nav color, font family and the horizontal nav. EOCR changes:
  * - The color mode is MUI's color scheme (shared with the header toggle), not a separate setting.
- * - The drawer is a dialog named by its "Settings" heading; native scrolling replaces Scrollbar.
+ * - The drawer is a dialog named by its "Settings" heading.
  * - Switch cards, named nav layout buttons with aria-pressed, named reset buttons (BaseOption, styles).
  */
 export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
@@ -193,8 +194,7 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
     >
       {renderHead()}
 
-      {/* Native scrolling replaces the template's Scrollbar (simplebar-react is not approved). */}
-      <Box sx={{ flex: '1 1 auto', overflowY: 'auto' }}>
+      <Scrollbar>
         <Box
           sx={{
             pt: 1,
@@ -213,7 +213,7 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
           {renderNav()}
           {renderFont()}
         </Box>
-      </Box>
+      </Scrollbar>
     </Drawer>
   );
 }

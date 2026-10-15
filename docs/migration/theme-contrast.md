@@ -8,6 +8,11 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 - **Browser pairs:** some pairs need real CSS (alpha tints, `color-mix`, hover states, DOM structure). They are measured in a real browser (see "Browser measurements") and the code that produces them is guarded by `src/theme/theme-composition.test.ts`.
 - **Not changed on purpose:** `text.disabled`, `divider` and `shared.paperOutlined`.
 
+## Template scrollbar and toasts (2026-10-15)
+
+- Scrollbar thumb (`components/scrollbar/styles.css`): `text.secondary` at 0.64 opacity, computed against each surface: 3.29:1 on `background.default` and `background.paper` and 3.17:1 on `background.neutral` (light); 5.17:1 on `background.default` and 4.82:1 on `background.paper` (dark). UI component minimum 3:1. The template's `text.disabled` at 0.48 is below 3:1.
+- Toasts (`components/snackbar`): title text is `text.primary` on `background.paper` (covered by the asserted pairs); descriptions use `text.secondary` instead of the template's 0.64 opacity (about 4:1); icon tiles use each color's `main` (covered by the `main` as text pairs, well above the 3:1 needed for icons).
+
 ## Template settings drawer, breadcrumbs and error views (2026-10-15)
 
 New template pieces reuse tokens already guarded below: the current breadcrumb and unselected settings options use `text.secondary` (the template's `text.disabled` is replaced), the account role and status tabs use soft Labels, and the error-view illustrations are decorative. The settings drawer's block labels ("Nav", "Font") are new pairs, now asserted:

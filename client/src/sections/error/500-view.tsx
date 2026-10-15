@@ -1,3 +1,5 @@
+import { m } from 'framer-motion';
+
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
@@ -6,13 +8,15 @@ import { RouterLink } from 'src/routes/components';
 import { CONFIG } from 'src/global-config';
 import { ServerErrorIllustration } from 'src/assets/illustrations';
 
+import { varBounce } from 'src/components/animate';
+
 import { ErrorContent } from './error-content';
 
 // ----------------------------------------------------------------------
 
-// Adapted from the template's sections/error/500-view.tsx: the framer-motion bounce is removed (framer-motion is
-// not approved) and the page renders inside EOCR's layout (ErrorContent replaces SimpleLayout). The
-// heading is the page's only h1 (styled as the template's h3), focusable by the route-focus hook, and
+// Adapted from the template's sections/error/500-view.tsx. The one-time bounce-in is kept (no movement under
+// reduced motion: MotionLazy's MotionConfig). The page renders inside EOCR's layout (ErrorContent
+// replaces SimpleLayout). The heading is the page's only h1 (styled as the template's h3), focusable by the route-focus hook, and
 // the page sets its document title. `description` and `action` replace the default text and button.
 type Props = {
   title?: string;
@@ -32,23 +36,29 @@ export function View500({
     <ErrorContent>
       <title>{`${documentTitle} - ${CONFIG.appName}`}</title>
 
-      <Typography
-        variant="h3"
-        component="h1"
-        tabIndex={-1}
-        sx={{ mb: 2, outline: 'none' }}
-      >
-        {title}
-      </Typography>
+      <m.div variants={varBounce('in')}>
+        <Typography
+          variant="h3"
+          component="h1"
+          tabIndex={-1}
+          sx={{ mb: 2, outline: 'none' }}
+        >
+          {title}
+        </Typography>
+      </m.div>
 
-      <Typography
-        component="div"
-        sx={{ color: 'text.secondary' }}
-      >
-        {description ?? 'There was an error, please try again later.'}
-      </Typography>
+      <m.div variants={varBounce('in')}>
+        <Typography
+          component="div"
+          sx={{ color: 'text.secondary' }}
+        >
+          {description ?? 'There was an error, please try again later.'}
+        </Typography>
+      </m.div>
 
-      <ServerErrorIllustration sx={{ my: { xs: 5, sm: 10 } }} />
+      <m.div variants={varBounce('in')}>
+        <ServerErrorIllustration sx={{ my: { xs: 5, sm: 10 } }} />
+      </m.div>
 
       {action ?? (
         <Button

@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from 'src/lib/api';
 
-import { useToast } from 'src/components/toast/toast-provider';
+import { toast } from 'src/components/snackbar';
 
 import { updateSoftware, fetchSoftwareOptions } from './api';
 import { SOFTWARE_QUERY_KEY, SOFTWARE_CATALOG_QUERY_KEY } from './use-software';
@@ -19,7 +19,6 @@ import {
 } from './software-editor-schema';
 
 export function useSoftwareEditor(software: Software, onSaved: () => void) {
-  const toast = useToast();
   const client = useQueryClient();
   const [saveError, setSaveError] = useState('');
   const methods = useForm<SoftwareEditorValues>({
@@ -40,7 +39,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
       );
       void client.invalidateQueries({ queryKey: SOFTWARE_QUERY_KEY });
       void client.invalidateQueries({ queryKey: SOFTWARE_CATALOG_QUERY_KEY });
-      toast.showSuccess('Software changes saved.');
+      toast.success('Software changes saved.');
     },
   });
   const submit = methods.handleSubmit(
@@ -66,16 +65,20 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
               first = false;
             }
           }
-          toast.showError(
+          // Errors stay until dismissed (WCAG 2.2.1); successes use the toaster's timeout.
+          toast.error(
             error.status === 409
               ? 'Another administrator changed this software. Your edits are still here. Cancel, refresh the list, and reopen the editor before saving.'
               : error.status === 403 || error.status === 401
                 ? 'You no longer have administrator access. Your edits have not been saved.'
                 : (error.problem?.detail ??
-                  'Software could not be saved. Check the fields or try again.')
+                  'Software could not be saved. Check the fields or try again.'),
+            { duration: Infinity }
           );
         } else {
-          toast.showError('Software could not be saved. Your edits are still here. Try again.');
+          toast.error('Software could not be saved. Your edits are still here. Try again.', {
+            duration: Infinity,
+          });
         }
       }
     },

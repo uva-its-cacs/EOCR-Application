@@ -5,6 +5,7 @@ import Portal from '@mui/material/Portal';
 import { styled } from '@mui/material/styles';
 
 import { AnimateLogoZoom } from '../animate';
+import { VisuallyHidden } from '../visually-hidden';
 
 // ----------------------------------------------------------------------
 
@@ -20,11 +21,26 @@ export type SplashScreenProps = React.ComponentProps<'div'> & {
   };
 };
 
+// EOCR: the splash is a polite status announced as "Loading", and its logo (a link in the template) is
+// hidden from assistive technology and out of the tab order. The logo pulses only while loading, with
+// nothing else on screen (WCAG 2.2.2 covers moving content beside other content); under reduced
+// motion it does not scale or rotate (MotionLazy's MotionConfig).
 export function SplashScreen({ portal = true, slots, slotProps, sx, ...other }: SplashScreenProps) {
   const renderContent = (
     <LoadingWrapper {...slotProps?.wrapper}>
-      <LoadingContent sx={sx} {...other}>
-        {slots?.logo ?? <AnimateLogoZoom {...slotProps?.logo} />}
+      <LoadingContent role="status" sx={sx} {...other}>
+        <VisuallyHidden>Loading</VisuallyHidden>
+        <span aria-hidden>
+          {slots?.logo ?? (
+            <AnimateLogoZoom
+              {...slotProps?.logo}
+              slotProps={{
+                ...slotProps?.logo?.slotProps,
+                logo: { tabIndex: -1, ...slotProps?.logo?.slotProps?.logo },
+              }}
+            />
+          )}
+        </span>
       </LoadingContent>
     </LoadingWrapper>
   );

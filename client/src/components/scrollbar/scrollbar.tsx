@@ -1,5 +1,6 @@
 import type { ScrollbarProps } from './types';
 
+import { useCallback } from 'react';
 import SimpleBar from 'simplebar-react';
 import { mergeClasses } from 'minimal-shared/utils';
 
@@ -15,12 +16,32 @@ export function Scrollbar({
   children,
   className,
   slotProps,
+  label,
   fillContent = true,
+  scrollableNodeProps,
   ...other
 }: ScrollbarProps) {
+  // EOCR: simplebar always makes the scroll node a region named "scrollable content" in the tab order.
+  // Without a label, those attributes are removed once the node mounts (React does not set them again
+  // while the props are unchanged). One callback ref also forwards the node to the caller's ref.
+  const scrollableRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (node && !label) {
+        node.removeAttribute('role');
+        node.removeAttribute('aria-label');
+        node.removeAttribute('tabindex');
+      }
+      if (typeof ref === 'function') ref(node as HTMLDivElement | null);
+      else if (ref) ref.current = node as HTMLDivElement | null;
+    },
+    [label, ref]
+  );
+
   return (
     <ScrollbarRoot
-      scrollableNodeProps={{ ref }}
+      // EOCR: the caller's scrollableNodeProps are kept (the template replaces them with the ref).
+      scrollableNodeProps={{ ...scrollableNodeProps, ref: scrollableRef }}
+      ariaLabel={label}
       clickOnTrack={false}
       fillContent={fillContent}
       className={mergeClasses([scrollbarClasses.root, className])}

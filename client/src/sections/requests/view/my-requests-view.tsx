@@ -6,7 +6,6 @@ import { useMemo, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useSetState } from 'minimal-shared/hooks';
 
-import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
 import Tabs from '@mui/material/Tabs';
@@ -26,6 +25,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { Scrollbar } from 'src/components/scrollbar';
 import { VisuallyHidden } from 'src/components/visually-hidden';
 import { AnalyticSummary } from 'src/components/analytic-summary';
 import { ErrorState, LoadingState } from 'src/components/feedback';
@@ -159,13 +159,10 @@ export function MyRequestsView() {
       {!(isError && !data) && (
         <>
           <Card sx={{ mb: { xs: 3, md: 5 } }}>
-            {/* Native scrolling replaces the template's Scrollbar; focusable so keyboard users can scroll. */}
-            <Box
-              role="region"
-              aria-labelledby="requests-summary-heading"
-              aria-busy={isPending}
-              tabIndex={0}
-              sx={{ minHeight: 108, overflowX: 'auto' }}
+            <Scrollbar
+              label="Summary"
+              scrollableNodeProps={{ 'aria-busy': isPending }}
+              sx={{ minHeight: 108 }}
             >
               <VisuallyHidden
                 component="h2"
@@ -210,7 +207,7 @@ export function MyRequestsView() {
                   );
                 })}
               </Stack>
-            </Box>
+            </Scrollbar>
           </Card>
 
           <Card>
@@ -283,12 +280,9 @@ export function MyRequestsView() {
               <span role="status">{isPending ? '' : `${dataFiltered.length} results found`}</span>
             </VisuallyHidden>
 
-            {/* Native scrolling replaces the template's Scrollbar; focusable so keyboard users can scroll. */}
-            <Box
-              role="region"
-              aria-label="Requests table"
-              tabIndex={0}
-              sx={{ minHeight: 444, overflowX: 'auto' }}
+            <Scrollbar
+              label="Requests table"
+              sx={{ minHeight: 444 }}
             >
               <Table
                 aria-label="Your vetting requests"
@@ -333,7 +327,7 @@ export function MyRequestsView() {
                   />
                 </TableBody>
               </Table>
-            </Box>
+            </Scrollbar>
 
             <TablePaginationCustom
               page={table.page}

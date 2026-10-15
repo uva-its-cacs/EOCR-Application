@@ -4,13 +4,10 @@ import { useId } from 'react';
 import { usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
-import Skeleton from '@mui/material/Skeleton';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
 import { RouterLink } from 'src/routes/components';
@@ -21,13 +18,15 @@ import { CustomPopover } from 'src/components/custom-popover';
 import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 
+import { AccountButton } from './account-button';
+
 // ----------------------------------------------------------------------
 
 // Adapted from the template's layouts/components/account-popover.tsx. EOCR changes:
 // - The signed-in user comes from GET /api/me (useCurrentUser) instead of the mocked auth user, with
 //   loading, error (Retry) and signed-out states.
-// - The template's AccountButton (framer-motion AnimateBorder) is replaced by a static ring of the same
-//   40px size; the button is named "Account" and reports its popup.
+// - The template's AccountButton is used (adapted: its border moves only on hover or focus); the
+//   button is named "Account" and reports its popup.
 // - The popover is a dialog named "Account". The email wraps instead of being truncated, and each menu
 //   item is the link itself (the template nests a Link inside a MenuItem).
 // - No sign-out yet: the identity provider is undecided.
@@ -135,34 +134,17 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
 
   return (
     <>
-      <IconButton
+      <AccountButton
         aria-label="Account"
         aria-haspopup="dialog"
-        aria-expanded={open}
+        aria-expanded={!!open}
         aria-controls={open ? popoverId : undefined}
         onClick={onOpen}
-        sx={[{ p: 0 }, ...(Array.isArray(sx) ? sx : [sx])]}
+        pending={current.status === 'loading'}
+        displayName={user?.name}
+        sx={sx}
         {...other}
-      >
-        <Box
-          sx={{
-            p: '3px',
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            border: 1,
-            borderColor: 'primary.main',
-          }}
-        >
-          {current.status === 'loading' ? (
-            <Skeleton variant="circular" sx={{ width: 1, height: 1 }} />
-          ) : (
-            <Avatar alt="" sx={{ width: 1, height: 1 }}>
-              {user?.name.trim().charAt(0).toUpperCase()}
-            </Avatar>
-          )}
-        </Box>
-      </IconButton>
+      />
 
       {renderMenuActions()}
     </>

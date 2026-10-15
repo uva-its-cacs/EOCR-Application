@@ -3,6 +3,8 @@ import type { BoxProps } from '@mui/material/Box';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 
+import { MotionContainer } from 'src/components/animate';
+
 // ----------------------------------------------------------------------
 
 /**
@@ -33,8 +35,11 @@ export function ErrorContent({ sx, children, ...other }: BoxProps) {
       ]}
       {...other}
     >
-      {/* As the template's views: a Container (24px side padding from sm up) inside the column. */}
-      <Container sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* As the template's views: a MotionContainer (staggers the bounce-in) inside the column. */}
+      <Container
+        component={MotionContainer}
+        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+      >
         {children}
       </Container>
     </Box>

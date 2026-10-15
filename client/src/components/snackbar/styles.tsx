@@ -71,7 +71,8 @@ const contentStyles = (theme: Theme): CSSObject => ({
     fontWeight: theme.typography.fontWeightMedium,
   },
   [`& .${snackbarClasses.description}`]: {
-    opacity: 0.64,
+    // EOCR: text.secondary instead of opacity 0.64 on the toast text (about 4:1, below 4.5:1).
+    color: theme.vars.palette.text.secondary,
     lineHeight: 18 / 13,
     fontSize: theme.typography.pxToRem(13),
   },

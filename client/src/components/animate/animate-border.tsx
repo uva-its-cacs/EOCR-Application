@@ -7,6 +7,7 @@ import {
   m,
   useTransform,
   useMotionValue,
+  useReducedMotion,
   useAnimationFrame,
   useMotionTemplate,
 } from 'framer-motion';
@@ -32,7 +33,11 @@ type BorderStyleProps = {
   sx?: SxProps<Theme>;
 };
 
+// EOCR: the template's border moves forever (WCAG 2.2.2 and AGENTS.md: no endless motion). `active`
+// starts it (for example while its button is hovered or focused); it never moves when the user prefers
+// reduced motion.
 type AnimateBorderProps = BoxProps & {
+  active?: boolean;
   duration?: number;
   slotProps?: {
     primaryBorder?: BorderStyleProps;
@@ -47,6 +52,7 @@ type AnimateBorderProps = BoxProps & {
 
 export function AnimateBorder({
   sx,
+  active = false,
   children,
   duration,
   slotProps,
@@ -59,6 +65,7 @@ export function AnimateBorder({
   const primaryBorderRef = useRef<HTMLSpanElement>(null);
 
   const [isHidden, setIsHidden] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   const secondaryBorderStyles = useComputedElementStyles(theme, primaryBorderRef);
 
@@ -70,11 +77,13 @@ export function AnimateBorder({
       }
     };
 
-    handleVisibility();
+    // EOCR: measured on the next frame, not synchronously in the effect (react-hooks/set-state-in-effect).
+    const frame = requestAnimationFrame(handleVisibility);
 
     window.addEventListener('resize', handleVisibility);
 
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener('resize', handleVisibility);
     };
   }, []);
@@ -86,7 +95,7 @@ export function AnimateBorder({
 
   const borderProps = {
     duration,
-    isHidden,
+    isHidden: isHidden || !active || !!reducedMotion,
     rx: slotProps?.svgSettings?.rx,
     ry: slotProps?.svgSettings?.ry,
   };

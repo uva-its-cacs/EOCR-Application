@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { PageLoading } from 'src/components/page-loading';
+import { SplashScreen } from 'src/components/loading-screen';
 
 import { View403 } from 'src/sections/error/403-view';
 import { View500 } from 'src/sections/error/500-view';
@@ -20,7 +20,8 @@ import { useCurrentUser } from 'src/sections/auth/use-current-user';
 export function RequireAdmin() {
   const current = useCurrentUser();
 
-  if (current.status === 'loading') return <PageLoading />;
+  // As the template's auth guard: the splash screen while the session is checked.
+  if (current.status === 'loading') return <SplashScreen />;
 
   if (current.status === 'unauthenticated') {
     return (
