@@ -16,6 +16,8 @@ export const paths = {
   requests: {
     root: `${ROOTS.REQUESTS}`,
     new: `${ROOTS.REQUESTS}/new`,
+    details: (requestId: number) => `${ROOTS.REQUESTS}/${requestId}`,
+    edit: (requestId: number) => `${ROOTS.REQUESTS}/${requestId}/edit`,
   },
   // ADMIN
   admin: {

@@ -167,6 +167,14 @@ describe('MyRequestsView', () => {
     expect(dataRows()[0].textContent).toContain('Demo Boards');
   });
 
+  it('links each request to its status page', async () => {
+    mockFetch(ok(REQUESTS));
+    renderView(<MyRequestsView />);
+
+    const link = await screen.findByRole('link', { name: 'Sample Suite' });
+    expect(link.getAttribute('href')).toBe('/requests/1');
+  });
+
   it('has one h1 and a New request link', async () => {
     mockFetch(ok([]));
     renderView(<MyRequestsView />);

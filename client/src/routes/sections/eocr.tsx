@@ -16,6 +16,8 @@ import { RequireAdmin } from '../components';
 
 const MyRequestsPage = lazy(() => import('src/pages/requests/list'));
 const NewRequestPage = lazy(() => import('src/pages/requests/new'));
+const RequestDetailsPage = lazy(() => import('src/pages/requests/details'));
+const RequestEditPage = lazy(() => import('src/pages/requests/edit'));
 const SoftwareCatalogPage = lazy(() => import('src/pages/software/catalog'));
 const SoftwareEditPage = lazy(() => import('src/pages/admin/software-edit'));
 const NotFoundPage = lazy(() => import('src/pages/not-found'));
@@ -55,6 +57,22 @@ export const eocrRoutes: RouteObject[] = [
         element: <NewRequestPage />,
         handle: {
           crumb: 'New request',
+          parent: { crumb: 'My requests', path: paths.requests.root },
+        } satisfies RouteHandle,
+      },
+      {
+        path: 'requests/:requestId',
+        element: <RequestDetailsPage />,
+        handle: {
+          crumb: 'Request',
+          parent: { crumb: 'My requests', path: paths.requests.root },
+        } satisfies RouteHandle,
+      },
+      {
+        path: 'requests/:requestId/edit',
+        element: <RequestEditPage />,
+        handle: {
+          crumb: 'Continue request',
           parent: { crumb: 'My requests', path: paths.requests.root },
         } satisfies RouteHandle,
       },

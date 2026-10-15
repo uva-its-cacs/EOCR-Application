@@ -1,105 +1,89 @@
-import type { IDateValue } from 'src/types/common';
-
-import { usePopover } from 'minimal-shared/hooks';
+import type { RequestDetail } from './types';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import MenuList from '@mui/material/MenuList';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
+import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { fDateTime } from 'src/utils/format-time';
+import { formatTime, formatDateTime } from 'src/utils/format';
 
-import { Label } from 'src/components/label';
+import { CONFIG } from 'src/global-config';
+
 import { Iconify } from 'src/components/iconify';
-import { CustomPopover } from 'src/components/custom-popover';
+import { StatusChip } from 'src/components/status-chip';
+
+import { REQUEST_STATUS_COLORS } from './status-colors';
 
 // ----------------------------------------------------------------------
 
+// Adapted from the template's sections/order/order-details-toolbar.tsx. EOCR changes: the heading is the
+// page's only h1 (styled h4, focusable by the route-focus hook) and the page sets its document title;
+// the back arrow is named; the status is a StatusChip (text, not color alone); the date uses
+// text.secondary (the template's text.disabled is below 4.5:1). The template's status menu, Print and
+// Edit buttons are replaced by "Continue draft" for drafts (status changes belong to reviewers).
 type Props = {
-  status?: string;
+  request: RequestDetail;
   backHref: string;
-  orderNumber?: string;
-  createdAt?: IDateValue;
-  onChangeStatus: (newValue: string) => void;
-  statusOptions: { value: string; label: string }[];
 };
 
-export function OrderDetailsToolbar({
-  status,
-  backHref,
-  createdAt,
-  orderNumber,
-  statusOptions,
-  onChangeStatus,
-}: Props) {
-  const menuActions = usePopover();
-
-  const renderMenuActions = () => (
-    <CustomPopover
-      open={menuActions.open}
-      anchorEl={menuActions.anchorEl}
-      onClose={menuActions.onClose}
-      slotProps={{ arrow: { placement: 'top-right' } }}
-    >
-      <MenuList>
-        {statusOptions.map((option) => (
-          <MenuItem
-            key={option.value}
-            selected={option.value === status}
-            onClick={() => {
-              menuActions.onClose();
-              onChangeStatus(option.value);
-            }}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </MenuList>
-    </CustomPopover>
-  );
+export function RequestDetailsToolbar({ request, backHref }: Props) {
+  const isDraft = request.statusCode === 'Draft';
+  const dated = request.submittedAt ?? request.createdAt;
 
   return (
-    <>
-      <Box
-        sx={{
-          gap: 3,
-          display: 'flex',
-          mb: { xs: 3, md: 5 },
-          flexDirection: { xs: 'column', md: 'row' },
-        }}
-      >
-        <Box sx={{ gap: 1, display: 'flex', alignItems: 'flex-start' }}>
-          <IconButton component={RouterLink} href={backHref}>
-            <Iconify icon="eva:arrow-ios-back-fill" />
-          </IconButton>
+    <Box
+      sx={{
+        gap: 3,
+        display: 'flex',
+        mb: { xs: 3, md: 5 },
+        flexDirection: { xs: 'column', md: 'row' },
+      }}
+    >
+      <title>{`Request: ${request.title} - ${CONFIG.appName}`}</title>
 
-          <Stack spacing={0.5}>
-            <Box sx={{ gap: 1, display: 'flex', alignItems: 'center' }}>
-              <Typography variant="h4"> Order {orderNumber} </Typography>
-              <Label
-                variant="soft"
-                color={
-                  (status === 'completed' && 'success') ||
-                  (status === 'pending' && 'warning') ||
-                  (status === 'cancelled' && 'error') ||
-                  'default'
-                }
-              >
-                {status}
-              </Label>
-            </Box>
+      <Box sx={{ gap: 1, display: 'flex', alignItems: 'flex-start' }}>
+        <IconButton
+          component={RouterLink}
+          href={backHref}
+          aria-label="Back to My requests"
+        >
+          <Iconify icon="eva:arrow-ios-back-fill" />
+        </IconButton>
 
-            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-              {fDateTime(createdAt)}
+        <Stack spacing={0.5}>
+          <Box sx={{ gap: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              tabIndex={-1}
+              sx={{ outline: 'none' }}
+            >
+              Request: {request.title}
             </Typography>
-          </Stack>
-        </Box>
+            <StatusChip
+              code={request.statusCode}
+              label={request.statusLabel}
+              colors={REQUEST_STATUS_COLORS}
+            />
+          </Box>
 
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary' }}
+          >
+            {request.submittedAt ? 'Submitted' : 'Started'}{' '}
+            <time dateTime={dated}>
+              {formatDateTime(dated)} at {formatTime(dated)}
+            </time>
+          </Typography>
+        </Stack>
+      </Box>
+
+      {isDraft && (
         <Box
           sx={{
             gap: 1.5,
@@ -110,30 +94,16 @@ export function OrderDetailsToolbar({
           }}
         >
           <Button
+            component={RouterLink}
+            href={paths.requests.edit(request.requestId)}
             color="inherit"
-            variant="outlined"
-            endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
-            onClick={menuActions.onOpen}
-            sx={{ textTransform: 'capitalize' }}
+            variant="contained"
+            startIcon={<Iconify icon="solar:pen-bold" />}
           >
-            {status}
-          </Button>
-
-          <Button
-            color="inherit"
-            variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-          >
-            Print
-          </Button>
-
-          <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
-            Edit
+            Continue draft
           </Button>
         </Box>
-      </Box>
-
-      {renderMenuActions()}
-    </>
+      )}
+    </Box>
   );
 }

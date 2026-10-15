@@ -1,7 +1,7 @@
-import { NewRequestView } from 'src/sections/requests/view/new-request-view';
+import { RequestIntakeView } from 'src/sections/requests/view/request-intake-view';
 
 // ----------------------------------------------------------------------
 
 export default function Page() {
-  return <NewRequestView />;
+  return <RequestIntakeView draft={null} />;
 }

@@ -123,7 +123,8 @@ client/src/
                       # ours: eocr/ (shell: skip link, header with dark mode toggle, settings and account,
                       #   sidebar with collapse to the mini nav, mobile drawer, route focus hook)
   lib/                # api.ts (apiFetch, ApiError), query-client.ts
-  pages/              # requests/list.tsx, requests/new.tsx, software/catalog.tsx, admin/software-edit.tsx
+  pages/              # requests/list.tsx, requests/new.tsx, requests/details.tsx, requests/edit.tsx,
+                      #   software/catalog.tsx, admin/software-edit.tsx
                       #   (thin: each composes a section view), not-found.tsx
   routes/             # paths.ts, route-handle.ts, sections/ (index, eocr), hooks/,
                       #   components/ (RouterLink, RequireAdmin, EocrErrorBoundary, route-error-message.ts)
@@ -136,7 +137,7 @@ client/src/
   utils/              # format.ts (date formatters)
 ```
 
-The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (the same template list as the catalog: summary, status tabs, search, filter chips and the template's MUI Table), New request (a placeholder until the intake slice), Software catalog (`/`, for everyone: approval summary, status tabs, filters and the template's MUI Table; admins also get a per-row actions menu with Edit), Edit software (admin) and the not-found page for any other URL. The 404, no-access (`RequireAdmin`) and error pages are the template's error views (`sections/error`, static, with their illustrations). Route errors render `EocrErrorBoundary` (outside the layout, with its own theme, showing the template's 500 view). The header has the template's settings drawer (safe options only, see "UI") and account popover; there is no auth code in the client.
+The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (the same template list as the catalog: summary, status tabs, search, filter chips and the template's MUI Table), New request (the intake: a three-step stepper, the template's checkout steps, that checks the catalog first, then gathers the request, saves drafts and submits), Request status (`/requests/:id`, the template's order details layout with the workflow history; `/requests/:id/edit` continues a draft), Software catalog (`/`, for everyone: approval summary, status tabs, filters and the template's MUI Table; admins also get a per-row actions menu with Edit), Edit software (admin) and the not-found page for any other URL. The 404, no-access (`RequireAdmin`) and error pages are the template's error views (`sections/error`, static, with their illustrations). Route errors render `EocrErrorBoundary` (outside the layout, with its own theme, showing the template's 500 view). The header has the template's settings drawer (safe options only, see "UI") and account popover; there is no auth code in the client.
 
 Shared components (Slices 8 and 9). Use these instead of building one-off versions:
 
@@ -217,7 +218,7 @@ This application tracks accessibility compliance, so it must itself meet **WCAG 
 
 Code type `RequestStatus`, values: `Draft`, `Submitted`, `AiReview`, `HumanReview`, `MoreInfoNeeded`, `AwaitingEeaap`, `Approved`, `ApprovedWithConditions`, `Denied`.
 
-Status changes happen only through the repo layer, never by writing the column directly from a controller. Every status change will write a Workflow History record (added in a later slice).
+Status changes happen only through the repo layer, never by writing the column directly from a controller. Every status change writes a `WorkflowHistory` record: `RequestRepo` changes status only through its `ChangeStatusAsync` helper, and creating a draft writes the first record. Users create and edit only their own drafts (`POST`/`PUT /api/requests`, with `UpdatedAt` as a concurrency token) and submit them (`POST /api/requests/{id}/submit`, which checks the required fields). The source workflow and the old Airtable model are in `docs/` (`EOCR Software Vetting Workflow.png`, `EOCR_Airtable_Data_Model.xlsx`).
 
 ## Definition of done
 

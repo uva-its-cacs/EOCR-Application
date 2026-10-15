@@ -6,6 +6,7 @@ import type { FormControlProps } from '@mui/material/FormControl';
 import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 import type { FormControlLabelProps } from '@mui/material/FormControlLabel';
 
+import { useId } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
@@ -29,6 +30,9 @@ type RHFCheckboxProps = Omit<FormControlLabelProps, 'control'> & {
   };
 };
 
+// EOCR: the controller ref reaches the input (focus moves here on an invalid submit), the input has a
+// stable id, aria-invalid, and aria-describedby pointing at the helper or error text (AGENTS.md: fixed
+// once in the shared field wrappers).
 export function RHFCheckbox({
   sx,
   name,
@@ -38,24 +42,30 @@ export function RHFCheckbox({
   ...other
 }: RHFCheckboxProps) {
   const { control } = useFormContext();
+  const generatedId = useId();
+  const inputId = slotProps?.checkbox?.id ?? `${name}-checkbox-${generatedId}`;
+  const helperId = `${inputId}-helper-text`;
 
   return (
     <Controller
       name={name}
       control={control}
-      render={({ field, fieldState: { error } }) => (
+      render={({ field: { ref, ...field }, fieldState: { error } }) => (
         <Box {...slotProps?.wrapper}>
           <FormControlLabel
             label={label}
             control={
               <Checkbox
                 {...field}
-                checked={field.value}
+                checked={!!field.value}
                 {...slotProps?.checkbox}
                 slotProps={{
                   ...slotProps?.checkbox?.slotProps,
                   input: {
-                    id: `${name}-checkbox`,
+                    ref,
+                    id: inputId,
+                    'aria-invalid': !!error,
+                    'aria-describedby': error || helperText ? helperId : undefined,
                     ...(!label && { 'aria-label': `${name} checkbox` }),
                     ...slotProps?.checkbox?.slotProps?.input,
                   },
@@ -67,6 +77,7 @@ export function RHFCheckbox({
           />
 
           <HelperText
+            id={helperId}
             {...slotProps?.helperText}
             errorMessage={error?.message}
             helperText={helperText}

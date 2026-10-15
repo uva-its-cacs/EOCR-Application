@@ -4,8 +4,6 @@ import { screen, cleanup } from '@testing-library/react';
 
 import { renderView } from 'src/test/render-view';
 
-import { NewRequestView } from 'src/sections/requests/view/new-request-view';
-
 import NotFoundPage from './not-found';
 
 // ----------------------------------------------------------------------
@@ -23,17 +21,5 @@ describe('NotFound page', () => {
     expect(headings[0].getAttribute('tabindex')).toBe('-1');
     expect(document.title).toBe('Page not found - EOCR');
     expect(screen.getByRole('link', { name: 'Go to home' }).getAttribute('href')).toBe('/');
-  });
-});
-
-describe('NewRequestView', () => {
-  it('has one h1, the placeholder text and a link back', async () => {
-    renderView(<NewRequestView />, '/requests/new');
-
-    expect(await screen.findAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(screen.getByText('The request form is coming soon.')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Back to My requests' }).getAttribute('href')).toBe(
-      '/requests'
-    );
   });
 });
