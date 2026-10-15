@@ -11,6 +11,72 @@ public static class DevSeeder
         SeedFundingSources(db);
         SeedRequestIntake(db);
         SeedVersions(db);
+        SeedReviews(db);
+    }
+
+    // Adds a second administrator (so requests can be reassigned) and, once, an assigned reviewer and a
+    // review in progress on the seeded requests under review. Fictional.
+    private static void SeedReviews(EocrDbContext db)
+    {
+        if (!db.Users.Any(u => u.Email == "riley@example.com"))
+        {
+            var adminRoleId = db.Codes
+                .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.Admin)
+                .Select(c => c.CodeId)
+                .Single();
+            db.Users.Add(new User { Email = "riley@example.com", Name = "Riley Example", RoleId = adminRoleId });
+            db.SaveChanges();
+        }
+        if (db.Reviews.Any()) return;
+
+        var admin = db.Users.SingleOrDefault(u => u.Email == "admin@example.com");
+        var riley = db.Users.Single(u => u.Email == "riley@example.com");
+        int Code(string type, string value) => db.Codes
+            .Where(c => c.CodeType == type && c.Value == value)
+            .Select(c => c.CodeId)
+            .Single();
+
+        var buildout = db.VettingRequests.FirstOrDefault(r => r.SoftwareName == "Buildout Pro"
+            && r.Status.Value == CodeConstants.RequestStatuses.HumanReview);
+        if (buildout is not null && admin is not null)
+        {
+            buildout.AssignedReviewerId = admin.UserId;
+            var now = DateTimeOffset.UtcNow;
+            db.Reviews.Add(new Review
+            {
+                RequestId = buildout.RequestId,
+                ReviewerId = admin.UserId,
+                ReviewTypeId = Code(CodeConstants.CodeTypes.ReviewType, CodeConstants.ReviewTypes.Human),
+                Findings = "Keyboard focus is hard to see in the project editor. (Fictional seed data.)",
+                VendorQuestions = "Is a fix for the focus indicator planned for the next release?",
+                RiskRatingId = Code(CodeConstants.CodeTypes.AccessibilityRisk, CodeConstants.AccessibilityRisks.Medium),
+                ReviewedAt = now.AddDays(-1),
+                UpdatedAt = now.AddDays(-1),
+            });
+        }
+
+        var delphi = db.VettingRequests.FirstOrDefault(r => r.SoftwareName == "Delphi Boards"
+            && r.Status.Value == CodeConstants.RequestStatuses.AiReview);
+        if (delphi is not null) delphi.AssignedReviewerId = riley.UserId;
+
+        // The seeded "more info needed" request gets the reviewer's question in its history.
+        var ember = db.VettingRequests.FirstOrDefault(r => r.SoftwareName == "Ember Forms"
+            && r.Status.Value == CodeConstants.RequestStatuses.MoreInfoNeeded);
+        if (ember is not null)
+        {
+            ember.AssignedReviewerId = admin?.UserId ?? riley.UserId;
+            var lastChange = db.WorkflowHistory
+                .Where(h => h.RequestId == ember.RequestId && h.NewStatusId == ember.StatusId)
+                .OrderByDescending(h => h.ChangedAt)
+                .FirstOrDefault();
+            if (lastChange is not null && lastChange.Comments is null)
+            {
+                lastChange.ChangedById = ember.AssignedReviewerId.Value;
+                lastChange.Comments = "Please attach the vendor's current VPAT for this version, or tell us when "
+                    + "the vendor expects to publish one.";
+            }
+        }
+        db.SaveChanges();
     }
 
     // Gives the seeded software and requests fictional versions (once: while any software has none), and

@@ -265,3 +265,15 @@ Copied unmodified from `Minimal_TypeScript_v7.7.0/vite-ts` in commit `72d9d4a` (
 | `client/src/sections/requests/view/request-details-view.tsx` | `src/sections/order/view/order-details-view.tsx` | modified | The same toolbar plus 8/4 grid: business need and history on the left, software, funding and VPAT sections with dashed dividers on the right; no mock data. |
 
 Ours, built on these: `request-intake-view.tsx`, `request-intake-catalog-step.tsx`, `request-intake-details-step.tsx` (the invoice create/edit form layout), `request-intake-review-step.tsx`, `request-details-page-view.tsx`, `request-edit-page-view.tsx`, `use-request.ts`, `use-request-intake.ts` and `request-intake-schema.ts`. `components/hook-form/rhf-checkbox.tsx` (starter) now passes the controller ref to the input and sets `aria-invalid` and `aria-describedby` (AGENTS.md shared field rules). `sections/requests/view/new-request-view.tsx` was removed.
+
+## Review queue and review page (2026-10-15)
+
+Copied unmodified from `Minimal_TypeScript_v7.7.0/vite-ts` in commit `142571f` ("vendor: Minimal UI v7.7.0 user quick edit form and kanban nav icon (unmodified)"), then adapted.
+
+| Our path | Template path (`vite-ts/`) | Status | Changes |
+| --- | --- | --- | --- |
+| `client/src/sections/review/review-action-dialog.tsx` | `src/sections/user/user-quick-edit-form.tsx` | modified | One comment field (required for "Request more information"); named by its title and described by its text; focus moves to the field on open; errors summarized, tied to the field and focused; stays open on a failed save; no mock data or phone/country fields. |
+| `client/src/sections/review/review-decide-dialog.tsx` | `src/sections/user/user-quick-edit-form.tsx` | modified | Decision, expiry (default twelve months, hidden for a denial), risk, conditions (for "approved with conditions") and comments, with options from the server's codes; a polite status region previews the catalog change; focus starts on the Decision select; errors summarized and tied to their fields; stays open on failure. |
+| `client/public/assets/icons/navbar/ic-kanban.svg` | `public/assets/icons/navbar/ic-kanban.svg` | unmodified | The Review queue nav icon. |
+
+Ours, built on these: `sections/review/view/review-queue-view.tsx` and `review-table-{row,toolbar,filters-result}.tsx` (the My requests list layout, from the invoice list), `view/review-request-view.tsx` and `review-request-page-view.tsx` (the request status layout), `review-form.tsx`, `review-people-card.tsx`, `review-catalog-versions.tsx`, `review-schema.ts`, `review-workflow.ts`, `use-review.ts`, `use-review-actions.ts`, `api.ts` and `types.ts`. Changed: `sections/requests/request-details-toolbar.tsx` (optional back label and actions; "Update request" when more information is needed), `view/request-details-view.tsx` (the details card moved to `request-details-summary.tsx`; the reviewer's message), `view/request-intake-view.tsx` and `view/request-edit-page-view.tsx` (update and resubmit a request sent back), and `components/eocr-nav/nav-data.ts` (the Management group, admins only).

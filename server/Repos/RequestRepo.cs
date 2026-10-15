@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Eocr.Server.Data;
 using Eocr.Server.Data.Entities;
 using Eocr.Server.DTOs;
@@ -18,6 +19,47 @@ public interface IRequestRepo
 
 public class RequestRepo(EocrDbContext db) : IRequestRepo
 {
+    // The request as its details page shows it (shared with the admin review page).
+    public static readonly Expression<Func<Request, RequestDetailDto>> DetailProjection = r => new RequestDetailDto
+    {
+        RequestId = r.RequestId,
+        SoftwareName = r.SoftwareName,
+        Vendor = r.Vendor,
+        Version = r.Version,
+        Department = r.Department,
+        BusinessNeed = r.BusinessNeed,
+        FundingSourceId = r.FundingSourceId,
+        FundingSourceCode = r.FundingSource == null ? null : r.FundingSource.Value,
+        FundingSourceLabel = r.FundingSource == null ? null : r.FundingSource.Label,
+        Url = r.Url,
+        VpatSubmitted = r.VpatSubmitted,
+        SoftwareId = r.SoftwareId,
+        StatusCode = r.Status.Value,
+        StatusLabel = r.Status.Label,
+        SubmittedAt = r.SubmittedAt,
+        CreatedAt = r.CreatedAt,
+        UpdatedAt = r.UpdatedAt,
+        History = r.History
+            .OrderBy(h => h.ChangedAt)
+            .ThenBy(h => h.WorkflowHistoryId)
+            .Select(h => new WorkflowHistoryDto
+            {
+                WorkflowHistoryId = h.WorkflowHistoryId,
+                PreviousStatusCode = h.PreviousStatus == null ? null : h.PreviousStatus.Value,
+                PreviousStatusLabel = h.PreviousStatus == null ? null : h.PreviousStatus.Label,
+                NewStatusCode = h.NewStatus.Value,
+                NewStatusLabel = h.NewStatus.Label,
+                ChangedByName = h.ChangedBy.Name,
+                ChangedAt = h.ChangedAt,
+                Comments = h.Comments,
+            })
+            .ToList(),
+    };
+
+    // The requester can edit a request while it is a draft or when the reviewer asked for more information.
+    private static bool IsEditable(string statusValue) =>
+        statusValue is CodeConstants.RequestStatuses.Draft or CodeConstants.RequestStatuses.MoreInfoNeeded;
+
     public async Task<IEnumerable<RequestSummaryDto>> GetMyRequestsAsync(
         int requestorId,
         CancellationToken ct)
@@ -44,41 +86,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
     {
         return await db.VettingRequests.AsNoTracking()
             .Where(r => r.RequestId == requestId && r.RequestorId == requestorId)
-            .Select(r => new RequestDetailDto
-            {
-                RequestId = r.RequestId,
-                SoftwareName = r.SoftwareName,
-                Vendor = r.Vendor,
-                Version = r.Version,
-                Department = r.Department,
-                BusinessNeed = r.BusinessNeed,
-                FundingSourceId = r.FundingSourceId,
-                FundingSourceCode = r.FundingSource == null ? null : r.FundingSource.Value,
-                FundingSourceLabel = r.FundingSource == null ? null : r.FundingSource.Label,
-                Url = r.Url,
-                VpatSubmitted = r.VpatSubmitted,
-                SoftwareId = r.SoftwareId,
-                StatusCode = r.Status.Value,
-                StatusLabel = r.Status.Label,
-                SubmittedAt = r.SubmittedAt,
-                CreatedAt = r.CreatedAt,
-                UpdatedAt = r.UpdatedAt,
-                History = r.History
-                    .OrderBy(h => h.ChangedAt)
-                    .ThenBy(h => h.WorkflowHistoryId)
-                    .Select(h => new WorkflowHistoryDto
-                    {
-                        WorkflowHistoryId = h.WorkflowHistoryId,
-                        PreviousStatusCode = h.PreviousStatus == null ? null : h.PreviousStatus.Value,
-                        PreviousStatusLabel = h.PreviousStatus == null ? null : h.PreviousStatus.Label,
-                        NewStatusCode = h.NewStatus.Value,
-                        NewStatusLabel = h.NewStatus.Label,
-                        ChangedByName = h.ChangedBy.Name,
-                        ChangedAt = h.ChangedAt,
-                        Comments = h.Comments,
-                    })
-                    .ToList(),
-            })
+            .Select(DetailProjection)
             .SingleOrDefaultAsync(ct);
     }
 
@@ -90,7 +98,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
         if (result.Errors.Count > 0) return result;
 
         var now = DateTimeOffset.UtcNow;
-        var draftId = await StatusIdAsync(CodeConstants.RequestStatuses.Draft, ct);
+        var draftId = await RequestWorkflow.StatusIdAsync(db, CodeConstants.RequestStatuses.Draft, ct);
         var request = new Request
         {
             RequestorId = requestorId,
@@ -100,7 +108,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
         };
         Apply(request, input);
         db.VettingRequests.Add(request);
-        AddHistory(request, null, draftId, requestorId, now, "Request started.");
+        RequestWorkflow.AddHistory(db, request, null, draftId, requestorId, now, "Request started.");
 
         await db.SaveChangesAsync(ct);
         result.Request = await GetMyRequestAsync(requestorId, request.RequestId, ct);
@@ -114,8 +122,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             .Include(r => r.Status)
             .SingleOrDefaultAsync(r => r.RequestId == requestId && r.RequestorId == requestorId, ct);
         if (request is null) return new RequestWriteResultDto { NotFound = true };
-        if (request.Status.Value != CodeConstants.RequestStatuses.Draft)
-            return new RequestWriteResultDto { NotDraft = true };
+        if (!IsEditable(request.Status.Value)) return new RequestWriteResultDto { NotDraft = true };
         if (input.UpdatedAt != request.UpdatedAt) return new RequestWriteResultDto { Conflict = true };
 
         var result = new RequestWriteResultDto();
@@ -125,7 +132,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
         Apply(request, input);
         request.UpdatedAt = DateTimeOffset.UtcNow;
 
-        if (!await SaveCheckingConcurrencyAsync(request, input.UpdatedAt.Value, ct))
+        if (!await RequestWorkflow.SaveCheckingConcurrencyAsync(db, request, input.UpdatedAt.Value, ct))
             return new RequestWriteResultDto { Conflict = true };
 
         result.Request = await GetMyRequestAsync(requestorId, requestId, ct);
@@ -139,8 +146,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             .Include(r => r.Status)
             .SingleOrDefaultAsync(r => r.RequestId == requestId && r.RequestorId == requestorId, ct);
         if (request is null) return new RequestWriteResultDto { NotFound = true };
-        if (request.Status.Value != CodeConstants.RequestStatuses.Draft)
-            return new RequestWriteResultDto { NotDraft = true };
+        if (!IsEditable(request.Status.Value)) return new RequestWriteResultDto { NotDraft = true };
         if (input.UpdatedAt != request.UpdatedAt) return new RequestWriteResultDto { Conflict = true };
 
         // Required to submit (a draft may be saved without them).
@@ -159,12 +165,21 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             result.Errors[nameof(SaveRequestDto.FundingSourceId)] = ["Select a funding source."];
         if (result.Errors.Count > 0) return result;
 
+        // A first submission joins the queue; an answer to "more info needed" goes back to the reviewer.
         var now = DateTimeOffset.UtcNow;
-        await ChangeStatusAsync(request, CodeConstants.RequestStatuses.Submitted, requestorId, now,
-            "Request submitted for review.", ct);
-        request.SubmittedAt = now;
+        if (request.Status.Value == CodeConstants.RequestStatuses.MoreInfoNeeded)
+        {
+            await RequestWorkflow.ChangeStatusAsync(db, request, CodeConstants.RequestStatuses.HumanReview,
+                requestorId, now, "Requester updated the request and sent it back for review.", ct);
+        }
+        else
+        {
+            await RequestWorkflow.ChangeStatusAsync(db, request, CodeConstants.RequestStatuses.Submitted,
+                requestorId, now, "Request submitted for review.", ct);
+            request.SubmittedAt = now;
+        }
 
-        if (!await SaveCheckingConcurrencyAsync(request, input.UpdatedAt, ct))
+        if (!await RequestWorkflow.SaveCheckingConcurrencyAsync(db, request, input.UpdatedAt, ct))
             return new RequestWriteResultDto { Conflict = true };
 
         result.Request = await GetMyRequestAsync(requestorId, requestId, ct);
@@ -172,48 +187,6 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
     }
 
     // ----------------------------------------------------------------------
-
-    // Every status change goes through here so it always writes a Workflow History record.
-    private async Task ChangeStatusAsync(Request request, string newStatusValue, int changedById,
-        DateTimeOffset now, string? comments, CancellationToken ct)
-    {
-        var previousId = request.StatusId;
-        var newId = await StatusIdAsync(newStatusValue, ct);
-        request.StatusId = newId;
-        request.UpdatedAt = now;
-        AddHistory(request, previousId, newId, changedById, now, comments);
-    }
-
-    private void AddHistory(Request request, int? previousStatusId, int newStatusId, int changedById,
-        DateTimeOffset now, string? comments)
-    {
-        db.WorkflowHistory.Add(new WorkflowHistory
-        {
-            Request = request,
-            PreviousStatusId = previousStatusId,
-            NewStatusId = newStatusId,
-            ChangedById = changedById,
-            ChangedAt = now,
-            Comments = comments,
-        });
-    }
-
-    // Saves only if no one else changed the request since it was loaded (UpdatedAt as the token).
-    private async Task<bool> SaveCheckingConcurrencyAsync(
-        Request request, DateTimeOffset loadedUpdatedAt, CancellationToken ct)
-    {
-        db.Entry(request).Property(r => r.UpdatedAt).OriginalValue = loadedUpdatedAt;
-        db.Entry(request).Property(r => r.UpdatedAt).IsModified = true;
-        try
-        {
-            await db.SaveChangesAsync(ct);
-            return true;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return false;
-        }
-    }
 
     private static void Apply(Request request, SaveRequestDto input)
     {
@@ -259,9 +232,4 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             && !await db.Software.AnyAsync(s => s.SoftwareId == input.SoftwareId, ct))
             result.Errors[nameof(input.SoftwareId)] = ["Select software from the catalog."];
     }
-
-    private Task<int> StatusIdAsync(string value, CancellationToken ct) => db.Codes
-        .Where(c => c.CodeType == CodeConstants.CodeTypes.RequestStatus && c.Value == value)
-        .Select(c => c.CodeId)
-        .SingleAsync(ct);
 }

@@ -124,20 +124,22 @@ client/src/
                       #   sidebar with collapse to the mini nav, mobile drawer, route focus hook)
   lib/                # api.ts (apiFetch, ApiError), query-client.ts
   pages/              # requests/list.tsx, requests/new.tsx, requests/details.tsx, requests/edit.tsx,
-                      #   software/catalog.tsx, admin/software-edit.tsx
+                      #   software/catalog.tsx, admin/software-edit.tsx, admin/review-queue.tsx,
+                      #   admin/review-request.tsx
                       #   (thin: each composes a section view), not-found.tsx
   routes/             # paths.ts, route-handle.ts, sections/ (index, eocr), hooks/,
                       #   components/ (RouterLink, RequireAdmin, EocrErrorBoundary, route-error-message.ts)
-  sections/           # auth/, requests/, software/: types, api, hooks (use-my-requests, use-software),
-                      #   view/ (*-view.tsx and their grids); requests/ also has status-groups.ts and
-                      #   status-colors.ts
+  sections/           # auth/, requests/, software/, review/: types, api, hooks (use-my-requests,
+                      #   use-software, use-review), view/ (*-view.tsx and their grids); requests/ also has
+                      #   status-groups.ts, status-colors.ts and request-details-summary.tsx (shared with
+                      #   the review page); review/ has review-workflow.ts (action names, decision outcomes)
   theme/              # template theme pipeline plus our eocr-tokens.ts, eocr-overrides.ts, eocr-components.ts
   test/               # render helpers for component tests (app theme, memory router, QueryClient, fetch
                       #   mock)
   utils/              # format.ts (date formatters)
 ```
 
-The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (the same template list as the catalog: summary, status tabs, search, filter chips and the template's MUI Table), New request (the intake: a three-step stepper, the template's checkout steps, that checks the catalog first, then gathers the request, saves drafts and submits), Request status (`/requests/:id`, the template's order details layout with the workflow history; `/requests/:id/edit` continues a draft), Software catalog (`/`, for everyone: approval summary, status tabs, filters and the template's MUI Table; admins also get a per-row actions menu with Edit), Edit software (admin) and the not-found page for any other URL. The 404, no-access (`RequireAdmin`) and error pages are the template's error views (`sections/error`, static, with their illustrations). Route errors render `EocrErrorBoundary` (outside the layout, with its own theme, showing the template's 500 view). The header has the template's settings drawer (safe options only, see "UI") and account popover; there is no auth code in the client.
+The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (the same template list as the catalog: summary, status tabs, search, filter chips and the template's MUI Table), New request (the intake: a three-step stepper, the template's checkout steps, that checks the catalog first, then gathers the request, saves drafts and submits), Request status (`/requests/:id`, the template's order details layout with the workflow history; `/requests/:id/edit` continues a draft or updates a request the reviewer sent back, shown with the reviewer's message), Review queue (admin, `/admin/requests`, in the Management nav group: the same list layout with an "Assigned" filter and "Assign to me"), Review (admin, `/admin/requests/:id`: the order details layout with the workflow steps the server allows, the summary review form, the requester and reviewer with reassignment, the catalog versions of the product, and the request-more-info, EEAAP and Decide dialogs), Software catalog (`/`, for everyone: approval summary, status tabs, filters and the template's MUI Table; admins also get a per-row actions menu with Edit), Edit software (admin) and the not-found page for any other URL. The 404, no-access (`RequireAdmin`) and error pages are the template's error views (`sections/error`, static, with their illustrations). Route errors render `EocrErrorBoundary` (outside the layout, with its own theme, showing the template's 500 view). The header has the template's settings drawer (safe options only, see "UI") and account popover; there is no auth code in the client.
 
 Shared components (Slices 8 and 9). Use these instead of building one-off versions:
 
@@ -218,7 +220,17 @@ This application tracks accessibility compliance, so it must itself meet **WCAG 
 
 Code type `RequestStatus`, values: `Draft`, `Submitted`, `AiReview`, `HumanReview`, `MoreInfoNeeded`, `AwaitingEeaap`, `Approved`, `ApprovedWithConditions`, `Denied`.
 
-Status changes happen only through the repo layer, never by writing the column directly from a controller. Every status change writes a `WorkflowHistory` record: `RequestRepo` changes status only through its `ChangeStatusAsync` helper, and creating a draft writes the first record. Users create and edit only their own drafts (`POST`/`PUT /api/requests`, with `UpdatedAt` as a concurrency token) and submit them (`POST /api/requests/{id}/submit`, which checks the required fields). The source workflow and the old Airtable model are in `docs/` (`EOCR Software Vetting Workflow.png`, `EOCR_Airtable_Data_Model.xlsx`).
+Status changes happen only through the repo layer, never by writing the column directly from a controller. Every status change writes a `WorkflowHistory` record: `RequestRepo` changes status only through its `ChangeStatusAsync` helper, and creating a draft writes the first record. The rules live in `Repos/RequestWorkflow.cs` (the allowed admin actions per status, `ChangeStatusAsync`, the concurrency-checked save), shared by `RequestRepo` and `ReviewRepo`. Users create and edit only their own requests while they are `Draft` or `MoreInfoNeeded` (`POST`/`PUT /api/requests`, with `UpdatedAt` as a concurrency token) and submit them (`POST /api/requests/{id}/submit`, which checks the required fields): a draft goes to `Submitted`, a `MoreInfoNeeded` request goes back to `HumanReview`.
+
+Admin workflow (`AdminRequestsController`, `api/admin`, admin-only through `ICurrentUser`, 403 otherwise; every write takes the request's `UpdatedAt` and answers 409 when it is stale or the step is not allowed from the current status):
+
+- `GET requests` (the queue, no drafts), `GET requests/{id}` (with the review, the catalog versions of the same name and vendor, and `allowedActions`), `GET reviewers`.
+- `POST requests/{id}/assign` (`reviewerId` null assigns the caller; not a status change, no history).
+- `PUT requests/{id}/review`: the summary review (one per request, `Reviews` table, its own `UpdatedAt` token), while `AiReview`, `HumanReview` or `AwaitingEeaap`.
+- Moves: `Submitted` to `AiReview` (`start-ai-review`) or `HumanReview` (`start-review`, which also assigns an unassigned request to the caller); `AiReview` to `HumanReview`; `HumanReview` to `MoreInfoNeeded` (`request-info`, a message is required) or `AwaitingEeaap` (`send-for-eeaap`); `AwaitingEeaap` back to `HumanReview`.
+- `POST requests/{id}/decide` from `HumanReview` or `AwaitingEeaap`: `Approved`, `ApprovedWithConditions` or `Denied`. Approvals need an expiry after today and conditions need text. The decision upserts the catalog row for the request's name, vendor and version (`Software` is one row per version) with the approval status, today's approval date, the expiry, risk and conditions (a denial clears the dates), and links the request to it.
+
+Code lists the review page reads (`GET /api/codes/{type}`, admin-only): `AccessibilityRisk`, `Recommendation` and `RequestStatus` (the decision outcomes). The source workflow and the old Airtable model are in `docs/` (`EOCR Software Vetting Workflow.png`, `EOCR_Airtable_Data_Model.xlsx`).
 
 ## Definition of done
 

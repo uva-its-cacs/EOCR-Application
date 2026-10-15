@@ -10,6 +10,7 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
     public DbSet<Request> VettingRequests => Set<Request>();
     public DbSet<Software> Software => Set<Software>();
     public DbSet<WorkflowHistory> WorkflowHistory => Set<WorkflowHistory>();
+    public DbSet<Review> Reviews => Set<Review>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,7 +43,15 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
                 // AccessibilityRisk — Ids 301-303
                 new Code { CodeId = 301, CodeType = CodeConstants.CodeTypes.AccessibilityRisk, Value = CodeConstants.AccessibilityRisks.Low,                  Label = "Low",                      SortOrder = 1, IsActive = true, IsSystem = true },
                 new Code { CodeId = 302, CodeType = CodeConstants.CodeTypes.AccessibilityRisk, Value = CodeConstants.AccessibilityRisks.Medium,               Label = "Medium",                   SortOrder = 2, IsActive = true, IsSystem = true },
-                new Code { CodeId = 303, CodeType = CodeConstants.CodeTypes.AccessibilityRisk, Value = CodeConstants.AccessibilityRisks.High,                 Label = "High",                     SortOrder = 3, IsActive = true, IsSystem = true }
+                new Code { CodeId = 303, CodeType = CodeConstants.CodeTypes.AccessibilityRisk, Value = CodeConstants.AccessibilityRisks.High,                 Label = "High",                     SortOrder = 3, IsActive = true, IsSystem = true },
+                // ReviewType — Ids 401-402
+                new Code { CodeId = 401, CodeType = CodeConstants.CodeTypes.ReviewType,     Value = CodeConstants.ReviewTypes.Ai,                         Label = "AI review",                SortOrder = 1, IsActive = true, IsSystem = true },
+                new Code { CodeId = 402, CodeType = CodeConstants.CodeTypes.ReviewType,     Value = CodeConstants.ReviewTypes.Human,                      Label = "Human review",             SortOrder = 2, IsActive = true, IsSystem = true },
+                // Recommendation — Ids 501-504
+                new Code { CodeId = 501, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.Approve,                 Label = "Approve",                  SortOrder = 1, IsActive = true, IsSystem = true },
+                new Code { CodeId = 502, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.ApproveWithConditions,   Label = "Approve with conditions",  SortOrder = 2, IsActive = true, IsSystem = true },
+                new Code { CodeId = 503, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.Deny,                    Label = "Deny",                     SortOrder = 3, IsActive = true, IsSystem = true },
+                new Code { CodeId = 504, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.ExceptionNeeded,         Label = "Exception (EEAAP) needed", SortOrder = 4, IsActive = true, IsSystem = true }
             );
         });
 
@@ -78,9 +87,44 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
                 .WithMany()
                 .HasForeignKey(r => r.StatusId)
                 .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(r => r.AssignedReviewer)
+                .WithMany()
+                .HasForeignKey(r => r.AssignedReviewerId)
+                .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(r => r.Requestor)
                 .WithMany(u => u.VettingRequests)
                 .HasForeignKey(r => r.RequestorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Review>(e =>
+        {
+            e.Property(v => v.VendorQuestions).HasMaxLength(4000);
+            e.Property(v => v.OverallAssessment).HasMaxLength(4000);
+            e.Property(v => v.Findings).HasMaxLength(4000);
+            e.Property(v => v.Conditions).HasMaxLength(4000);
+            // A stale review form cannot overwrite a newer save.
+            e.Property(v => v.UpdatedAt).IsConcurrencyToken();
+            e.HasIndex(v => v.RequestId).IsUnique();
+            e.HasOne(v => v.Request)
+                .WithOne(r => r.Review)
+                .HasForeignKey<Review>(v => v.RequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(v => v.Reviewer)
+                .WithMany()
+                .HasForeignKey(v => v.ReviewerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(v => v.ReviewType)
+                .WithMany()
+                .HasForeignKey(v => v.ReviewTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(v => v.RiskRating)
+                .WithMany()
+                .HasForeignKey(v => v.RiskRatingId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(v => v.Recommendation)
+                .WithMany()
+                .HasForeignKey(v => v.RecommendationId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -113,6 +157,7 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
             e.Property(s => s.Version).HasMaxLength(50).IsRequired();
             e.Property(s => s.PublisherWebsite).HasMaxLength(2000);
             e.Property(s => s.Notes).HasMaxLength(4000);
+            e.Property(s => s.Conditions).HasMaxLength(4000);
             e.Property(s => s.ApprovalDate).HasColumnType("date");
             e.Property(s => s.ApprovalExpirationDate).HasColumnType("date");
 

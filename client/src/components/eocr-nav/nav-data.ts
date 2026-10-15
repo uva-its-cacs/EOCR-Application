@@ -1,5 +1,7 @@
 import { paths } from 'src/routes/paths';
 
+import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
+
 // ----------------------------------------------------------------------
 
 export type NavItemData = {
@@ -29,6 +31,12 @@ export const NAV_GROUPS: NavGroupData[] = [
       { title: 'New request', path: paths.requests.new, icon: 'ic-blank' },
       { title: 'Software catalog', path: paths.catalog.root, icon: 'ic-course' },
     ],
+  },
+  {
+    id: 'management',
+    label: 'Management',
+    requiredRole: ADMIN_ROLE_CODE,
+    items: [{ title: 'Review queue', path: paths.admin.requests, icon: 'ic-kanban' }],
   },
 ];
 

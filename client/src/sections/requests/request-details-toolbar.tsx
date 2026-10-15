@@ -24,15 +24,46 @@ import { REQUEST_STATUS_COLORS } from './status-colors';
 // page's only h1 (styled h4, focusable by the route-focus hook) and the page sets its document title;
 // the back arrow is named; the status is a StatusChip (text, not color alone); the date uses
 // text.secondary (the template's text.disabled is below 4.5:1). The template's status menu, Print and
-// Edit buttons are replaced by "Continue draft" for drafts (status changes belong to reviewers).
+// Edit buttons are replaced by the requester's next step ("Continue draft", or "Update request" when the
+// reviewer asked for more information), or by the `actions` the admin review page passes.
 type Props = {
   request: RequestDetail;
   backHref: string;
+  backLabel?: string;
+  actions?: React.ReactNode;
 };
 
-export function RequestDetailsToolbar({ request, backHref }: Props) {
-  const isDraft = request.statusCode === 'Draft';
+export function RequestDetailsToolbar({
+  request,
+  backHref,
+  backLabel = 'Back to My requests',
+  actions,
+}: Props) {
   const dated = request.submittedAt ?? request.createdAt;
+
+  const requesterAction =
+    request.statusCode === 'Draft' ? (
+      <Button
+        component={RouterLink}
+        href={paths.requests.edit(request.requestId)}
+        color="inherit"
+        variant="contained"
+        startIcon={<Iconify icon="solar:pen-bold" />}
+      >
+        Continue draft
+      </Button>
+    ) : request.statusCode === 'MoreInfoNeeded' ? (
+      <Button
+        component={RouterLink}
+        href={paths.requests.edit(request.requestId)}
+        color="inherit"
+        variant="contained"
+        startIcon={<Iconify icon="solar:pen-bold" />}
+      >
+        Update request
+      </Button>
+    ) : null;
+  const shownActions = actions ?? requesterAction;
 
   return (
     <Box
@@ -49,7 +80,7 @@ export function RequestDetailsToolbar({ request, backHref }: Props) {
         <IconButton
           component={RouterLink}
           href={backHref}
-          aria-label="Back to My requests"
+          aria-label={backLabel}
         >
           <Iconify icon="eva:arrow-ios-back-fill" />
         </IconButton>
@@ -83,25 +114,18 @@ export function RequestDetailsToolbar({ request, backHref }: Props) {
         </Stack>
       </Box>
 
-      {isDraft && (
+      {shownActions && (
         <Box
           sx={{
             gap: 1.5,
             flexGrow: 1,
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
           }}
         >
-          <Button
-            component={RouterLink}
-            href={paths.requests.edit(request.requestId)}
-            color="inherit"
-            variant="contained"
-            startIcon={<Iconify icon="solar:pen-bold" />}
-          >
-            Continue draft
-          </Button>
+          {shownActions}
         </Box>
       )}
     </Box>

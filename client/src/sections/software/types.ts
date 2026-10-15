@@ -35,6 +35,8 @@ export interface SoftwareCatalogItem {
   currentApprovalStatusLabel: string;
   accessibilityRiskLabel: string | null;
   approvalExpirationDate: string | null;
+  // The conditions of an "approved with conditions" decision.
+  conditions: string | null;
   createdAt: string;
 }
 

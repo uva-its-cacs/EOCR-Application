@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import AlertTitle from '@mui/material/AlertTitle';
 import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
@@ -18,6 +19,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { PageHeader } from 'src/components/page-header';
 
 import { useRequestIntake } from '../use-request-intake';
+import { latestReviewerMessage } from '../request-messages';
 import { RequestIntakeSteps } from '../request-intake-steps';
 import { requestSubmitSchema } from '../request-intake-schema';
 import { RequestIntakeReviewStep } from '../request-intake-review-step';
@@ -33,6 +35,8 @@ type PendingAction = 'save' | 'submit' | null;
 /**
  * The request intake (workflow: check the catalog, gather the request, save in progress, submit), on the
  * template's checkout stepper. A new request starts at the catalog check; a draft opens at the details.
+ * A request the reviewer sent back ("More info needed") opens the same way, shows the reviewer's message,
+ * and is resubmitted to the reviewer.
  */
 type Props = {
   draft: RequestDetail | null;
@@ -98,14 +102,36 @@ export function RequestIntakeView({ draft }: Props) {
     setActiveStep(1);
   };
 
-  const title = draft ? 'Continue your request' : 'New request';
+  const isResubmit = draft?.statusCode === 'MoreInfoNeeded';
+  const title = isResubmit
+    ? 'Update your request'
+    : draft
+      ? 'Continue your request'
+      : 'New request';
+  const documentTitle = isResubmit
+    ? `Update request: ${draft.softwareName}`
+    : draft
+      ? `Continue request: ${draft.softwareName}`
+      : 'Request software';
+  const reviewerMessage = isResubmit ? latestReviewerMessage(draft) : null;
 
   return (
     <DashboardContent>
       <PageHeader
         title={title}
-        documentTitle={draft ? `Continue request: ${draft.softwareName}` : 'Request software'}
+        documentTitle={documentTitle}
       />
+
+      {isResubmit && (
+        <Alert
+          severity="warning"
+          role="note"
+          sx={{ mb: 3 }}
+        >
+          <AlertTitle component="h2">The reviewer needs more information</AlertTitle>
+          {reviewerMessage ?? 'Update your request and send it back for review.'}
+        </Alert>
+      )}
 
       <RequestIntakeSteps
         steps={STEPS}
@@ -185,7 +211,7 @@ export function RequestIntakeView({ draft }: Props) {
                 aria-disabled={busy}
                 onClick={() => run('save')}
               >
-                Save as draft
+                {isResubmit ? 'Save changes' : 'Save as draft'}
               </Button>
               {activeStep === 1 ? (
                 <Button
@@ -202,7 +228,7 @@ export function RequestIntakeView({ draft }: Props) {
                   aria-disabled={busy}
                   onClick={() => run('submit')}
                 >
-                  Submit request
+                  {isResubmit ? 'Resubmit request' : 'Submit request'}
                 </Button>
               )}
             </Box>
@@ -213,7 +239,7 @@ export function RequestIntakeView({ draft }: Props) {
               variant="body2"
               sx={{ mt: 2, color: 'text.secondary', textAlign: 'right' }}
             >
-              Draft saved.{' '}
+              {isResubmit ? 'Changes saved.' : 'Draft saved.'}{' '}
               <Link
                 component={RouterLink}
                 href={paths.requests.details(request.requestId)}

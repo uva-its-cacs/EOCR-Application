@@ -18,22 +18,27 @@ import { RequestIntakeView } from './request-intake-view';
 
 // ----------------------------------------------------------------------
 
-// Continue a draft: loads it and opens the intake on the details step. A submitted request can no longer
-// be edited, so it links to its status page instead.
+// Continue a draft, or update a request the reviewer sent back for more information: loads it and opens
+// the intake on the details step. A request with the reviewer can't be edited, so this links to its
+// status page instead.
+const EDITABLE_STATUSES = ['Draft', 'MoreInfoNeeded'];
+
 export function RequestEditPageView() {
   const { requestId } = useParams();
   const id = Number(requestId);
   const query = useRequest(Number.isInteger(id) && id > 0 ? id : null);
 
-  if (query.data?.statusCode === 'Draft') return <RequestIntakeView draft={query.data} />;
+  if (query.data && EDITABLE_STATUSES.includes(query.data.statusCode)) {
+    return <RequestIntakeView draft={query.data} />;
+  }
 
   if (query.data) {
     return (
       <DashboardContent>
         <PageHeader
-          title="This request has been submitted"
-          documentTitle="Request submitted"
-          description="Submitted requests can no longer be edited."
+          title="This request is with the reviewer"
+          documentTitle="Request with the reviewer"
+          description="Requests can be edited only as drafts or when the reviewer asks for more information."
           actions={
             <Button
               component={RouterLink}

@@ -8,8 +8,13 @@ const titles = (roleCode: string | undefined) =>
   filterNavGroups(NAV_GROUPS, roleCode).flatMap((group) => group.items.map((item) => item.title));
 
 describe('filterNavGroups', () => {
-  it('shows the same links to Admin and User (admin editing lives on the catalog page)', () => {
-    expect(titles('Admin')).toEqual(['My requests', 'New request', 'Software catalog']);
+  it('adds the Review queue for Admin only (admin editing of software lives on the catalog page)', () => {
+    expect(titles('Admin')).toEqual([
+      'My requests',
+      'New request',
+      'Software catalog',
+      'Review queue',
+    ]);
     expect(titles('User')).toEqual(['My requests', 'New request', 'Software catalog']);
     expect(titles(undefined)).toEqual(['My requests', 'New request', 'Software catalog']);
   });

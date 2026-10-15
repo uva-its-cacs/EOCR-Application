@@ -22,6 +22,8 @@ export const paths = {
   // ADMIN
   admin: {
     software: `${ROOTS.ADMIN}/software`,
+    requests: `${ROOTS.ADMIN}/requests`,
+    request: (requestId: number) => `${ROOTS.ADMIN}/requests/${requestId}`,
     softwareEdit: (softwareId: number) => `${ROOTS.ADMIN}/software/${softwareId}/edit`,
   },
 };

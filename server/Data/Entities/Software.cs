@@ -28,6 +28,8 @@ public class Software
     public DateOnly? ApprovalDate { get; set; }
     public DateOnly? ApprovalExpirationDate { get; set; }
 
+    // The conditions of an "approved with conditions" decision.
+    public string? Conditions { get; set; }
     public string? Notes { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

@@ -10,6 +10,8 @@ public static class CodeConstants
         public const string AccessibilityRisk = "AccessibilityRisk";
         public const string SoftwareCategory = "SoftwareCategory";
         public const string FundingSource = "FundingSource";
+        public const string ReviewType = "ReviewType";
+        public const string Recommendation = "Recommendation";
     }
 
     public static class UserRoles
@@ -39,6 +41,20 @@ public static class CodeConstants
         public const string ApprovedWithConditions = "ApprovedWithConditions";
         public const string Denied = "Denied";
         public const string Expired = "Expired";
+    }
+
+    public static class ReviewTypes
+    {
+        public const string Ai = "Ai";
+        public const string Human = "Human";
+    }
+
+    public static class Recommendations
+    {
+        public const string Approve = "Approve";
+        public const string ApproveWithConditions = "ApproveWithConditions";
+        public const string Deny = "Deny";
+        public const string ExceptionNeeded = "ExceptionNeeded";
     }
 
     public static class AccessibilityRisks

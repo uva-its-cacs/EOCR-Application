@@ -20,6 +20,8 @@ const RequestDetailsPage = lazy(() => import('src/pages/requests/details'));
 const RequestEditPage = lazy(() => import('src/pages/requests/edit'));
 const SoftwareCatalogPage = lazy(() => import('src/pages/software/catalog'));
 const SoftwareEditPage = lazy(() => import('src/pages/admin/software-edit'));
+const ReviewQueuePage = lazy(() => import('src/pages/admin/review-queue'));
+const ReviewRequestPage = lazy(() => import('src/pages/admin/review-request'));
 const NotFoundPage = lazy(() => import('src/pages/not-found'));
 
 // ----------------------------------------------------------------------
@@ -80,6 +82,19 @@ export const eocrRoutes: RouteObject[] = [
         // Admin pages: the guard decides what to show; the server enforces access.
         element: <RequireAdmin />,
         children: [
+          {
+            path: paths.admin.requests.slice(1),
+            element: <ReviewQueuePage />,
+            handle: { crumb: 'Review queue' } satisfies RouteHandle,
+          },
+          {
+            path: 'admin/requests/:requestId',
+            element: <ReviewRequestPage />,
+            handle: {
+              crumb: 'Review',
+              parent: { crumb: 'Review queue', path: paths.admin.requests },
+            } satisfies RouteHandle,
+          },
           {
             path: 'admin/software/:softwareId/edit',
             element: <SoftwareEditPage />,

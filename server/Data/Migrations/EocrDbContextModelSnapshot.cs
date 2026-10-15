@@ -265,6 +265,66 @@ namespace Eocr.Server.Data.Migrations
                             Label = "High",
                             SortOrder = 3,
                             Value = "High"
+                        },
+                        new
+                        {
+                            CodeId = 401,
+                            CodeType = "ReviewType",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "AI review",
+                            SortOrder = 1,
+                            Value = "Ai"
+                        },
+                        new
+                        {
+                            CodeId = 402,
+                            CodeType = "ReviewType",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Human review",
+                            SortOrder = 2,
+                            Value = "Human"
+                        },
+                        new
+                        {
+                            CodeId = 501,
+                            CodeType = "Recommendation",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Approve",
+                            SortOrder = 1,
+                            Value = "Approve"
+                        },
+                        new
+                        {
+                            CodeId = 502,
+                            CodeType = "Recommendation",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Approve with conditions",
+                            SortOrder = 2,
+                            Value = "ApproveWithConditions"
+                        },
+                        new
+                        {
+                            CodeId = 503,
+                            CodeType = "Recommendation",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Deny",
+                            SortOrder = 3,
+                            Value = "Deny"
+                        },
+                        new
+                        {
+                            CodeId = 504,
+                            CodeType = "Recommendation",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Exception (EEAAP) needed",
+                            SortOrder = 4,
+                            Value = "ExceptionNeeded"
                         });
                 });
 
@@ -275,6 +335,9 @@ namespace Eocr.Server.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestId"));
+
+                    b.Property<int?>("AssignedReviewerId")
+                        .HasColumnType("int");
 
                     b.Property<string>("BusinessNeed")
                         .IsRequired()
@@ -332,6 +395,8 @@ namespace Eocr.Server.Data.Migrations
 
                     b.HasKey("RequestId");
 
+                    b.HasIndex("AssignedReviewerId");
+
                     b.HasIndex("FundingSourceId");
 
                     b.HasIndex("RequestorId");
@@ -341,6 +406,68 @@ namespace Eocr.Server.Data.Migrations
                     b.HasIndex("StatusId");
 
                     b.ToTable("VettingRequests");
+                });
+
+            modelBuilder.Entity("Eocr.Server.Data.Entities.Review", b =>
+                {
+                    b.Property<int>("ReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
+
+                    b.Property<string>("Conditions")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Findings")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("OverallAssessment")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int?>("RecommendationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ReviewTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("ReviewedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RiskRatingId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("VendorQuestions")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.HasKey("ReviewId");
+
+                    b.HasIndex("RecommendationId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("ReviewTypeId");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.HasIndex("RiskRatingId");
+
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.Software", b =>
@@ -362,6 +489,10 @@ namespace Eocr.Server.Data.Migrations
 
                     b.Property<int?>("BusinessOwnerId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Conditions")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -491,6 +622,11 @@ namespace Eocr.Server.Data.Migrations
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
+                    b.HasOne("Eocr.Server.Data.Entities.User", "AssignedReviewer")
+                        .WithMany()
+                        .HasForeignKey("AssignedReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Eocr.Server.Data.Entities.Code", "FundingSource")
                         .WithMany()
                         .HasForeignKey("FundingSourceId")
@@ -513,6 +649,8 @@ namespace Eocr.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("AssignedReviewer");
+
                     b.Navigation("FundingSource");
 
                     b.Navigation("Requestor");
@@ -520,6 +658,47 @@ namespace Eocr.Server.Data.Migrations
                     b.Navigation("Software");
 
                     b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("Eocr.Server.Data.Entities.Review", b =>
+                {
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "Recommendation")
+                        .WithMany()
+                        .HasForeignKey("RecommendationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Eocr.Server.Data.Entities.Request", "Request")
+                        .WithOne("Review")
+                        .HasForeignKey("Eocr.Server.Data.Entities.Review", "RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "ReviewType")
+                        .WithMany()
+                        .HasForeignKey("ReviewTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "RiskRating")
+                        .WithMany()
+                        .HasForeignKey("RiskRatingId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Recommendation");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("ReviewType");
+
+                    b.Navigation("Reviewer");
+
+                    b.Navigation("RiskRating");
                 });
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.Software", b =>
@@ -609,6 +788,8 @@ namespace Eocr.Server.Data.Migrations
             modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
                     b.Navigation("History");
+
+                    b.Navigation("Review");
                 });
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>

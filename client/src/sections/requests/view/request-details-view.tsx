@@ -3,8 +3,8 @@ import type { RequestDetail } from '../types';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
-import Divider from '@mui/material/Divider';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 
@@ -12,61 +12,25 @@ import { paths } from 'src/routes/paths';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { VisuallyHidden } from 'src/components/visually-hidden';
-
+import { latestReviewerMessage } from '../request-messages';
 import { RequestDetailsHistory } from '../request-details-history';
 import { RequestDetailsToolbar } from '../request-details-toolbar';
+import { NOT_SET, RequestDetailsSummary, requestDetailSections } from '../request-details-summary';
 
 // ----------------------------------------------------------------------
 
 // Adapted from the template's sections/order/view/order-details-view.tsx: the toolbar, then an 8/4 grid
 // with the request (business need) and its history on the left and the details sections (software,
-// funding, VPAT) on the right, separated by dashed dividers as in the template's order sidebar.
-
-const NOT_SET = 'Not set';
+// funding, VPAT) on the right, separated by dashed dividers as in the template's order sidebar. When the
+// reviewer asked for more information, their message is shown above the grid.
 
 type Props = {
   request: RequestDetail;
 };
 
 export function RequestDetailsView({ request }: Props) {
-  const sections: { title: string; rows: [string, React.ReactNode][] }[] = [
-    {
-      title: 'Software',
-      rows: [
-        ['Name', request.softwareName || NOT_SET],
-        ['Vendor', request.vendor || NOT_SET],
-        ['Version', request.version || NOT_SET],
-        [
-          'Website',
-          request.url ? (
-            <Link
-              href={request.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {request.url}
-              <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-            </Link>
-          ) : (
-            NOT_SET
-          ),
-        ],
-        ['In the catalog', request.softwareId ? 'Yes' : 'No'],
-      ],
-    },
-    {
-      title: 'Funding',
-      rows: [
-        ['Department', request.department || NOT_SET],
-        ['Funding source', request.fundingSourceLabel ?? NOT_SET],
-      ],
-    },
-    {
-      title: 'VPAT',
-      rows: [['VPAT provided', request.vpatSubmitted ? 'Yes' : 'No']],
-    },
-  ];
+  const reviewerMessage =
+    request.statusCode === 'MoreInfoNeeded' ? latestReviewerMessage(request) : null;
 
   return (
     <DashboardContent>
@@ -74,6 +38,17 @@ export function RequestDetailsView({ request }: Props) {
         request={request}
         backHref={paths.requests.root}
       />
+
+      {request.statusCode === 'MoreInfoNeeded' && (
+        <Alert
+          severity="warning"
+          role="note"
+          sx={{ mb: 3 }}
+        >
+          <AlertTitle component="h2">The reviewer needs more information</AlertTitle>
+          {reviewerMessage ?? 'Update your request and send it back for review.'}
+        </Alert>
+      )}
 
       <Grid
         container
@@ -99,48 +74,7 @@ export function RequestDetailsView({ request }: Props) {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            {sections.map((section, index) => (
-              <Box key={section.title}>
-                {index > 0 && <Divider sx={{ borderStyle: 'dashed' }} />}
-                <CardHeader
-                  title={section.title}
-                  slotProps={{ title: { component: 'h2' } }}
-                />
-                <Box
-                  component="dl"
-                  sx={{
-                    m: 0,
-                    p: 3,
-                    gap: 1.5,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    typography: 'body2',
-                  }}
-                >
-                  {section.rows.map(([term, value]) => (
-                    <Box
-                      key={term}
-                      sx={{ gap: 2, display: 'flex' }}
-                    >
-                      <Box
-                        component="dt"
-                        sx={{ width: 120, flexShrink: 0, color: 'text.secondary' }}
-                      >
-                        {term}
-                      </Box>
-                      <Box
-                        component="dd"
-                        sx={{ m: 0, minWidth: 0, wordBreak: 'break-word' }}
-                      >
-                        {value}
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            ))}
-          </Card>
+          <RequestDetailsSummary sections={requestDetailSections(request)} />
         </Grid>
       </Grid>
     </DashboardContent>

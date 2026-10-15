@@ -17,6 +17,9 @@ public class Request
     // Set when the request is for software already in the catalog (chosen during intake).
     public int? SoftwareId { get; set; }
     public Software? Software { get; set; }
+    public int? AssignedReviewerId { get; set; }
+    public User? AssignedReviewer { get; set; }
+    public Review? Review { get; set; }
     public int StatusId { get; set; }
     public Code Status { get; set; } = null!;
     public DateTimeOffset? SubmittedAt { get; set; }

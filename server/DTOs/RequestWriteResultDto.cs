@@ -8,6 +8,6 @@ public class RequestWriteResultDto
     public bool NotFound { get; set; }
     // The request changed since it was loaded (stale UpdatedAt).
     public bool Conflict { get; set; }
-    // The request is no longer a draft, so it cannot be edited or submitted.
+    // The request is not a draft or waiting on the requester, so it cannot be edited or submitted.
     public bool NotDraft { get; set; }
 }

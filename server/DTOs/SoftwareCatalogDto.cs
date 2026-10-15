@@ -11,5 +11,6 @@ public class SoftwareCatalogDto
     public string CurrentApprovalStatusLabel { get; set; } = string.Empty;
     public string? AccessibilityRiskLabel { get; set; }
     public DateOnly? ApprovalExpirationDate { get; set; }
+    public string? Conditions { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

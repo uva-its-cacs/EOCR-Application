@@ -1,121 +1,140 @@
-import type { IUserItem } from 'src/types/user';
+import type { DecideValues } from './review-schema';
+import type { ReviewOptions, ReviewRequestDetail } from './types';
 
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
+import { useId, useMemo, useEffect } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { isValidPhoneNumber } from 'react-phone-number-input/input';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import MenuItem from '@mui/material/MenuItem';
+import AlertTitle from '@mui/material/AlertTitle';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
-import { USER_STATUS_OPTIONS } from 'src/_mock';
+import { formatDateOnly } from 'src/utils/format';
 
-import { toast } from 'src/components/snackbar';
-import { Form, Field, schemaUtils } from 'src/components/hook-form';
+import { Form, Field } from 'src/components/hook-form';
 
-// ----------------------------------------------------------------------
-
-export type UserQuickEditSchemaType = z.infer<typeof UserQuickEditSchema>;
-
-export const UserQuickEditSchema = z.object({
-  name: z.string().min(1, { error: 'Name is required!' }),
-  email: schemaUtils.email(),
-  phoneNumber: schemaUtils.phoneNumber({ isValid: isValidPhoneNumber }),
-  country: schemaUtils.nullableInput(z.string().min(1, { error: 'Country is required!' }), {
-    error: 'Country is required!',
-  }),
-  state: z.string().min(1, { error: 'State is required!' }),
-  city: z.string().min(1, { error: 'City is required!' }),
-  address: z.string().min(1, { error: 'Address is required!' }),
-  zipCode: z.string().min(1, { error: 'Zip code is required!' }),
-  company: z.string().min(1, { error: 'Company is required!' }),
-  role: z.string().min(1, { error: 'Role is required!' }),
-  // Not required
-  status: z.string(),
-});
+import { decideRequest } from './api';
+import { useReviewWrite } from './use-review-actions';
+import { todayDate, decideInput, decideSchema } from './review-schema';
+import { DENIED, defaultExpiryDate, APPROVED_WITH_CONDITIONS } from './review-workflow';
 
 // ----------------------------------------------------------------------
+
+// Adapted from the template's sections/user/user-quick-edit-form.tsx: the decision dialog. EOCR changes:
+// the decision, expiry, risk, conditions and comments fields (options from the server's codes); the
+// expiry defaults to twelve months from today (and is not shown for a denial), conditions and risk start
+// from the review; a live
+// preview says what the decision will change in the software catalog; the dialog is named by its title,
+// errors are summarized and tied to their fields with focus on the first, and it stays open on failure.
 
 type Props = {
   open: boolean;
+  detail: ReviewRequestDetail;
+  options: ReviewOptions | undefined;
   onClose: () => void;
-  currentUser?: IUserItem;
+  // Called after a successful decision (the dialog closes first).
+  onDecided: () => void;
 };
 
-export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
-  const defaultValues: UserQuickEditSchemaType = {
-    name: '',
-    email: '',
-    phoneNumber: '',
-    address: '',
-    country: '',
-    state: '',
-    city: '',
-    zipCode: '',
-    status: '',
-    company: '',
-    role: '',
-  };
+export function ReviewDecideDialog({ open, detail, options, onClose, onDecided }: Props) {
+  const titleId = useId();
+  const { request, review } = detail;
+  const today = todayDate();
+  const schema = useMemo(() => decideSchema(today), [today]);
 
-  const methods = useForm({
-    mode: 'all',
-    resolver: zodResolver(UserQuickEditSchema),
+  const defaultValues: DecideValues = useMemo(
+    () => ({
+      outcome: '',
+      approvalExpirationDate: defaultExpiryDate(),
+      accessibilityRiskId: review?.riskRatingId?.toString() ?? '',
+      conditions: review?.conditions ?? '',
+      comments: '',
+    }),
+    [review]
+  );
+
+  const methods = useForm<DecideValues>({
+    resolver: zodResolver(schema),
     defaultValues,
-    values: currentUser,
   });
 
   const {
     reset,
+    control,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { errors, submitCount },
   } = methods;
 
-  const onSubmit = handleSubmit(async (data) => {
-    const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+  useEffect(() => {
+    if (open) reset(defaultValues);
+  }, [open, reset, defaultValues]);
 
-    try {
-      reset();
+  const write = useReviewWrite(
+    request.requestId,
+    (values: DecideValues) =>
+      decideRequest(request.requestId, decideInput(values, request.updatedAt)),
+    'Decision recorded and the software catalog updated.'
+  );
+
+  const onSubmit = handleSubmit(async (values) => {
+    if (write.pending) return;
+    if (await write.run(values, methods)) {
       onClose();
-
-      toast.promise(promise, {
-        loading: 'Loading...',
-        success: 'Update success!',
-        error: 'Update error!',
-      });
-
-      await promise;
-
-      console.info('DATA', data);
-    } catch (error) {
-      console.error(error);
+      onDecided();
     }
   });
+
+  const outcome = useWatch({ control, name: 'outcome' });
+  const expiry = useWatch({ control, name: 'approvalExpirationDate' });
+  const approved = outcome !== '' && outcome !== DENIED;
+  const outcomeLabel = options?.outcomes.find((option) => option.value === outcome)?.label;
+
+  const existing = detail.catalogVersions.find(
+    (version) => version.version.toLowerCase() === request.version.toLowerCase()
+  );
+  const product = `${request.softwareName} ${request.version} (${request.vendor})`;
+  const hasErrors = submitCount > 0 && Object.keys(errors).length > 0;
 
   return (
     <Dialog
       fullWidth
       maxWidth={false}
       open={open}
-      onClose={onClose}
+      onClose={write.pending ? undefined : onClose}
+      aria-labelledby={titleId}
       slotProps={{
         paper: {
           sx: { maxWidth: 720 },
         },
+        // Focus starts on the Decision select (the dialog's first combobox) once the dialog has opened;
+        // react-hook-form's setFocus does not reach the select's display element here.
+        transition: {
+          onEntered: (node: HTMLElement) =>
+            node.querySelector<HTMLElement>('[role="combobox"]')?.focus(),
+        },
       }}
     >
-      <DialogTitle>Quick update</DialogTitle>
+      <DialogTitle id={titleId}>Record the decision</DialogTitle>
 
-      <Form methods={methods} onSubmit={onSubmit}>
+      <Form
+        methods={methods}
+        onSubmit={onSubmit}
+      >
         <DialogContent>
-          <Alert variant="outlined" severity="info" sx={{ mb: 3 }}>
-            Account is waiting for confirmation
-          </Alert>
+          {hasErrors && (
+            <Alert
+              severity="error"
+              sx={{ mb: 3 }}
+            >
+              Check the highlighted fields.
+            </Alert>
+          )}
 
           <Box
             sx={{
@@ -125,42 +144,123 @@ export function UserQuickEditForm({ currentUser, open, onClose }: Props) {
               gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' },
             }}
           >
-            <Field.Select name="status" label="Status">
-              {USER_STATUS_OPTIONS.map((status) => (
-                <MenuItem key={status.value} value={status.value}>
-                  {status.label}
+            <Field.Select
+              name="outcome"
+              label="Decision"
+              required
+              disabled={!options}
+              slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
+            >
+              <MenuItem
+                value=""
+                disabled
+              >
+                Select a decision
+              </MenuItem>
+              {options?.outcomes.map((option) => (
+                <MenuItem
+                  key={option.value}
+                  value={option.value}
+                >
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Field.Select>
+
+            {outcome === DENIED ? (
+              <Box sx={{ display: { xs: 'none', sm: 'block' } }} />
+            ) : (
+              <Field.Text
+                name="approvalExpirationDate"
+                label="Approval expires"
+                type="date"
+                required
+                helperText="Twelve months from today unless you change it."
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            )}
+
+            <Field.Select
+              name="accessibilityRiskId"
+              label="Accessibility risk"
+              disabled={!options}
+              slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
+            >
+              <MenuItem value="">Not rated</MenuItem>
+              {options?.risks.map((option) => (
+                <MenuItem
+                  key={option.codeId}
+                  value={option.codeId.toString()}
+                >
+                  {option.label}
                 </MenuItem>
               ))}
             </Field.Select>
 
             <Box sx={{ display: { xs: 'none', sm: 'block' } }} />
 
-            <Field.Text name="name" label="Full name" />
-            <Field.Text name="email" label="Email address" />
-            <Field.Phone name="phoneNumber" label="Phone number" />
+            {outcome === APPROVED_WITH_CONDITIONS && (
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <Field.Text
+                  name="conditions"
+                  label="Conditions"
+                  required
+                  multiline
+                  minRows={3}
+                />
+              </Box>
+            )}
 
-            <Field.CountrySelect
-              fullWidth
-              name="country"
-              label="Country"
-              placeholder="Choose a country"
-            />
-
-            <Field.Text name="state" label="State/region" />
-            <Field.Text name="city" label="City" />
-            <Field.Text name="address" label="Address" />
-            <Field.Text name="zipCode" label="Zip/code" />
-            <Field.Text name="company" label="Company" />
-            <Field.Text name="role" label="Role" />
+            <Box sx={{ gridColumn: '1 / -1' }}>
+              <Field.Text
+                name="comments"
+                label="Comments for the requester"
+                helperText="Shown in the request's history."
+                multiline
+                minRows={2}
+              />
+            </Box>
           </Box>
+
+          {/* A polite live region: the preview changes as the decision is chosen. */}
+          <Alert
+            severity="info"
+            variant="outlined"
+            role="status"
+            sx={{ mt: 3 }}
+          >
+            <AlertTitle component="h3">Software catalog change</AlertTitle>
+            {!outcome ? (
+              'Select a decision to see how the catalog will change.'
+            ) : (
+              <>
+                {existing
+                  ? `The catalog entry for ${product} will be updated`
+                  : `A new catalog entry will be added for ${product}`}
+                {`: status ${outcomeLabel ?? outcome}`}
+                {approved
+                  ? `, approved today, expires ${expiry ? formatDateOnly(expiry) : 'not set'}.`
+                  : ', with no approval or expiry dates.'}
+              </>
+            )}
+          </Alert>
         </DialogContent>
 
         <DialogActions>
-          <Button variant="outlined" onClick={onClose}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={onClose}
+            disabled={write.pending}
+          >
             Cancel
           </Button>
-          <Button type="submit" variant="contained" loading={isSubmitting}>
-            Update
+          <Button
+            type="submit"
+            variant="contained"
+            loading={write.pending}
+          >
+            Record decision
           </Button>
         </DialogActions>
       </Form>

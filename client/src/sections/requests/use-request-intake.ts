@@ -103,7 +103,7 @@ export function useRequestIntake(draft: RequestDetail | null) {
       setFormError('');
       try {
         const saved = await save.mutateAsync(values);
-        toast.success('Draft saved.');
+        toast.success(draft?.statusCode === 'MoreInfoNeeded' ? 'Changes saved.' : 'Draft saved.');
         if (!draft) navigate(paths.requests.edit(saved.requestId), { replace: true });
       } catch (error) {
         showServerErrors(error);
@@ -137,7 +137,11 @@ export function useRequestIntake(draft: RequestDetail | null) {
       try {
         const saved = await save.mutateAsync(values);
         const submitted = await submit.mutateAsync(saved);
-        toast.success('Request submitted for review.');
+        toast.success(
+          draft?.statusCode === 'MoreInfoNeeded'
+            ? 'Request sent back to the reviewer.'
+            : 'Request submitted for review.'
+        );
         navigate(paths.requests.details(submitted.requestId));
       } catch (error) {
         showServerErrors(error);

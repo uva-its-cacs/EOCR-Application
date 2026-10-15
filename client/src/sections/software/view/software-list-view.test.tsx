@@ -21,6 +21,7 @@ const SOFTWARE: SoftwareCatalogItem[] = [
     currentApprovalStatusLabel: 'Approved',
     accessibilityRiskLabel: 'Low',
     approvalExpirationDate: '2027-09-30',
+    conditions: null,
     createdAt: '2026-09-30T12:00:00Z',
   },
   {
@@ -33,6 +34,7 @@ const SOFTWARE: SoftwareCatalogItem[] = [
     currentApprovalStatusLabel: 'Denied',
     accessibilityRiskLabel: null,
     approvalExpirationDate: null,
+    conditions: null,
     createdAt: '2026-10-01T12:00:00Z',
   },
 ];

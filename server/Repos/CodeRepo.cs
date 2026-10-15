@@ -16,7 +16,9 @@ public class CodeRepo(EocrDbContext db) : ICodeRepo
         if (codeType != CodeConstants.CodeTypes.SoftwareCategory
             && codeType != CodeConstants.CodeTypes.ApprovalStatus
             && codeType != CodeConstants.CodeTypes.AccessibilityRisk
-            && codeType != CodeConstants.CodeTypes.FundingSource)
+            && codeType != CodeConstants.CodeTypes.FundingSource
+            && codeType != CodeConstants.CodeTypes.Recommendation
+            && codeType != CodeConstants.CodeTypes.RequestStatus)
             return null;
 
         return await db.Codes.AsNoTracking()

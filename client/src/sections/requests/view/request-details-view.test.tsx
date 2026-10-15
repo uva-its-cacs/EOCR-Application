@@ -132,6 +132,38 @@ describe('RequestDetailsPageView', () => {
     expect(link.getAttribute('href')).toBe('/requests/2/edit');
   });
 
+  it("shows the reviewer's message and Update request when more information is needed", async () => {
+    renderDetails(() =>
+      jsonResponse({
+        ...REQUEST,
+        statusCode: 'MoreInfoNeeded',
+        statusLabel: 'More Info Needed',
+        history: [
+          ...REQUEST.history,
+          {
+            workflowHistoryId: 4,
+            previousStatusCode: 'HumanReview',
+            previousStatusLabel: 'Human Review',
+            newStatusCode: 'MoreInfoNeeded',
+            newStatusLabel: 'More Info Needed',
+            changedByName: 'Admin Example',
+            changedAt: '2026-10-14T12:00:00Z',
+            comments: 'Please attach the current VPAT.',
+          },
+        ],
+      })
+    );
+
+    const note = await screen.findByRole('note');
+    expect(
+      within(note).getByRole('heading', { level: 2, name: 'The reviewer needs more information' })
+    ).toBeTruthy();
+    expect(note.textContent).toContain('Please attach the current VPAT.');
+    expect(screen.getByRole('link', { name: 'Update request' }).getAttribute('href')).toBe(
+      '/requests/2/edit'
+    );
+  });
+
   it('shows "Request not found" for a 404 (another user’s request)', async () => {
     renderDetails(() => jsonResponse({}, 404));
 

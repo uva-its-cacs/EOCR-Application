@@ -43,7 +43,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         UpdatedAt = s.UpdatedAt,
     };
 
-    private static readonly Expression<Func<Software, SoftwareCatalogDto>> CatalogProjection = s => new SoftwareCatalogDto
+    public static readonly Expression<Func<Software, SoftwareCatalogDto>> CatalogProjection = s => new SoftwareCatalogDto
     {
         SoftwareId = s.SoftwareId,
         SoftwareName = s.SoftwareName,
@@ -54,6 +54,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         CurrentApprovalStatusLabel = s.CurrentApprovalStatus.Label,
         AccessibilityRiskLabel = s.AccessibilityRisk == null ? null : s.AccessibilityRisk.Label,
         ApprovalExpirationDate = s.ApprovalExpirationDate,
+        Conditions = s.Conditions,
         CreatedAt = s.CreatedAt,
     };
 

@@ -34,7 +34,7 @@ function renderNav(roleCode: string | undefined, path = '/', compact = false) {
 }
 
 describe('PrimaryNav sections', () => {
-  it('places request and catalog links under Overview, with no Management section', () => {
+  it('places request and catalog links under Overview, and the Review queue under Management', () => {
     renderNav('Admin');
     const overview = screen.getByRole('list', { name: 'Overview' });
     expect(
@@ -45,7 +45,12 @@ describe('PrimaryNav sections', () => {
     expect(screen.getByRole('button', { name: 'Overview' }).getAttribute('aria-expanded')).toBe(
       'true'
     );
-    expect(screen.queryByText('Management')).toBeNull();
+    const management = screen.getByRole('list', { name: 'Management' });
+    expect(
+      within(management)
+        .getAllByRole('link')
+        .map((link) => link.textContent)
+    ).toEqual(['Review queue']);
     expect(screen.queryByText('Administration')).toBeNull();
   });
 
@@ -65,12 +70,15 @@ describe('PrimaryNav sections', () => {
     expect(screen.getByRole('link', { name: 'My requests' })).toBeTruthy();
   });
 
-  it.each(['User', 'unknown', undefined])('shows the shared catalog for %s', (role) => {
-    renderNav(role);
-    expect(screen.getByRole('list', { name: 'Overview' })).toBeTruthy();
-    expect(screen.queryByText('Management')).toBeNull();
-    expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
-  });
+  it.each(['User', 'unknown', undefined])(
+    'shows the shared catalog and no Management for %s',
+    (role) => {
+      renderNav(role);
+      expect(screen.getByRole('list', { name: 'Overview' })).toBeTruthy();
+      expect(screen.queryByText('Management')).toBeNull();
+      expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
+    }
+  );
 
   it('keeps the current route marked and reports navigation to the drawer', () => {
     const { onItemClick } = renderNav('User', '/requests/new');

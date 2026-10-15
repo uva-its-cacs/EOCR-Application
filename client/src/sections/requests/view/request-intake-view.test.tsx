@@ -105,7 +105,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderIntake() {
+function renderIntake(draft: RequestDetail | null = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return renderRoutes(
     [
@@ -113,7 +113,7 @@ function renderIntake() {
         path: '/requests/new',
         element: (
           <QueryClientProvider client={client}>
-            <RequestIntakeView draft={null} />
+            <RequestIntakeView draft={draft} />
           </QueryClientProvider>
         ),
       },
@@ -252,5 +252,40 @@ describe('RequestIntakeView', () => {
       department: 'Library',
     });
     expect(calls.some((c) => c.url === '/api/requests/42/submit')).toBe(true);
+  });
+
+  it('opens a request sent back for more information with the reviewer’s message and resubmits it', async () => {
+    const sentBack: RequestDetail = {
+      ...saved(
+        {
+          softwareName: 'Quill Notes',
+          vendor: 'Quill Labs',
+          version: '2.0',
+          department: 'Library',
+          businessNeed: 'Note taking.',
+          fundingSourceId: 1202,
+        },
+        'MoreInfoNeeded'
+      ),
+      history: [
+        {
+          workflowHistoryId: 9,
+          previousStatusCode: 'HumanReview',
+          previousStatusLabel: 'Human Review',
+          newStatusCode: 'MoreInfoNeeded',
+          newStatusLabel: 'More Info Needed',
+          changedByName: 'Admin Example',
+          changedAt: '2026-10-15T12:00:00Z',
+          comments: 'Which version do you need?',
+        },
+      ],
+    };
+    renderIntake(sentBack);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Update your request' })).toBeTruthy();
+    expect(screen.getByRole('note').textContent).toContain('Which version do you need?');
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next: review' }));
+    expect(await screen.findByRole('button', { name: 'Resubmit request' })).toBeTruthy();
   });
 });

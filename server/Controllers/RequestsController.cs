@@ -77,8 +77,8 @@ public class RequestsController(ICurrentUser currentUser, IRequestRepo requestRe
             return Conflict(new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,
-                Title = "This request has already been submitted.",
-                Detail = "Submitted requests can no longer be edited.",
+                Title = "This request is with the reviewer.",
+                Detail = "Requests can be edited only as drafts or when the reviewer asks for more information.",
             });
         if (result.Conflict)
             return Conflict(new ProblemDetails
