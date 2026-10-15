@@ -61,7 +61,7 @@ function setup(saveStatus = 200) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   renderRoutes(
     [
-      { path: paths.admin.software, element: <div>Software catalog list</div> },
+      { path: paths.catalog.root, element: <div>Software catalog list</div> },
       {
         path: '/admin/software/:softwareId/edit',
         element: (
@@ -71,7 +71,7 @@ function setup(saveStatus = 200) {
         ),
         handle: {
           crumb: 'Edit software',
-          parent: { crumb: 'Software catalog', path: paths.admin.software },
+          parent: { crumb: 'Software catalog', path: paths.catalog.root },
         },
       },
     ],

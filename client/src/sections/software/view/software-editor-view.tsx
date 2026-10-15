@@ -29,13 +29,13 @@ export function SoftwareEditorView({ software }: Props) {
   const navigate = useNavigate();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const { methods, options, submit, saveError, saving } = useSoftwareEditor(software, () => {
-    navigate(paths.admin.software);
+    navigate(paths.catalog.root);
   });
   const dirty = methods.formState.isDirty;
   const requestBack = () => {
     if (saving) return;
     if (dirty) setConfirmDiscard(true);
-    else navigate(paths.admin.software);
+    else navigate(paths.catalog.root);
   };
 
   return (
@@ -104,7 +104,7 @@ export function SoftwareEditorView({ software }: Props) {
         destructive
         confirmLabel="Discard changes"
         onClose={() => setConfirmDiscard(false)}
-        onConfirm={() => navigate(paths.admin.software)}
+        onConfirm={() => navigate(paths.catalog.root)}
       />
     </>
   );

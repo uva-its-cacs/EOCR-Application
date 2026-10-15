@@ -1,8 +1,8 @@
 import type { RouteObject } from 'react-router';
 import type { RouteHandle } from '../route-handle';
 
-import { Outlet } from 'react-router';
 import { lazy, Suspense } from 'react';
+import { Outlet, Navigate } from 'react-router';
 
 import { EocrLayout } from 'src/layouts/eocr';
 
@@ -17,7 +17,6 @@ import { RequireAdmin } from '../components';
 const MyRequestsPage = lazy(() => import('src/pages/requests/list'));
 const NewRequestPage = lazy(() => import('src/pages/requests/new'));
 const SoftwareCatalogPage = lazy(() => import('src/pages/software/catalog'));
-const SoftwarePage = lazy(() => import('src/pages/admin/software'));
 const SoftwareEditPage = lazy(() => import('src/pages/admin/software-edit'));
 const NotFoundPage = lazy(() => import('src/pages/not-found'));
 
@@ -64,19 +63,19 @@ export const eocrRoutes: RouteObject[] = [
         element: <RequireAdmin />,
         children: [
           {
-            path: paths.admin.software,
-            element: <SoftwarePage />,
-            handle: { crumb: 'Software catalog' } satisfies RouteHandle,
-          },
-          {
             path: 'admin/software/:softwareId/edit',
             element: <SoftwareEditPage />,
             handle: {
               crumb: 'Edit software',
-              parent: { crumb: 'Software catalog', path: paths.admin.software },
+              parent: { crumb: 'Software catalog', path: paths.catalog.root },
             } satisfies RouteHandle,
           },
         ],
+      },
+      {
+        // The admin catalog merged into the shared catalog; keep old links working.
+        path: paths.admin.software,
+        element: <Navigate to={paths.catalog.root} replace />,
       },
       {
         path: '*',

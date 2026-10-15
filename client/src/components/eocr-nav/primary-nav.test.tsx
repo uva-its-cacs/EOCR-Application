@@ -30,7 +30,7 @@ function renderNav(roleCode: string | undefined, path = '/') {
 }
 
 describe('PrimaryNav sections', () => {
-  it('places request links under Overview and Software under Management', () => {
+  it('places request and catalog links under Overview, with no Management section', () => {
     renderNav('Admin');
     const overview = screen.getByRole('list', { name: 'Overview' });
     expect(
@@ -38,25 +38,16 @@ describe('PrimaryNav sections', () => {
         .getAllByRole('link')
         .map((link) => link.textContent)
     ).toEqual(['My requests', 'New request', 'Software catalog']);
-    const management = screen.getByRole('list', { name: 'Management' });
-    expect(
-      within(management)
-        .getAllByRole('link')
-        .map((link) => link.textContent)
-    ).toEqual(['Software']);
     expect(screen.getByRole('button', { name: 'Overview' }).getAttribute('aria-expanded')).toBe(
       'true'
     );
-    expect(screen.getByRole('button', { name: 'Management' }).getAttribute('aria-expanded')).toBe(
-      'true'
-    );
+    expect(screen.queryByText('Management')).toBeNull();
     expect(screen.queryByText('Administration')).toBeNull();
   });
 
-  it('collapses each section independently and retains focus on its header', async () => {
+  it('collapses a section and retains focus on its header', async () => {
     renderNav('Admin');
     const overview = screen.getByRole('button', { name: 'Overview' });
-    const management = screen.getByRole('button', { name: 'Management' });
     expect(overview.tagName).toBe('BUTTON');
     overview.focus();
     fireEvent.click(overview);
@@ -66,22 +57,11 @@ describe('PrimaryNav sections', () => {
       document.getElementById(overview.getAttribute('aria-controls') ?? '')?.hasAttribute('inert')
     ).toBe(true);
     await waitFor(() => expect(screen.queryByRole('link', { name: 'My requests' })).toBeNull());
-    expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
-    fireEvent.click(management);
-    await waitFor(() => expect(screen.queryByRole('link', { name: 'Software' })).toBeNull());
     fireEvent.click(overview);
     expect(screen.getByRole('link', { name: 'My requests' })).toBeTruthy();
-    expect(management.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('shows Software in Overview and hides Management for User', () => {
-    renderNav('User');
-    expect(screen.getByRole('list', { name: 'Overview' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
-    expect(screen.queryByText('Management')).toBeNull();
-  });
-
-  it.each(['unknown', undefined])('keeps the shared catalog and hides Management for %s', (role) => {
+  it.each(['User', 'unknown', undefined])('shows the shared catalog for %s', (role) => {
     renderNav(role);
     expect(screen.getByRole('list', { name: 'Overview' })).toBeTruthy();
     expect(screen.queryByText('Management')).toBeNull();
@@ -89,14 +69,14 @@ describe('PrimaryNav sections', () => {
   });
 
   it('keeps the current route marked and reports navigation to the drawer', () => {
-    const { onItemClick } = renderNav('Admin', '/admin/software');
-    const software = screen.getByRole('link', { name: 'Software' });
-    expect(software.getAttribute('aria-current')).toBe('page');
+    const { onItemClick } = renderNav('User', '/requests/new');
+    const newRequest = screen.getByRole('link', { name: 'New request' });
+    expect(newRequest.getAttribute('aria-current')).toBe('page');
     expect(
       screen.getByRole('link', { name: 'My requests' }).getAttribute('aria-current')
     ).toBeNull();
-    fireEvent.click(software);
-    expect(onItemClick).toHaveBeenCalledWith('/admin/software');
+    fireEvent.click(newRequest);
+    expect(onItemClick).toHaveBeenCalledWith('/requests/new');
   });
 });
 

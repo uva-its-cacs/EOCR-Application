@@ -105,6 +105,7 @@ export function SoftwareGrid({
       ? [
           {
             field: 'actions',
+            type: 'actions',
             headerName: 'Actions',
             width: 90,
             sortable: false,
