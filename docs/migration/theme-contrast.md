@@ -8,7 +8,22 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 - **Browser pairs:** some pairs need real CSS (alpha tints, `color-mix`, hover states, DOM structure). They are measured in a real browser (see "Browser measurements") and the code that produces them is guarded by `src/theme/theme-composition.test.ts`.
 - **Not changed on purpose:** `text.disabled`, `divider` and `shared.paperOutlined`.
 
-## Grid and light-background refinement (2026-10-09)
+## Template shell match: white page and light sidebar (2026-10-15)
+
+To match the Minimal template's dashboard, light `background.default` is white (`#FFFFFF`) again, and the sidebar and mobile drawer use the template's "integrate" nav colors (they sit on `background.default`) instead of a permanently dark `grey.900` menu. The "permanent dark navigation" pairs are removed from the guard; the nav pairs below (Slice 7) now cover the sidebar in both schemes, plus a focus ring check on the active item tint. Light `primary.main` stays `#007565` (it passes on white too).
+
+Measured (unrounded, 4 decimals; light / dark):
+
+- Active nav item text (`primary.main` on the 8% primary tint): 5.0221 light; dark uses `primary.light` at 9.7725.
+- Active nav hover (`primary.dark` on the 16% tint): 7.8494 light; dark `primary.light` 8.5959.
+- Nav section headings and items (`text.secondary` on the nav): 8.3251 / 10.8719. The template's `text.disabled` headings (below 4.5:1) are replaced by `text.secondary` in `components/eocr-nav/primary-nav.styles.ts`; this is the only nav token change.
+- Nav item hover (`text.secondary` on `action.hover`): 7.7774 / 9.6538.
+- Focus ring (`primary.main`) on the active item tint: 5.0221 / 5.4860 (UI 3:1).
+- `primary.main` as text on the page: 5.6264 / 6.0916. `text.secondary` on the page: 8.3251 / 10.8719.
+
+The catalog's ported template components replace `text.disabled` text with `text.secondary` (EmptyContent title and description, the analytics count, the edit form's "Details:" heading, row secondary text), so they are covered by the `text.secondary` pairs. Decorative analytics rings and icons are `aria-hidden` and carry no information (the count and percent are text).
+
+## Grid and light-background refinement (2026-10-09) (superseded for the page background, see above)
 
 Current values supersede the historical measurements below wherever the page background or light primary color is involved. `background.default` is now template grey 200 (`#F4F6F8`) in light mode; `background.paper` stays white. Dark default/paper remain `#141A21` / `#1C252E`. Both schemes are explicit tokens with regenerated background channels in EOCR's overrides; no template files changed.
 
@@ -155,7 +170,8 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 
 | Pair | Min | Light | Dark |
 | --- | --- | --- | --- |
-| primary.contrastText on primary.main | 4.5 | 5.4090 | 5.3985 |
+| navigation: focus ring on the active item tint | 3 | 5.0221 | 5.4860 |
+| primary.contrastText on primary.main | 4.5 | 5.6264 | 5.3985 |
 | primary.contrastText on primary.dark (hover) | 4.5 | 9.8951 | 9.6165 |
 | secondary.contrastText on secondary.main | 4.5 | 5.1626 | 5.3686 |
 | secondary.contrastText on secondary.dark (hover) | 4.5 | 9.6654 | 11.6242 |
@@ -167,9 +183,9 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | warning.contrastText on warning.dark (hover) | 4.5 | 6.9206 | 11.1289 |
 | error.contrastText on error.main | 4.5 | 6.5576 | 5.3756 |
 | error.contrastText on error.dark (hover) | 4.5 | 11.1811 | 8.4786 |
-| primary.main as text on background.default | 4.5 | 5.4090 | 6.0916 |
-| primary.main as text on background.paper | 4.5 | 5.4090 | 5.3985 |
-| primary.main as text on background.neutral | 4.5 | 4.9928 | 4.5274 |
+| primary.main as text on background.default | 4.5 | 5.6264 | 6.0916 |
+| primary.main as text on background.paper | 4.5 | 5.6264 | 5.3985 |
+| primary.main as text on background.neutral | 4.5 | 5.1935 | 4.5274 |
 | secondary.main as text on background.default | 4.5 | 5.1626 | 6.0579 |
 | secondary.main as text on background.paper | 4.5 | 5.1626 | 5.3686 |
 | secondary.main as text on background.neutral | 4.5 | 4.7655 | 4.5024 |
@@ -230,12 +246,12 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | shared.buttonOutlined on background.default | 3 | 4.8839 | 6.4052 |
 | shared.buttonOutlined on background.paper | 3 | 4.8839 | 5.6764 |
 | shared.buttonOutlined on background.neutral | 3 | 4.5082 | 4.7605 |
-| soft primary: primary.dark on primary.main at soft.bg over background.default | 4.5 | 7.8767 | 8.5959 |
-| soft primary: primary.dark on primary.main at soft.hoverBg over background.default | 4.5 | 6.9825 | 7.4350 |
-| soft primary: primary.dark on primary.main at soft.bg over background.paper | 4.5 | 7.8767 | 7.5623 |
-| soft primary: primary.dark on primary.main at soft.hoverBg over background.paper | 4.5 | 6.9825 | 6.5838 |
-| soft primary: primary.dark on primary.main at soft.bg over background.neutral | 4.5 | 7.3228 | 6.4221 |
-| soft primary: primary.dark on primary.main at soft.hoverBg over background.neutral | 4.5 | 6.5187 | 5.6681 |
+| soft primary: primary.dark on primary.main at soft.bg over background.default | 4.5 | 7.8494 | 8.5959 |
+| soft primary: primary.dark on primary.main at soft.hoverBg over background.default | 4.5 | 6.9441 | 7.4350 |
+| soft primary: primary.dark on primary.main at soft.bg over background.paper | 4.5 | 7.8494 | 7.5623 |
+| soft primary: primary.dark on primary.main at soft.hoverBg over background.paper | 4.5 | 6.9441 | 6.5838 |
+| soft primary: primary.dark on primary.main at soft.bg over background.neutral | 4.5 | 7.2966 | 6.4221 |
+| soft primary: primary.dark on primary.main at soft.hoverBg over background.neutral | 4.5 | 6.4818 | 5.6681 |
 | soft secondary: secondary.dark on secondary.main at soft.bg over background.default | 4.5 | 7.6076 | 10.3168 |
 | soft secondary: secondary.dark on secondary.main at soft.hoverBg over background.default | 4.5 | 6.7065 | 8.9161 |
 | soft secondary: secondary.dark on secondary.main at soft.bg over background.paper | 4.5 | 7.6076 | 9.0785 |
@@ -269,6 +285,12 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | soft default: text.primary on grey.500 at soft.bg over background.default | 4.5 | 13.5169 | 13.5129 |
 | soft default: text.primary on grey.500 at soft.bg over background.paper | 4.5 | 13.5169 | 11.8585 |
 | soft default: text.primary on grey.500 at soft.bg over background.neutral | 4.5 | 12.5938 | 10.0283 |
+| nav active: primary.main on primary at 8% | 4.5 | 5.0221 | n/a |
+| nav active hover: primary.dark on primary at 16% | 4.5 | 7.8494 | n/a |
+| nav active: primary.light on primary at 8% | 4.5 | n/a | 9.7725 |
+| nav active hover: primary.light on primary at 16% | 4.5 | n/a | 8.5959 |
+| nav group label and caption: text.secondary on the nav | 4.5 | 8.3251 | 10.8719 |
+| nav item hover: text.secondary on action.hover | 4.5 | 7.7774 | 9.6538 |
 | outlined/text hover primary: primary.dark on its hover tint over background.default | 4.5 | 8.6341 | 9.2238 |
 | outlined/text hover primary: primary.dark on its hover tint over background.paper | 4.5 | 8.6341 | 8.0559 |
 | outlined/text hover primary: primary.dark on its hover tint over background.neutral | 4.5 | 7.9905 | 6.7404 |
@@ -287,13 +309,13 @@ Ratio is the unrounded value to 4 decimals. "n/a" means the pair is not asserted
 | outlined/text hover error: error.dark on its hover tint over background.default | 4.5 | 9.5811 | 8.2536 |
 | outlined/text hover error: error.dark on its hover tint over background.paper | 4.5 | 9.5811 | 7.2294 |
 | outlined/text hover error: error.dark on its hover tint over background.neutral | 4.5 | 8.8599 | 6.0512 |
-| DataGrid hovered cell: primary.main on background.default + action.hover | 4.5 | 5.0531 | 5.4090 |
-| DataGrid hovered cell: primary.main on background.paper + action.hover | 4.5 | 5.0531 | 4.7488 |
+| DataGrid hovered cell: primary.main on background.default + action.hover | 4.5 | 5.2562 | 5.4090 |
+| DataGrid hovered cell: primary.main on background.paper + action.hover | 4.5 | 5.2562 | 4.7488 |
 | Avatar letters: text.secondary on grey.300 | 4.5 | 6.4581 | n/a |
 | Avatar letters: text.secondary on grey.700 | 4.5 | n/a | 5.1697 |
-| primary.main as outline/focus ring on background.default | 3 | 5.4090 | 6.0916 |
-| primary.main as outline/focus ring on background.paper | 3 | 5.4090 | 5.3985 |
-| primary.main as outline/focus ring on background.neutral | 3 | 4.9928 | 4.5274 |
+| primary.main as outline/focus ring on background.default | 3 | 5.6264 | 6.0916 |
+| primary.main as outline/focus ring on background.paper | 3 | 5.6264 | 5.3985 |
+| primary.main as outline/focus ring on background.neutral | 3 | 5.1935 | 4.5274 |
 
 ## Thin margins
 
@@ -303,7 +325,6 @@ Every asserted pair under 4.6 (text, threshold 4.5) or under 3.1 (UI, threshold 
 | --- | --- | --- | --- |
 | primary.main as text on background.neutral | dark | 4.5274 | 4.5 |
 | secondary.main as text on background.neutral | dark | 4.5024 | 4.5 |
-| success.main as text on background.neutral | light | 4.5312 | 4.5 |
 | warning.main as text on background.neutral | light | 4.5137 | 4.5 |
 | error.main as text on background.neutral | dark | 4.5082 | 4.5 |
 | placeholder (shared.inputOutlined) on background.neutral | light | 4.5082 | 4.5 |

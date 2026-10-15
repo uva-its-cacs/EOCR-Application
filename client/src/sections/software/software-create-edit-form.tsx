@@ -1,169 +1,183 @@
-import type { IInvoice } from 'src/types/invoice';
+import type { Software } from './types';
 
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { useBoolean } from 'minimal-shared/hooks';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { FormProvider } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
-import { useRouter } from 'src/routes/hooks';
 
-import { today, fIsAfter } from 'src/utils/format-time';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import { ErrorState, LoadingState } from 'src/components/feedback';
+import { RHFTextField } from 'src/components/hook-form/rhf-text-field';
 
-import { _addressBooks } from 'src/_mock';
-
-import { Form, schemaUtils } from 'src/components/hook-form';
-
-import { InvoiceCreateEditAddress } from './invoice-create-edit-address';
-import { InvoiceCreateEditStatusDate } from './invoice-create-edit-status-date';
-import { defaultItem, InvoiceCreateEditDetails } from './invoice-create-edit-details';
+import { useSoftwareEditor } from './use-software-editor';
+import { SoftwareEditorFields } from './view/software-editor-fields';
+import { SoftwareCreateEditStatusDate } from './software-create-edit-status-date';
 
 // ----------------------------------------------------------------------
 
-export type InvoiceCreateSchemaType = z.infer<typeof InvoiceCreateSchema>;
-
-export const InvoiceCreateSchema = z
-  .object({
-    invoiceTo: schemaUtils.nullableInput(z.custom<IInvoice['invoiceTo']>(), {
-      error: 'Invoice to is required!',
-    }),
-    createDate: schemaUtils.date({ error: { required: 'Create date is required!' } }),
-    dueDate: schemaUtils.date({ error: { required: 'Due date is required!' } }),
-    items: z.array(
-      z.object({
-        title: z.string().min(1, { error: 'Title is required!' }),
-        service: z.string().min(1, { error: 'Service is required!' }),
-        quantity: z.number().int().positive().min(1, { error: 'Quantity must be more than 0' }),
-        // Not required
-        price: z.number(),
-        total: z.number(),
-        description: z.string(),
-      })
-    ),
-    // Not required
-    taxes: z.number(),
-    status: z.string(),
-    discount: z.number(),
-    shipping: z.number(),
-    subtotal: z.number(),
-    totalAmount: z.number(),
-    invoiceNumber: z.string(),
-    invoiceFrom: z.custom<IInvoice['invoiceFrom']>().nullable(),
-  })
-  .refine((val) => !fIsAfter(val.createDate, val.dueDate), {
-    error: 'Due date cannot be earlier than create date!',
-    path: ['dueDate'],
-  });
-
-// ----------------------------------------------------------------------
-
+// Adapted from the template's invoice-create-edit-form.tsx: a Card with the identity fields, the
+// neutral status/date row and the details, then right-aligned large buttons below the card. Saving
+// goes through useSoftwareEditor (zod validation, server field errors, conflict and access messages).
+// Edit only: there is no create endpoint yet.
 type Props = {
-  currentInvoice?: IInvoice;
+  software: Software;
 };
 
-export function InvoiceCreateEditForm({ currentInvoice }: Props) {
-  const router = useRouter();
+export function SoftwareCreateEditForm({ software }: Props) {
+  const navigate = useNavigate();
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const { methods, options, submit, saveError, saving } = useSoftwareEditor(software, () => {
+    navigate(paths.catalog.root);
+  });
+  const dirty = methods.formState.isDirty;
+  const ready = !!options.data && !options.isError;
 
-  const loadingSave = useBoolean();
-  const loadingSend = useBoolean();
-
-  const defaultValues: InvoiceCreateSchemaType = {
-    invoiceNumber: 'INV-1990',
-    createDate: today(),
-    dueDate: null,
-    taxes: 0,
-    shipping: 0,
-    status: 'draft',
-    discount: 0,
-    invoiceFrom: _addressBooks[0],
-    invoiceTo: null,
-    subtotal: 0,
-    totalAmount: 0,
-    items: [defaultItem],
+  const requestBack = () => {
+    if (saving) return;
+    if (dirty) setConfirmDiscard(true);
+    else navigate(paths.catalog.root);
   };
 
-  const methods = useForm({
-    mode: 'all',
-    resolver: zodResolver(InvoiceCreateSchema),
-    defaultValues,
-    values: currentInvoice,
-  });
-
-  const {
-    reset,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
-
-  const handleSaveAsDraft = handleSubmit(async (data) => {
-    loadingSave.onTrue();
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      loadingSave.onFalse();
-      router.push(paths.dashboard.invoice.root);
-      console.info('DATA', JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error(error);
-      loadingSave.onFalse();
-    }
-  });
-
-  const handleCreateAndSend = handleSubmit(async (data) => {
-    loadingSend.onTrue();
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      loadingSend.onFalse();
-      router.push(paths.dashboard.invoice.root);
-      console.info('DATA', JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error(error);
-      loadingSend.onFalse();
-    }
-  });
-
   return (
-    <Form methods={methods}>
-      <Card>
-        <InvoiceCreateEditAddress />
-        <InvoiceCreateEditStatusDate />
-        <InvoiceCreateEditDetails />
-      </Card>
-
-      <Box
-        sx={{
-          mt: 3,
-          gap: 2,
-          display: 'flex',
-          justifyContent: 'flex-end',
-        }}
-      >
-        <Button
-          color="inherit"
-          size="large"
-          variant="outlined"
-          loading={loadingSave.value && isSubmitting}
-          onClick={handleSaveAsDraft}
+    <>
+      <FormProvider {...methods}>
+        <Box
+          component="form"
+          noValidate
+          onSubmit={submit}
+          aria-busy={saving}
         >
-          Save as draft
-        </Button>
+          <Card>
+            {options.isPending && (
+              <Box sx={{ p: 3 }}>
+                <LoadingState message="Loading editing options..." />
+              </Box>
+            )}
+            {options.isError && (
+              <Box sx={{ p: 3 }}>
+                <ErrorState
+                  onRetry={() => {
+                    void options.refetch();
+                  }}
+                >
+                  Editing options could not be loaded.
+                </ErrorState>
+              </Box>
+            )}
+            {saveError && (
+              <Box sx={{ p: 3, pb: 0 }}>
+                <Alert severity="error">{saveError}</Alert>
+              </Box>
+            )}
 
-        <Button
-          size="large"
-          variant="contained"
-          loading={loadingSend.value && isSubmitting}
-          onClick={handleCreateAndSend}
-        >
-          {currentInvoice ? 'Update' : 'Create'} & send
-        </Button>
-      </Box>
-    </Form>
+            {ready && options.data && (
+              <Box
+                component="fieldset"
+                disabled={saving}
+                sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+              >
+                <Box
+                  sx={{
+                    p: 3,
+                    gap: 3,
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  }}
+                >
+                  <RHFTextField
+                    name="softwareName"
+                    label="Software name"
+                    required
+                    autoComplete="off"
+                  />
+                  <RHFTextField
+                    name="vendorName"
+                    label="Vendor name"
+                    required
+                    autoComplete="organization"
+                  />
+                  <RHFTextField
+                    name="publisherWebsite"
+                    label="Publisher website"
+                    type="url"
+                    autoComplete="url"
+                    helperText="Optional. Include http:// or https://."
+                    sx={{ gridColumn: { md: '1 / -1' } }}
+                  />
+                </Box>
+
+                <SoftwareCreateEditStatusDate
+                  software={software}
+                  options={options.data}
+                  saving={saving}
+                />
+
+                <SoftwareEditorFields
+                  software={software}
+                  options={options.data}
+                  saving={saving}
+                />
+              </Box>
+            )}
+          </Card>
+
+          <Typography
+            role="status"
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: saving ? 2 : 0 }}
+          >
+            {saving ? 'Saving software...' : ''}
+          </Typography>
+
+          <Box
+            sx={{
+              mt: 3,
+              gap: 2,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button
+              color="inherit"
+              size="large"
+              variant="outlined"
+              aria-disabled={saving}
+              onClick={requestBack}
+            >
+              Back to software catalog
+            </Button>
+
+            <Button
+              type="submit"
+              size="large"
+              variant="contained"
+              disabled={!ready}
+              // aria-disabled (not the template's `loading`, which disables the button) keeps focus here.
+              aria-disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save changes'}
+            </Button>
+          </Box>
+        </Box>
+      </FormProvider>
+
+      <ConfirmDialog
+        open={confirmDiscard}
+        title="Discard unsaved changes?"
+        content="Your changes to this software have not been saved."
+        destructive
+        confirmLabel="Discard changes"
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => navigate(paths.catalog.root)}
+      />
+    </>
   );
 }

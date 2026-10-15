@@ -6,11 +6,12 @@ import { useTheme } from '@mui/material/styles';
 import { CONFIG } from 'src/global-config';
 
 import { SvgColor } from 'src/components/svg-color';
-import { NavSectionVertical } from 'src/components/nav-section';
+import { NavSectionMini, NavSectionVertical } from 'src/components/nav-section';
 
 import { primaryNavStyles } from './primary-nav.styles';
 
-// EOCR data and permissions feed the purchased template's actual vertical navigation.
+// EOCR data and permissions feed the template's vertical navigation, or its mini navigation when the
+// sidebar is collapsed (spacing as in the template's nav-vertical.tsx).
 export function PrimaryNav({
   id,
   groups,
@@ -25,42 +26,24 @@ export function PrimaryNav({
   sx?: SxProps<Theme>;
 }) {
   const theme = useTheme();
-  const items = groups.flatMap((group) => group.items);
-  const navigationData = compact
-    ? [
-        {
-          items: items.map((item) => ({
-            title: item.title,
-            path: item.path,
-            icon: (
-              <SvgColor
-                aria-hidden
-                src={`${CONFIG.assetsDir}/assets/icons/navbar/${item.icon}.svg`}
-              />
-            ),
-          })),
-        },
-      ]
-    : groups.map((group) => ({
-        subheader: group.label,
-        items: group.items.map((item) => ({
-          title: item.title,
-          path: item.path,
-          icon: (
-            <SvgColor
-              aria-hidden
-              src={`${CONFIG.assetsDir}/assets/icons/navbar/${item.icon}.svg`}
-            />
-          ),
-        })),
-      }));
+  const navigationData = groups.map((group) => ({
+    subheader: group.label,
+    items: group.items.map((item) => ({
+      title: item.title,
+      path: item.path,
+      icon: (
+        <SvgColor aria-hidden src={`${CONFIG.assetsDir}/assets/icons/navbar/${item.icon}.svg`} />
+      ),
+    })),
+  }));
+
+  const NavSection = compact ? NavSectionMini : NavSectionVertical;
 
   return (
-    <NavSectionVertical
+    <NavSection
       id={id}
       aria-label="Primary"
       data={navigationData}
-      data-compact={compact ? 'true' : undefined}
       cssVars={primaryNavStyles(theme)}
       onClickCapture={(event) => {
         const target = event.target;
@@ -69,7 +52,7 @@ export function PrimaryNav({
         const path = link?.getAttribute('href');
         if (path && event.currentTarget.contains(link)) onItemClick?.(path);
       }}
-      sx={[{ px: compact ? 0.5 : 2, pt: 1.5 }, ...(Array.isArray(sx) ? sx : [sx])]}
+      sx={[compact ? { px: 0.5, pb: 2 } : { px: 2 }, ...(Array.isArray(sx) ? sx : [sx])]}
     />
   );
 }

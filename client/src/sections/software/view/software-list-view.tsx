@@ -1,38 +1,30 @@
+import type { ReactNode } from 'react';
+import type { Theme } from '@mui/material/styles';
+import type { LabelColor } from 'src/components/label';
+import type { IconifyName } from 'src/components/iconify';
 import type { TableHeadCellProps } from 'src/components/table';
-import type { IInvoice, IInvoiceTableFilters } from 'src/types/invoice';
+import type { SoftwareCatalogItem, SoftwareTableFilters } from '../types';
 
-import { sumBy } from 'es-toolkit';
-import { useState, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
-import { useBoolean, useSetState } from 'minimal-shared/hooks';
+import { useSetState } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
+import Tabs from '@mui/material/Tabs';
 import Table from '@mui/material/Table';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import Tooltip from '@mui/material/Tooltip';
+import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
 import { useTheme } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
-
-import { paths } from 'src/routes/paths';
-import { RouterLink } from 'src/routes/components';
-
-import { fIsAfter, fIsBetween } from 'src/utils/format-time';
-
-import { DashboardContent } from 'src/layouts/dashboard';
-import { _invoices, INVOICE_SERVICE_OPTIONS } from 'src/_mock';
 
 import { Label } from 'src/components/label';
-import { toast } from 'src/components/snackbar';
-import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
-import { ConfirmDialog } from 'src/components/custom-dialog';
-import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+import { LoadingState } from 'src/components/feedback';
+import { PageHeader } from 'src/components/page-header';
+import { VisuallyHidden } from 'src/components/visually-hidden';
 import {
   useTable,
   emptyRows,
@@ -41,133 +33,117 @@ import {
   getComparator,
   TableEmptyRows,
   TableHeadCustom,
-  TableSelectedAction,
   TablePaginationCustom,
 } from 'src/components/table';
 
-import { InvoiceAnalytic } from '../invoice-analytic';
-import { InvoiceTableRow } from '../invoice-table-row';
-import { InvoiceTableToolbar } from '../invoice-table-toolbar';
-import { InvoiceTableFiltersResult } from '../invoice-table-filters-result';
+import { getStatusColor, APPROVAL_STATUS_COLORS } from 'src/sections/requests/status-colors';
+
+import { SoftwareAnalytic } from '../software-analytic';
+import { SoftwareTableRow } from '../software-table-row';
+import { SoftwareTableToolbar } from '../software-table-toolbar';
+import { SoftwareTableFiltersResult } from '../software-table-filters-result';
 
 // ----------------------------------------------------------------------
 
-const TABLE_HEAD: TableHeadCellProps[] = [
-  { id: 'invoiceNumber', label: 'Customer' },
-  { id: 'createDate', label: 'Create' },
-  { id: 'dueDate', label: 'Due' },
-  { id: 'price', label: 'Amount' },
-  { id: 'sent', label: 'Sent', align: 'center' },
-  { id: 'status', label: 'Status' },
-  { id: '' },
+// Adapted from the template's invoice-list-view.tsx, with catalog rows from the API instead of mock
+// data. Not ported: checkbox selection and bulk actions (no selection), Delete (no endpoint), date
+// filters (date pickers are not approved) and the Scrollbar (native scrolling).
+
+const BASE_TABLE_HEAD: TableHeadCellProps[] = [
+  { id: 'softwareName', label: 'Software' },
+  { id: 'softwareCategoryLabel', label: 'Category' },
+  { id: 'accessibilityRiskLabel', label: 'Risk' },
+  { id: 'createdAt', label: 'Added' },
+  { id: 'approvalExpirationDate', label: 'Expires' },
+  { id: 'currentApprovalStatusLabel', label: 'Status' },
 ];
 
-// ----------------------------------------------------------------------
+const ACTIONS_HEAD: TableHeadCellProps = {
+  id: 'actions',
+  label: <VisuallyHidden>Actions</VisuallyHidden>,
+  sortable: false,
+};
 
-export function InvoiceListView() {
+// Icon per Label color for the analytics strip (registered offline icons only).
+const STATUS_ICONS: Partial<Record<LabelColor, IconifyName>> = {
+  info: 'solar:sort-by-time-bold-duotone',
+  success: 'solar:file-check-bold-duotone',
+  warning: 'solar:bell-bing-bold-duotone',
+  error: 'solar:file-corrupted-bold-duotone',
+};
+
+type StatusSummary = {
+  code: string;
+  label: string;
+  count: number;
+  color: LabelColor;
+};
+
+type Props = {
+  rows: SoftwareCatalogItem[];
+  loading?: boolean;
+  editHref?: (softwareId: number) => string;
+  actions?: ReactNode;
+};
+
+export function SoftwareListView({ rows, loading = false, editHref, actions }: Props) {
   const theme = useTheme();
 
-  const table = useTable({ defaultOrderBy: 'createDate' });
+  const table = useTable({ defaultOrderBy: 'createdAt', defaultOrder: 'desc' });
 
-  const confirmDialog = useBoolean();
-
-  const [tableData, setTableData] = useState<IInvoice[]>(_invoices);
-
-  const filters = useSetState<IInvoiceTableFilters>({
+  const filters = useSetState<SoftwareTableFilters>({
     name: '',
-    service: [],
+    category: [],
     status: 'all',
-    startDate: null,
-    endDate: null,
   });
   const { state: currentFilters, setState: updateFilters } = filters;
 
-  const dateError = fIsAfter(currentFilters.startDate, currentFilters.endDate);
+  const statuses = useMemo(() => {
+    const found = new Map<string, StatusSummary>();
+
+    rows.forEach((row) => {
+      const status = found.get(row.currentApprovalStatusCode);
+      found.set(row.currentApprovalStatusCode, {
+        code: row.currentApprovalStatusCode,
+        label: row.currentApprovalStatusLabel,
+        count: (status?.count ?? 0) + 1,
+        color: getStatusColor(APPROVAL_STATUS_COLORS, row.currentApprovalStatusCode),
+      });
+    });
+
+    return [...found.values()];
+  }, [rows]);
+
+  const categories = useMemo(
+    () =>
+      [...new Set(rows.flatMap((row) => row.softwareCategoryLabel ?? []))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [rows]
+  );
+
+  // A status tab can disappear after a refresh; its filter then no longer applies.
+  const activeStatus = statuses.find((status) => status.code === currentFilters.status);
+  const effectiveFilters = { ...currentFilters, status: activeStatus ? activeStatus.code : 'all' };
 
   const dataFiltered = applyFilter({
-    inputData: tableData,
-    comparator: getComparator(table.order, table.orderBy),
-    filters: currentFilters,
-    dateError,
+    inputData: rows,
+    comparator: getComparator(table.order, table.orderBy as keyof SoftwareCatalogItem),
+    filters: effectiveFilters,
   });
 
   const dataInPage = rowInPage(dataFiltered, table.page, table.rowsPerPage);
 
   const canReset =
     !!currentFilters.name ||
-    currentFilters.service.length > 0 ||
-    currentFilters.status !== 'all' ||
-    (!!currentFilters.startDate && !!currentFilters.endDate);
+    currentFilters.category.length > 0 ||
+    effectiveFilters.status !== 'all';
 
-  const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
+  const notFound = !dataFiltered.length && !loading;
 
-  const getInvoiceLength = (status: string) =>
-    tableData.filter((item) => item.status === status).length;
+  const tableHead = editHref ? [...BASE_TABLE_HEAD, ACTIONS_HEAD] : BASE_TABLE_HEAD;
 
-  const getTotalAmount = (status: string) =>
-    sumBy(
-      tableData.filter((item) => item.status === status),
-      (invoice) => invoice.totalAmount
-    );
-
-  const getPercentByStatus = (status: string) =>
-    (getInvoiceLength(status) / tableData.length) * 100;
-
-  const TABS = [
-    {
-      value: 'all',
-      label: 'All',
-      color: 'default',
-      count: tableData.length,
-    },
-    {
-      value: 'paid',
-      label: 'Paid',
-      color: 'success',
-      count: getInvoiceLength('paid'),
-    },
-    {
-      value: 'pending',
-      label: 'Pending',
-      color: 'warning',
-      count: getInvoiceLength('pending'),
-    },
-    {
-      value: 'overdue',
-      label: 'Overdue',
-      color: 'error',
-      count: getInvoiceLength('overdue'),
-    },
-    {
-      value: 'draft',
-      label: 'Draft',
-      color: 'default',
-      count: getInvoiceLength('draft'),
-    },
-  ] as const;
-
-  const handleDeleteRow = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
-    },
-    [dataInPage.length, table, tableData]
-  );
-
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-
-    toast.success('Delete success!');
-
-    setTableData(deleteRows);
-
-    table.onUpdatePageDeleteRows(dataInPage.length, dataFiltered.length);
-  }, [dataFiltered.length, dataInPage.length, table, tableData]);
+  const getPercent = (count: number) => (rows.length ? (count / rows.length) * 100 : 0);
 
   const handleFilterStatus = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
@@ -177,268 +153,222 @@ export function InvoiceListView() {
     [updateFilters, table]
   );
 
-  const renderConfirmDialog = () => (
-    <ConfirmDialog
-      open={confirmDialog.value}
-      onClose={confirmDialog.onFalse}
-      title="Delete"
-      content={
-        <>
-          Are you sure want to delete <strong> {table.selected.length} </strong> items?
-        </>
-      }
-      action={
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() => {
-            handleDeleteRows();
-            confirmDialog.onFalse();
-          }}
-        >
-          Delete
-        </Button>
-      }
-    />
-  );
-
   return (
     <>
-      <DashboardContent>
-        <CustomBreadcrumbs
-          heading="List"
-          links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Invoice', href: paths.dashboard.invoice.root },
-            { name: 'List' },
-          ]}
-          action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.invoice.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              Add invoice
-            </Button>
-          }
-          sx={{ mb: { xs: 3, md: 5 } }}
-        />
+      <PageHeader
+        title="Software catalog"
+        documentTitle="Software catalog"
+        description="Browse software and its accessibility approval status."
+        actions={actions}
+      />
 
-        <Card sx={{ mb: { xs: 3, md: 5 } }}>
-          <Scrollbar sx={{ minHeight: 108 }}>
-            <Stack
-              divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
-              sx={{ py: 2, flexDirection: 'row' }}
-            >
-              <InvoiceAnalytic
-                title="Total"
-                total={tableData.length}
-                percent={100}
-                price={sumBy(tableData, (invoice) => invoice.totalAmount)}
-                icon="solar:bill-list-bold-duotone"
-                color={theme.vars.palette.info.main}
-              />
-
-              <InvoiceAnalytic
-                title="Paid"
-                total={getInvoiceLength('paid')}
-                percent={getPercentByStatus('paid')}
-                price={getTotalAmount('paid')}
-                icon="solar:file-check-bold-duotone"
-                color={theme.vars.palette.success.main}
-              />
-
-              <InvoiceAnalytic
-                title="Pending"
-                total={getInvoiceLength('pending')}
-                percent={getPercentByStatus('pending')}
-                price={getTotalAmount('pending')}
-                icon="solar:sort-by-time-bold-duotone"
-                color={theme.vars.palette.warning.main}
-              />
-
-              <InvoiceAnalytic
-                title="Overdue"
-                total={getInvoiceLength('overdue')}
-                percent={getPercentByStatus('overdue')}
-                price={getTotalAmount('overdue')}
-                icon="solar:bell-bing-bold-duotone"
-                color={theme.vars.palette.error.main}
-              />
-
-              <InvoiceAnalytic
-                title="Draft"
-                total={getInvoiceLength('draft')}
-                percent={getPercentByStatus('draft')}
-                price={getTotalAmount('draft')}
-                icon="solar:file-corrupted-bold-duotone"
-                color={theme.vars.palette.text.secondary}
-              />
-            </Stack>
-          </Scrollbar>
-        </Card>
-
-        <Card>
-          <Tabs
-            value={currentFilters.status}
-            onChange={handleFilterStatus}
-            sx={{
-              px: { md: 2.5 },
-              boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
-            }}
+      <Card sx={{ mb: { xs: 3, md: 5 } }}>
+        {/* Native scrolling replaces the template's Scrollbar; focusable so keyboard users can scroll. */}
+        <Box
+          role="region"
+          aria-labelledby="software-summary-heading"
+          tabIndex={0}
+          sx={{ minHeight: 108, overflowX: 'auto' }}
+        >
+          <VisuallyHidden
+            component="h2"
+            id="software-summary-heading"
           >
-            {TABS.map((tab) => (
-              <Tab
-                key={tab.value}
-                value={tab.value}
-                label={tab.label}
-                iconPosition="end"
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === currentFilters.status) && 'filled') ||
-                      'soft'
-                    }
-                    color={tab.color}
-                  >
-                    {tab.count}
-                  </Label>
-                }
+            Approval summary
+          </VisuallyHidden>
+          <Stack
+            divider={
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ borderStyle: 'dashed' }}
+              />
+            }
+            sx={{ py: 2, flexDirection: 'row' }}
+          >
+            <SoftwareAnalytic
+              title="Total"
+              total={rows.length}
+              percent={100}
+              icon="solar:bill-list-bold-duotone"
+              color={theme.vars.palette.info.main}
+            />
+
+            {statuses.map((status) => (
+              <SoftwareAnalytic
+                key={status.code}
+                title={status.label}
+                total={status.count}
+                percent={getPercent(status.count)}
+                icon={STATUS_ICONS[status.color] ?? 'solar:file-bold-duotone'}
+                color={analyticColor(theme, status.color)}
               />
             ))}
-          </Tabs>
+          </Stack>
+        </Box>
+      </Card>
 
-          <InvoiceTableToolbar
-            filters={filters}
-            dateError={dateError}
-            onResetPage={table.onResetPage}
-            options={{ services: INVOICE_SERVICE_OPTIONS.map((option) => option.name) }}
-          />
-
-          {canReset && (
-            <InvoiceTableFiltersResult
-              filters={filters}
-              onResetPage={table.onResetPage}
-              totalResults={dataFiltered.length}
-              sx={{ p: 2.5, pt: 0 }}
-            />
-          )}
-
-          <Box sx={{ position: 'relative' }}>
-            <TableSelectedAction
-              dense={table.dense}
-              numSelected={table.selected.length}
-              rowCount={dataFiltered.length}
-              onSelectAllRows={(checked) => {
-                table.onSelectAllRows(
-                  checked,
-                  dataFiltered.map((row) => row.id)
-                );
-              }}
-              action={
-                <Box sx={{ display: 'flex' }}>
-                  <Tooltip title="Sent">
-                    <IconButton color="primary">
-                      <Iconify icon="custom:send-fill" />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Download">
-                    <IconButton color="primary">
-                      <Iconify icon="solar:download-bold" />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Print">
-                    <IconButton color="primary">
-                      <Iconify icon="solar:printer-minimalistic-bold" />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Delete">
-                    <IconButton color="primary" onClick={confirmDialog.onTrue}>
-                      <Iconify icon="solar:trash-bin-trash-bold" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
+      <Card>
+        <Tabs
+          value={activeStatus ? activeStatus.code : 'all'}
+          onChange={handleFilterStatus}
+          aria-label="Filter software by approval status"
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            px: { md: 2.5 },
+            boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
+          }}
+        >
+          {[
+            { value: 'all', label: 'All', color: 'default' as LabelColor, count: rows.length },
+            ...statuses.map((status) => ({
+              value: status.code,
+              label: status.label,
+              color: status.color,
+              count: status.count,
+            })),
+          ].map((tab) => (
+            <Tab
+              key={tab.value}
+              value={tab.value}
+              label={tab.label}
+              aria-label={
+                tab.value === 'all' ? `All software (${tab.count})` : `${tab.label} (${tab.count})`
+              }
+              iconPosition="end"
+              icon={
+                <Label
+                  variant={
+                    ((tab.value === 'all' || tab.value === effectiveFilters.status) && 'filled') ||
+                    'soft'
+                  }
+                  color={tab.color}
+                >
+                  {tab.count}
+                </Label>
               }
             />
+          ))}
+        </Tabs>
 
-            <Scrollbar sx={{ minHeight: 444 }}>
-              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 800 }}>
-                <TableHeadCustom
-                  order={table.order}
-                  orderBy={table.orderBy}
-                  headCells={TABLE_HEAD}
-                  rowCount={dataFiltered.length}
-                  numSelected={table.selected.length}
-                  onSort={table.onSort}
-                  onSelectAllRows={(checked) =>
-                    table.onSelectAllRows(
-                      checked,
-                      dataFiltered.map((row) => row.id)
-                    )
-                  }
-                />
+        <SoftwareTableToolbar
+          filters={filters}
+          onResetPage={table.onResetPage}
+          options={{ categories }}
+        />
 
-                <TableBody>
-                  {dataFiltered
-                    .slice(
-                      table.page * table.rowsPerPage,
-                      table.page * table.rowsPerPage + table.rowsPerPage
-                    )
-                    .map((row) => (
-                      <InvoiceTableRow
-                        key={row.id}
-                        row={row}
-                        selected={table.selected.includes(row.id)}
-                        onSelectRow={() => table.onSelectRow(row.id)}
-                        onDeleteRow={() => handleDeleteRow(row.id)}
-                        editHref={paths.dashboard.invoice.edit(row.id)}
-                        detailsHref={paths.dashboard.invoice.details(row.id)}
-                      />
-                    ))}
-
-                  <TableEmptyRows
-                    height={table.dense ? 56 : 56 + 20}
-                    emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
-                  />
-
-                  <TableNoData notFound={notFound} />
-                </TableBody>
-              </Table>
-            </Scrollbar>
-          </Box>
-
-          <TablePaginationCustom
-            page={table.page}
-            dense={table.dense}
-            count={dataFiltered.length}
-            rowsPerPage={table.rowsPerPage}
-            onPageChange={table.onChangePage}
-            onChangeDense={table.onChangeDense}
-            onRowsPerPageChange={table.onChangeRowsPerPage}
+        {canReset && (
+          <SoftwareTableFiltersResult
+            filters={filters}
+            onResetPage={table.onResetPage}
+            totalResults={dataFiltered.length}
+            statusLabel={activeStatus?.label}
+            sx={{ p: 2.5, pt: 0 }}
           />
-        </Card>
-      </DashboardContent>
+        )}
 
-      {renderConfirmDialog()}
+        {/* Announces the result count as filters change (the visible count shows only while filtering). */}
+        <VisuallyHidden>
+          <span role="status">{loading ? '' : `${dataFiltered.length} results found`}</span>
+        </VisuallyHidden>
+
+        {/* Native scrolling replaces the template's Scrollbar; focusable so keyboard users can scroll. */}
+        <Box
+          role="region"
+          aria-label="Software catalog table"
+          tabIndex={0}
+          sx={{ minHeight: 444, overflowX: 'auto' }}
+        >
+          <Table
+            aria-label="Software catalog"
+            size={table.dense ? 'small' : 'medium'}
+            sx={{ minWidth: 800 }}
+          >
+            <TableHeadCustom
+              order={table.order}
+              orderBy={table.orderBy}
+              headCells={tableHead}
+              onSort={table.onSort}
+            />
+
+            <TableBody aria-busy={loading}>
+              {dataInPage.map((row) => (
+                <SoftwareTableRow
+                  key={row.softwareId}
+                  row={row}
+                  editHref={editHref?.(row.softwareId)}
+                />
+              ))}
+
+              {loading && !dataFiltered.length && (
+                <TableRow>
+                  <TableCell colSpan={12}>
+                    <LoadingState message="Loading software..." />
+                  </TableCell>
+                </TableRow>
+              )}
+
+              <TableEmptyRows
+                height={table.dense ? 56 : 56 + 20}
+                emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+              />
+
+              <TableNoData
+                notFound={notFound}
+                title={
+                  canReset
+                    ? 'No software matches your search or filters.'
+                    : 'No software is currently in the catalog.'
+                }
+              />
+            </TableBody>
+          </Table>
+        </Box>
+
+        <TablePaginationCustom
+          page={table.page}
+          dense={table.dense}
+          count={dataFiltered.length}
+          rowsPerPage={table.rowsPerPage}
+          onPageChange={table.onChangePage}
+          onChangeDense={table.onChangeDense}
+          onRowsPerPageChange={table.onChangeRowsPerPage}
+        />
+      </Card>
     </>
   );
 }
 
 // ----------------------------------------------------------------------
 
+// Theme color for an analytics icon and ring (decorative): the status's main color, or text.secondary
+// for statuses without one.
+function analyticColor(theme: Theme, color: LabelColor): string {
+  const { palette } = theme.vars;
+  switch (color) {
+    case 'info':
+    case 'success':
+    case 'warning':
+    case 'error':
+    case 'primary':
+    case 'secondary':
+      return palette[color].main;
+    default:
+      return palette.text.secondary;
+  }
+}
+
+// ----------------------------------------------------------------------
+
 type ApplyFilterProps = {
-  dateError: boolean;
-  inputData: IInvoice[];
-  filters: IInvoiceTableFilters;
-  comparator: (a: any, b: any) => number;
+  inputData: SoftwareCatalogItem[];
+  filters: SoftwareTableFilters;
+  comparator: (a: SoftwareCatalogItem, b: SoftwareCatalogItem) => number;
 };
 
-function applyFilter({ inputData, comparator, filters, dateError }: ApplyFilterProps) {
-  const { name, status, service, startDate, endDate } = filters;
+function applyFilter({ inputData, comparator, filters }: ApplyFilterProps) {
+  const { name, status, category } = filters;
 
   const stabilizedThis = inputData.map((el, index) => [el, index] as const);
 
@@ -450,28 +380,23 @@ function applyFilter({ inputData, comparator, filters, dateError }: ApplyFilterP
 
   inputData = stabilizedThis.map((el) => el[0]);
 
-  if (name) {
-    inputData = inputData.filter(({ invoiceNumber, invoiceTo }) =>
-      [invoiceNumber, invoiceTo.name, invoiceTo.company, invoiceTo.phoneNumber].some((field) =>
-        field?.toLowerCase().includes(name.toLowerCase())
-      )
+  const term = name.trim().toLocaleLowerCase();
+
+  if (term) {
+    inputData = inputData.filter(({ softwareName, vendorName }) =>
+      [softwareName, vendorName].some((field) => field.toLocaleLowerCase().includes(term))
     );
   }
 
   if (status !== 'all') {
-    inputData = inputData.filter((invoice) => invoice.status === status);
+    inputData = inputData.filter((software) => software.currentApprovalStatusCode === status);
   }
 
-  if (service.length) {
-    inputData = inputData.filter((invoice) =>
-      invoice.items.some((filterItem) => service.includes(filterItem.service))
+  if (category.length) {
+    inputData = inputData.filter(
+      (software) =>
+        !!software.softwareCategoryLabel && category.includes(software.softwareCategoryLabel)
     );
-  }
-
-  if (!dateError) {
-    if (startDate && endDate) {
-      inputData = inputData.filter((invoice) => fIsBetween(invoice.createDate, startDate, endDate));
-    }
   }
 
   return inputData;

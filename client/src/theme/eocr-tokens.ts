@@ -5,7 +5,7 @@
 
 export const eocrTokens = {
   light: {
-    background: { default: '#F4F6F8', paper: '#FFFFFF' },
+    background: { default: '#FFFFFF', paper: '#FFFFFF' },
     primary: { main: '#007565', dark: '#004B50', contrastText: '#FFFFFF' },
     secondary: { main: '#8E33FF', dark: '#5119B7', contrastText: '#FFFFFF' },
     info: { main: '#006C9C', dark: '#003768', contrastText: '#FFFFFF' },

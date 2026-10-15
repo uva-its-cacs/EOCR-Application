@@ -6,7 +6,7 @@ import { PageHeader } from 'src/components/page-header';
 import { ErrorState, LoadingState } from 'src/components/feedback';
 
 import { useSoftware } from '../use-software';
-import { SoftwareEditorView } from './software-editor-view';
+import { SoftwareCreateEditForm } from '../software-create-edit-form';
 
 // ----------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ export function SoftwareEditPageView() {
   const software = softwareQuery.data?.find((row) => row.softwareId === Number(softwareId));
 
   return (
-    <DashboardContent maxWidth="md">
+    <DashboardContent>
       <PageHeader
         title="Edit software"
         documentTitle="Edit software"
@@ -35,7 +35,7 @@ export function SoftwareEditPageView() {
       {softwareQuery.isSuccess && !software && (
         <ErrorState>That software record could not be found.</ErrorState>
       )}
-      {software && <SoftwareEditorView software={software} />}
+      {software && <SoftwareCreateEditForm software={software} />}
     </DashboardContent>
   );
 }

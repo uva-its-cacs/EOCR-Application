@@ -36,9 +36,9 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
   const theme = useTheme();
   const navGroups = useNavGroups();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [navCompact, setNavCompact] = useState(false);
+  const [isNavMini, setIsNavMini] = useState(false);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-  const toggleNavCompact = useCallback(() => setNavCompact((compact) => !compact), []);
+  const toggleNav = useCallback(() => setIsNavMini((mini) => !mini), []);
 
   useRouteFocus(MAIN_CONTENT_ID);
 
@@ -60,7 +60,7 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
           />
         ),
         rightArea: (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 0.75 } }}>
             <ColorModeToggle />
             <AccountMenu />
           </Box>
@@ -79,19 +79,20 @@ export function EocrLayout({ children, layoutQuery = 'lg' }: Props) {
           <NavSidebar
             groups={navGroups}
             layoutQuery={layoutQuery}
-            compact={navCompact}
-            onToggleCompact={toggleNavCompact}
+            isNavMini={isNavMini}
+            onToggleNav={toggleNav}
           />
         }
-        cssVars={{
-          ...dashboardLayoutVars(theme),
-          ...navVars.layout,
-          '--layout-nav-bg': theme.vars.palette.grey[900],
-          '--layout-nav-vertical-width': navCompact ? 'var(--layout-nav-mini-width)' : '300px',
-        }}
+        cssVars={{ ...dashboardLayoutVars(theme), ...navVars.layout }}
         sx={{
           [`& .${layoutClasses.sidebarContainer}`]: {
-            [theme.breakpoints.up(layoutQuery)]: { pl: 'var(--layout-nav-vertical-width)' },
+            [theme.breakpoints.up(layoutQuery)]: {
+              pl: isNavMini ? 'var(--layout-nav-mini-width)' : 'var(--layout-nav-vertical-width)',
+              transition: theme.transitions.create(['padding-left'], {
+                easing: 'var(--layout-transition-easing)',
+                duration: 'var(--layout-transition-duration)',
+              }),
+            },
           },
         }}
       >

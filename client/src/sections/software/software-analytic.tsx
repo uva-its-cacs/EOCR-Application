@@ -6,22 +6,21 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { fCurrency, fShortenNumber } from 'src/utils/format-number';
-
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
+// Adapted from the template's invoice-analytic.tsx: a count and a share of the catalog instead of an
+// invoice total. The icon and rings are decorative (aria-hidden); the title, count and percent are text.
 type Props = {
   title: string;
   total: number;
-  price: number;
   color?: string;
   percent: number;
   icon: IconifyName;
 };
 
-export function InvoiceAnalytic({ title, total, icon, color, percent, price }: Props) {
+export function SoftwareAnalytic({ title, total, icon, color, percent }: Props) {
   return (
     <Box
       sx={{
@@ -34,6 +33,7 @@ export function InvoiceAnalytic({ title, total, icon, color, percent, price }: P
       }}
     >
       <Box
+        aria-hidden
         sx={{
           display: 'flex',
           position: 'relative',
@@ -41,7 +41,11 @@ export function InvoiceAnalytic({ title, total, icon, color, percent, price }: P
           justifyContent: 'center',
         }}
       >
-        <Iconify icon={icon} width={32} sx={{ color, position: 'absolute' }} />
+        <Iconify
+          icon={icon}
+          width={32}
+          sx={{ color, position: 'absolute' }}
+        />
 
         <CircularProgress
           size={56}
@@ -69,17 +73,26 @@ export function InvoiceAnalytic({ title, total, icon, color, percent, price }: P
       </Box>
 
       <div>
-        <Typography variant="subtitle1">{title}</Typography>
+        <Typography
+          variant="subtitle1"
+          component="h3"
+        >
+          {title}
+        </Typography>
 
         <Box
           component="span"
-          sx={{ my: 0.5, display: 'block', typography: 'body2', color: 'text.disabled' }}
+          // text.secondary: the template's text.disabled is below 4.5:1.
+          sx={{ my: 0.5, display: 'block', typography: 'body2', color: 'text.secondary' }}
         >
-          {fShortenNumber(total)} invoices
+          {total} {total === 1 ? 'item' : 'items'}
         </Box>
 
-        <Box component="span" sx={{ typography: 'subtitle2' }}>
-          {fCurrency(price)}
+        <Box
+          component="span"
+          sx={{ typography: 'subtitle2' }}
+        >
+          {Math.round(percent)}%
         </Box>
       </div>
     </Box>

@@ -9,6 +9,7 @@ import { RouterLink } from 'src/routes/components';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { Iconify } from 'src/components/iconify';
 import { ErrorState } from 'src/components/feedback';
 import { VisuallyHidden } from 'src/components/visually-hidden';
 import { PageHeader, focusPageHeading } from 'src/components/page-header';
@@ -17,7 +18,7 @@ import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 
 import { useSoftwareCatalog } from '../use-software';
-import { SoftwareCatalogView } from './software-catalog-view';
+import { SoftwareListView } from './software-list-view';
 
 // ----------------------------------------------------------------------
 
@@ -62,6 +63,7 @@ export function SoftwareCatalogPageView() {
         component={RouterLink}
         href={paths.requests.new}
         variant="contained"
+        startIcon={<Iconify icon="mingcute:add-line" />}
       >
         Request software
       </Button>
@@ -88,9 +90,9 @@ export function SoftwareCatalogPageView() {
   );
 
   return (
-    <DashboardContent maxWidth="xl">
+    <DashboardContent>
       {!software.isError || software.data ? (
-        <SoftwareCatalogView
+        <SoftwareListView
           rows={software.data ?? []}
           loading={busy}
           editHref={isAdmin ? paths.admin.softwareEdit : undefined}

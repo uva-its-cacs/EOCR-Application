@@ -1,7 +1,7 @@
 import type { Theme, SxProps } from '@mui/material/styles';
 import type { PaperOffset, ArrowPlacement, CustomPopoverProps } from './types';
 
-import { useRef } from 'react';
+import { useState } from 'react';
 import { mergeRefs } from 'minimal-shared/utils';
 
 import Popover from '@mui/material/Popover';
@@ -38,8 +38,9 @@ export function CustomPopover({
 
   const { anchorOrigin, transformOrigin } = getPopoverOrigin(arrowPlacement, isRtl);
 
-  const paperRef = useRef<HTMLDivElement>(null);
-  const paperRect = useElementRect(paperRef.current, 'popoverPaper', open);
+  // EOCR: the paper element is kept in state (a callback ref), not read from a ref during render.
+  const [paperElement, setPaperElement] = useState<HTMLDivElement | null>(null);
+  const paperRect = useElementRect(paperElement, 'popoverPaper', open);
   const anchorRect = useElementRect(anchorEl as HTMLElement, 'anchor', open);
 
   const isArrowVisible = !arrowProps?.hide && !!paperRect && !!anchorRect;
@@ -63,7 +64,7 @@ export function CustomPopover({
         ...otherSlotProps,
         paper: {
           ...paperProps,
-          ref: mergeRefs([paperRef, paperProps?.ref]),
+          ref: mergeRefs([setPaperElement, paperProps?.ref]),
           sx: [paperStyles, ...(Array.isArray(paperProps?.sx) ? paperProps.sx : [paperProps?.sx])],
         },
       }}

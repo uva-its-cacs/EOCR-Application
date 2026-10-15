@@ -2,7 +2,6 @@ import type { Theme, SxProps, CSSObject } from '@mui/material/styles';
 
 import Box from '@mui/material/Box';
 import TableRow from '@mui/material/TableRow';
-import Checkbox from '@mui/material/Checkbox';
 import TableHead from '@mui/material/TableHead';
 import TableCell from '@mui/material/TableCell';
 import TableSortLabel from '@mui/material/TableSortLabel';
@@ -25,54 +24,28 @@ const visuallyHidden: CSSObject = {
 
 export type TableHeadCellProps = {
   id: string;
-  label?: string;
+  // EOCR: a node, so a column without visible text still names its header (VisuallyHidden).
+  label?: React.ReactNode;
   width?: CSSObject['width'];
   align?: 'left' | 'center' | 'right';
+  sortable?: boolean;
   sx?: SxProps<Theme>;
 };
 
+// EOCR: the select-all checkbox is removed (no row selection). A head cell with `sortable: false` (such
+// as an actions column) renders its label without a sort button; `label` may be visually hidden text.
 export type TableHeadCustomProps = {
   orderBy?: string;
-  rowCount?: number;
   sx?: SxProps<Theme>;
-  numSelected?: number;
   order?: 'asc' | 'desc';
   headCells: TableHeadCellProps[];
   onSort?: (id: string) => void;
-  onSelectAllRows?: (checked: boolean) => void;
 };
 
-export function TableHeadCustom({
-  sx,
-  order,
-  onSort,
-  orderBy,
-  headCells,
-  rowCount = 0,
-  numSelected = 0,
-  onSelectAllRows,
-}: TableHeadCustomProps) {
+export function TableHeadCustom({ sx, order, onSort, orderBy, headCells }: TableHeadCustomProps) {
   return (
     <TableHead sx={sx}>
       <TableRow>
-        {onSelectAllRows && (
-          <TableCell padding="checkbox">
-            <Checkbox
-              indeterminate={!!numSelected && numSelected < rowCount}
-              checked={!!rowCount && numSelected === rowCount}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                onSelectAllRows(event.target.checked)
-              }
-              slotProps={{
-                input: {
-                  id: `all-row-checkbox`,
-                  'aria-label': `All row Checkbox`,
-                },
-              }}
-            />
-          </TableCell>
-        )}
-
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -83,7 +56,7 @@ export function TableHeadCustom({
               ...(Array.isArray(headCell.sx) ? headCell.sx : [headCell.sx]),
             ]}
           >
-            {onSort ? (
+            {onSort && headCell.sortable !== false ? (
               <TableSortLabel
                 hideSortIcon
                 active={orderBy === headCell.id}

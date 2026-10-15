@@ -17,3 +17,11 @@ export function formatDateOnly(value: string | null): string {
     timeZone: 'UTC',
   }).format(new Date(`${value}T00:00:00Z`));
 }
+
+// Local-timezone time of day for timestamps (e.g. "2:30 PM"), shown under a date as in the template.
+export function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(iso));
+}

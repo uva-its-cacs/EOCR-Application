@@ -109,19 +109,20 @@ client/src/
   global-config.ts    # CONFIG: appName, appVersion, assetsDir
   global.css          # font imports and baseline styles
   vite-env.d.ts
-  components/         # template: hook-form (unused until Slice 10), iconify, label, loading-screen,
-                      #   nav-section/styles (nav tokens only), svg-color
-                      # from the full vite-ts demo: custom-dialog/ (ConfirmDialog, adapted)
+  components/         # template: hook-form, iconify, label, loading-screen, nav-section/ (vertical and
+                      #   mini), svg-color
+                      # from the full vite-ts demo (adapted): custom-dialog/ (ConfirmDialog), table/,
+                      #   empty-content/, filters-result/, custom-popover/, logo/ (EOCR placeholder mark)
                       # ours: eocr-nav/ (primary nav, nav data and role filtering), page-header/,
                       #   feedback/ (LoadingState, ErrorState, EmptyState), page-loading/, status-chip/,
                       #   visually-hidden/, stat-card/ (StatCard, StatCardGroup), data-grid/ (EocrDataGrid)
   layouts/            # template: core/ (layout, header, main sections), dashboard/ (content and css-vars
-                      #   only), components/menu-button.tsx
+                      #   only), components/menu-button.tsx, components/nav-toggle-button.tsx
                       # ours: eocr/ (shell: skip link, header with dark mode toggle and account menu,
-                      #   sidebar, mobile drawer, route focus hook, wordmark)
+                      #   sidebar with collapse to the mini nav, mobile drawer, route focus hook)
   lib/                # api.ts (apiFetch, ApiError), query-client.ts
-  pages/              # requests/list.tsx, requests/new.tsx, admin/software.tsx (thin: each composes a
-                      #   section view), not-found.tsx
+  pages/              # requests/list.tsx, requests/new.tsx, software/catalog.tsx, admin/software-edit.tsx
+                      #   (thin: each composes a section view), not-found.tsx
   routes/             # paths.ts, route-handle.ts, sections/ (index, eocr), hooks/,
                       #   components/ (RouterLink, RequireAdmin, EocrErrorBoundary, route-error-message.ts)
   sections/           # auth/, requests/, software/: types, api, hooks (use-my-requests, use-software),
@@ -133,7 +134,7 @@ client/src/
   utils/              # format.ts (date formatters)
 ```
 
-The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (summary cards and the requests grid), New request (a placeholder until the intake slice), Software (admin, a read-only grid until Slice 10) and the not-found page for any other URL. Route errors render `EocrErrorBoundary` (outside the layout, with its own theme). There is no settings drawer and no auth code in the client.
+The shell is `src/layouts/eocr/` (skip link, header with the dark mode toggle and account menu, sidebar or mobile drawer with the primary nav, and main) around the pages: My requests (summary cards and the requests grid), New request (a placeholder until the intake slice), Software catalog (`/`, for everyone: approval summary, status tabs, filters and the template's MUI Table; admins also get a per-row actions menu with Edit), Edit software (admin) and the not-found page for any other URL. Route errors render `EocrErrorBoundary` (outside the layout, with its own theme). There is no settings drawer and no auth code in the client.
 
 Shared components (Slices 8 and 9). Use these instead of building one-off versions:
 
@@ -180,7 +181,7 @@ Rules:
 - Wrap the app in `ThemeProvider` and `CssBaseline` (in `app.tsx` or the template's theme provider wrapper). Prefer theme values over hard-coded colors and spacing. Do not hard-code hex colors in components.
 - Inline links in body text are underlined at rest; navigation, breadcrumb and button-like links may use a hover-only underline.
 - Navigation items are real React Router links, and the active one carries `aria-current="page"`: implemented in `src/components/eocr-nav` (our nav replaces the template's nav-section) and verified in a browser in Slice 7.
-- Use the plain MUI `Table` (a real HTML `<table>`, with the template's table helpers where useful) for small, static lists. Use the Data Grid for lists that need sorting, filtering, or pagination, such as the user's request list and the admin queue. Every Data Grid needs an `aria-label`, must be keyboard operable, must show status as text, and has no checkbox selection unless a slice calls for it.
+- Use the plain MUI `Table` (a real HTML `<table>`, with the template's table helpers where useful) for small, static lists. Use the Data Grid for lists that need sorting, filtering, or pagination, such as the user's request list and the admin queue. Exception: the software catalog matches the template's invoice list and uses the template's table helpers (`components/table`) with a real `<table>`, sort buttons and pagination. Every Data Grid needs an `aria-label`, must be keyboard operable, must show status as text, and has no checkbox selection unless a slice calls for it.
 - **Forms** use `react-hook-form` with `zod` and the template's shared field components. Every field has a visible label. Shared field wrappers must: pass `inputRef` so focus moves to the first invalid field on submit; tie each error to its field with `aria-describedby` (including non-TextField controls) and `aria-invalid`; announce errors (an error summary or live region); and must not force `autoComplete="new-password"` (set a correct `autoComplete` per field purpose, or none). Fix these once in the shared wrappers, not per form.
 - **Status display** uses the shared `StatusChip` (`src/components/status-chip`), built on the template's soft `Label`. It always shows the status text, never color alone, with a safe fallback for unknown codes. Colors per code live in `src/sections/requests/status-colors.ts`; every color used there passes contrast in both schemes (`docs/migration/theme-contrast.md`).
 

@@ -40,7 +40,8 @@ export function EmptyContent({
     <ContentRoot filled={filled} sx={sx} {...other}>
       <Box
         component="img"
-        alt="Empty content"
+        // EOCR: decorative; the title carries the meaning.
+        alt=""
         src={imgUrl ?? `${CONFIG.assetsDir}/assets/icons/empty/ic-content.svg`}
         {...slotProps?.img}
         sx={[
@@ -60,7 +61,8 @@ export function EmptyContent({
             {
               mt: 1,
               textAlign: 'center',
-              color: 'text.disabled',
+              // EOCR: text.secondary (text.disabled is below 4.5:1).
+              color: 'text.secondary',
             },
             ...(Array.isArray(slotProps?.title?.sx) ? slotProps.title.sx : [slotProps?.title?.sx]),
           ]}
@@ -77,7 +79,8 @@ export function EmptyContent({
             {
               mt: 1,
               textAlign: 'center',
-              color: 'text.disabled',
+              // EOCR: text.secondary (text.disabled is below 4.5:1).
+              color: 'text.secondary',
             },
             ...(Array.isArray(slotProps?.description?.sx)
               ? slotProps.description.sx

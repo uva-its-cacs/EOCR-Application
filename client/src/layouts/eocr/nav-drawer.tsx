@@ -5,11 +5,11 @@ import { useRef, useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 
+import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
 
+import { Logo } from 'src/components/logo';
 import { PrimaryNav } from 'src/components/eocr-nav/primary-nav';
-
-import { Wordmark } from './wordmark';
 
 // ----------------------------------------------------------------------
 
@@ -44,6 +44,12 @@ export function NavDrawer({ id, open, onClose, groups }: Props) {
     }
   }, [open, pathname, onClose]);
 
+  const handleLinkClick = (path: string) => {
+    // Same page: just close, and focus returns to the menu button.
+    if (path === pathname) onClose();
+    else setRestoreFocus(false);
+  };
+
   return (
     <Drawer
       open={open}
@@ -61,18 +67,11 @@ export function NavDrawer({ id, open, onClose, groups }: Props) {
         },
       }}
     >
-      <Box ref={contentRef} data-color-scheme="dark">
+      <Box ref={contentRef}>
         <Box sx={{ pl: 3.5, pt: 2.5, pb: 1 }}>
-          <Wordmark />
+          <Logo onClick={() => handleLinkClick(paths.catalog.root)} />
         </Box>
-        <PrimaryNav
-          groups={groups}
-          onItemClick={(path) => {
-            // Same page: just close, and focus returns to the menu button.
-            if (path === pathname) onClose();
-            else setRestoreFocus(false);
-          }}
-        />
+        <PrimaryNav groups={groups} onItemClick={handleLinkClick} sx={{ px: 2 }} />
       </Box>
     </Drawer>
   );

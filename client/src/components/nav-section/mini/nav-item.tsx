@@ -53,7 +53,8 @@ export function NavItem({
 
   return (
     <ItemRoot
-      aria-label={title}
+      // EOCR: the visible title names the link; mark the current page (as in the vertical nav).
+      aria-current={active && !hasChild ? 'page' : undefined}
       {...ownerState}
       {...navItem.baseProps}
       className={mergeClasses([navSectionClasses.item.root, className], {
@@ -62,6 +63,7 @@ export function NavItem({
         [navSectionClasses.state.disabled]: disabled,
       })}
       sx={slotProps?.sx}
+      disabled={disabled}
       {...other}
     >
       {icon && (
@@ -111,8 +113,7 @@ type StyledState = Pick<NavItemProps, 'open' | 'active' | 'disabled'> & {
   variant: 'rootItem' | 'subItem';
 };
 
-const shouldForwardProp = (prop: string) =>
-  !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
+const shouldForwardProp = (prop: string) => !['open', 'active', 'variant', 'sx'].includes(prop);
 
 /**
  * @slot root

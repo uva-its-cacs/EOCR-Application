@@ -68,3 +68,11 @@ export interface UpdateSoftwareInput {
   notes: string | null;
   updatedAt: string;
 }
+
+// Catalog list filters (the template's IInvoiceTableFilters). `status` is an approval status code or
+// 'all'; `category` holds category labels (the catalog DTO exposes labels only).
+export interface SoftwareTableFilters {
+  name: string;
+  category: string[];
+  status: string;
+}

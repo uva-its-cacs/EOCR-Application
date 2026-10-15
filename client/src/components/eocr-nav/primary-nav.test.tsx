@@ -12,14 +12,18 @@ import { NAV_GROUPS, filterNavGroups } from './nav-data';
 
 afterEach(cleanup);
 
-function renderNav(roleCode: string | undefined, path = '/') {
+function renderNav(roleCode: string | undefined, path = '/', compact = false) {
   const onItemClick = vi.fn();
   const router = createMemoryRouter(
     [
       {
         path: '*',
         element: (
-          <PrimaryNav groups={filterNavGroups(NAV_GROUPS, roleCode)} onItemClick={onItemClick} />
+          <PrimaryNav
+            groups={filterNavGroups(NAV_GROUPS, roleCode)}
+            onItemClick={onItemClick}
+            compact={compact}
+          />
         ),
       },
     ],
@@ -70,6 +74,30 @@ describe('PrimaryNav sections', () => {
 
   it('keeps the current route marked and reports navigation to the drawer', () => {
     const { onItemClick } = renderNav('User', '/requests/new');
+    const newRequest = screen.getByRole('link', { name: 'New request' });
+    expect(newRequest.getAttribute('aria-current')).toBe('page');
+    expect(
+      screen.getByRole('link', { name: 'My requests' }).getAttribute('aria-current')
+    ).toBeNull();
+    fireEvent.click(newRequest);
+    expect(onItemClick).toHaveBeenCalledWith('/requests/new');
+  });
+});
+
+describe('PrimaryNav collapsed (template mini navigation)', () => {
+  it('shows each link with its visible title and no section headers', () => {
+    renderNav('User', '/requests/new', true);
+    const nav = screen.getByRole('navigation', { name: 'Primary' });
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent)
+    ).toEqual(['My requests', 'New request', 'Software catalog']);
+    expect(screen.queryByRole('button', { name: 'Overview' })).toBeNull();
+  });
+
+  it('marks the current page and reports navigation', () => {
+    const { onItemClick } = renderNav('User', '/requests/new', true);
     const newRequest = screen.getByRole('link', { name: 'New request' });
     expect(newRequest.getAttribute('aria-current')).toBe('page');
     expect(

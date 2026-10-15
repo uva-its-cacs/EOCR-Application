@@ -75,17 +75,16 @@ export function useElementRect<T extends HTMLElement>(
   }, [context, element, open]);
 
   useEffect(() => {
-    if (!element || !open) return;
+    if (!element || !open) return undefined;
 
-    updateRect();
-
+    // EOCR: no synchronous updateRect() here (react-hooks/set-state-in-effect). ResizeObserver reports
+    // the element once when observation starts, which takes the first measurement.
     const resizeObserver = new ResizeObserver(updateRect);
     resizeObserver.observe(element);
 
     window.addEventListener('resize', updateRect, { passive: true });
     window.addEventListener('scroll', updateRect, { capture: true });
 
-    // eslint-disable-next-line consistent-return
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateRect);
