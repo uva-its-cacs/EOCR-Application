@@ -9,6 +9,7 @@ namespace Eocr.Server.Repos;
 public interface ISoftwareRepo
 {
     Task<List<SoftwareDto>> GetAllAsync(CancellationToken ct);
+    Task<List<SoftwareCatalogDto>> GetCatalogAsync(CancellationToken ct);
     Task<List<SoftwareOwnerOptionDto>> GetOwnersAsync(CancellationToken ct);
     Task<SoftwareUpdateResultDto> UpdateAsync(int softwareId, UpdateSoftwareDto input, CancellationToken ct);
 }
@@ -41,10 +42,28 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         UpdatedAt = s.UpdatedAt,
     };
 
+    private static readonly Expression<Func<Software, SoftwareCatalogDto>> CatalogProjection = s => new SoftwareCatalogDto
+    {
+        SoftwareId = s.SoftwareId,
+        SoftwareName = s.SoftwareName,
+        VendorName = s.VendorName,
+        SoftwareCategoryLabel = s.SoftwareCategory == null ? null : s.SoftwareCategory.Label,
+        CurrentApprovalStatusCode = s.CurrentApprovalStatus.Value,
+        CurrentApprovalStatusLabel = s.CurrentApprovalStatus.Label,
+        AccessibilityRiskLabel = s.AccessibilityRisk == null ? null : s.AccessibilityRisk.Label,
+        ApprovalExpirationDate = s.ApprovalExpirationDate,
+        CreatedAt = s.CreatedAt,
+    };
+
     public Task<List<SoftwareDto>> GetAllAsync(CancellationToken ct) =>
         db.Software.AsNoTracking()
             .OrderBy(s => s.SoftwareName).ThenBy(s => s.SoftwareId)
             .Select(Projection).ToListAsync(ct);
+
+    public Task<List<SoftwareCatalogDto>> GetCatalogAsync(CancellationToken ct) =>
+        db.Software.AsNoTracking()
+            .OrderByDescending(s => s.CreatedAt).ThenBy(s => s.SoftwareId)
+            .Select(CatalogProjection).ToListAsync(ct);
 
     public Task<List<SoftwareOwnerOptionDto>> GetOwnersAsync(CancellationToken ct) =>
         db.Users.AsNoTracking()

@@ -3,6 +3,7 @@ import type {
   CodeOption,
   OwnerOption,
   SoftwareOptions,
+  SoftwareCatalogItem,
   UpdateSoftwareInput,
 } from './types';
 
@@ -10,6 +11,10 @@ import { apiFetch } from 'src/lib/api';
 
 export function fetchSoftware(): Promise<Software[]> {
   return apiFetch<Software[]>('/api/software');
+}
+
+export function fetchSoftwareCatalog(): Promise<SoftwareCatalogItem[]> {
+  return apiFetch<SoftwareCatalogItem[]>('/api/software/catalog');
 }
 
 export async function fetchSoftwareOptions(): Promise<SoftwareOptions> {

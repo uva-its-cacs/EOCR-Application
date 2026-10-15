@@ -4,7 +4,7 @@ import type { Software } from '../types';
 import { it, vi, expect, describe, afterEach } from 'vitest';
 import { screen, within, cleanup, fireEvent } from '@testing-library/react';
 
-import { ok, pending, mockFetch, renderView, serverError } from 'src/test/render-view';
+import { ok, pending, renderView, serverError, jsonResponse } from 'src/test/render-view';
 
 import { SoftwareView } from './software-view';
 
@@ -41,6 +41,18 @@ const refreshStatus = () =>
     .getAllByRole('status')
     .find((s) => s.tagName === 'SPAN' && !s.closest('.MuiDataGrid-root'));
 
+function mockSoftwareApi(...handlers: (() => Promise<Response>)[]) {
+  let softwareCall = 0;
+  const fetchMock = vi.fn((url: string) => {
+    if (url === '/api/requests/mine') return Promise.resolve(jsonResponse([]));
+    const handler = handlers[Math.min(softwareCall, handlers.length - 1)];
+    softwareCall += 1;
+    return handler();
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -48,10 +60,10 @@ afterEach(() => {
 
 describe('SoftwareView', () => {
   it('shows the loading status, and Refresh is busy but stays enabled', async () => {
-    mockFetch(pending);
+    mockSoftwareApi(pending);
     renderView(<SoftwareView />);
 
-    expect(await screen.findByText('Loading software...')).toBeTruthy();
+    expect(await screen.findByRole('grid', { name: 'Software catalog' })).toBeTruthy();
     expect(refreshButton().getAttribute('aria-busy')).toBe('true');
     expect(refreshButton().getAttribute('aria-disabled')).toBe('true');
     expect((refreshButton() as HTMLButtonElement).disabled).toBe(false);
@@ -60,18 +72,20 @@ describe('SoftwareView', () => {
   });
 
   it('shows the error with Retry, which fetches again', async () => {
-    const fetchMock = mockFetch(serverError);
+    const fetchMock = mockSoftwareApi(serverError);
     renderView(<SoftwareView />);
 
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('Software could not be loaded.');
 
     fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() =>
+      expect(fetchMock.mock.calls.filter(([url]) => url === '/api/software')).toHaveLength(2)
+    );
   });
 
   it('moves focus to the h1 after a successful Retry (the Retry button disappears)', async () => {
-    mockFetch(serverError, ok([SOFTWARE]));
+    mockSoftwareApi(serverError, ok([SOFTWARE]));
     renderView(
       <main id="main-content">
         <SoftwareView />
@@ -81,30 +95,30 @@ describe('SoftwareView', () => {
     const alert = await screen.findByRole('alert');
     fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
 
-    await screen.findByRole('grid', { name: 'Software administration' });
+    await screen.findByRole('grid', { name: 'Software catalog' });
     await vi.waitFor(() =>
       expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1 }))
     );
   });
 
   it('shows the empty state inside the named grid', async () => {
-    mockFetch(ok([]));
+    mockSoftwareApi(ok([]));
     renderView(<SoftwareView />);
 
-    const grid = await screen.findByRole('grid', { name: 'Software administration' });
-    expect(await within(grid).findByText('No software has been added yet.')).toBeTruthy();
+    const grid = await screen.findByRole('grid', { name: 'Software catalog' });
+    expect(await within(grid).findByText('No software is currently in the catalog.')).toBeTruthy();
   });
 
   it('shows rows with chip text, dates, "Not set", and the labelled search field', async () => {
-    mockFetch(ok([SOFTWARE]));
+    mockSoftwareApi(ok([SOFTWARE]));
     renderView(<SoftwareView />);
 
-    const grid = await screen.findByRole('grid', { name: 'Software administration' });
+    const grid = await screen.findByRole('grid', { name: 'Software catalog' });
 
     expect(within(grid).getByText('Approved with conditions')).toBeTruthy();
     expect(within(grid).getByText('Mar 31, 2027')).toBeTruthy();
     expect(within(grid).getAllByText('Not set')).toHaveLength(2);
-    expect(within(grid).getByRole('button', { name: 'Edit Sample Tracker' })).toBeTruthy();
+    expect(within(grid).getByRole('link', { name: 'Edit Sample Tracker' })).toBeTruthy();
     expect(screen.getByLabelText('Search software')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Columns' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy();
@@ -112,9 +126,10 @@ describe('SoftwareView', () => {
 
   it('announces a refresh the user asked for, then its completion', async () => {
     let release: (r: Response) => void = () => {};
-    mockFetch(ok([SOFTWARE]), () => new Promise<Response>((r) => (release = r)));
+    mockSoftwareApi(ok([SOFTWARE]), () => new Promise<Response>((r) => (release = r)));
     renderView(<SoftwareView />);
-    await screen.findByRole('grid', { name: 'Software administration' });
+    await screen.findByRole('grid', { name: 'Software catalog' });
+    await vi.waitFor(() => expect(refreshButton().getAttribute('aria-busy')).toBe('false'));
     expect(refreshButton().getAttribute('aria-busy')).toBe('false');
 
     fireEvent.click(refreshButton());
@@ -131,13 +146,13 @@ describe('SoftwareView', () => {
   });
 
   it('ignores Refresh clicks while fetching', async () => {
-    const fetchMock = mockFetch(pending);
+    const fetchMock = mockSoftwareApi(pending);
     renderView(<SoftwareView />);
-    await screen.findByText('Loading software...');
+    await screen.findByRole('grid', { name: 'Software catalog' });
 
     fireEvent.click(refreshButton());
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.filter(([url]) => url === '/api/software')).toHaveLength(1);
     expect(refreshStatus()?.textContent).toBe('');
   });
 });

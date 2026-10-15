@@ -21,6 +21,15 @@ public class SoftwareController(ICurrentUser currentUser, ISoftwareRepo software
         return Ok(await softwareRepo.GetAllAsync(ct));
     }
 
+    [HttpGet("catalog")]
+    public async Task<ActionResult<List<SoftwareCatalogDto>>> GetCatalog(CancellationToken ct)
+    {
+        var user = await currentUser.GetAsync(ct);
+        if (user is null) return Unauthorized();
+
+        return Ok(await softwareRepo.GetCatalogAsync(ct));
+    }
+
     [HttpGet("owners")]
     public async Task<ActionResult<List<SoftwareOwnerOptionDto>>> GetOwners(CancellationToken ct)
     {

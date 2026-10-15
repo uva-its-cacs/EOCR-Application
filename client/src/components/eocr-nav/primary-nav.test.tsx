@@ -37,7 +37,7 @@ describe('PrimaryNav sections', () => {
       within(overview)
         .getAllByRole('link')
         .map((link) => link.textContent)
-    ).toEqual(['My requests', 'New request']);
+    ).toEqual(['My requests', 'New request', 'Software catalog']);
     const management = screen.getByRole('list', { name: 'Management' });
     expect(
       within(management)
@@ -66,7 +66,7 @@ describe('PrimaryNav sections', () => {
       document.getElementById(overview.getAttribute('aria-controls') ?? '')?.hasAttribute('inert')
     ).toBe(true);
     await waitFor(() => expect(screen.queryByRole('link', { name: 'My requests' })).toBeNull());
-    expect(screen.getByRole('link', { name: 'Software' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
     fireEvent.click(management);
     await waitFor(() => expect(screen.queryByRole('link', { name: 'Software' })).toBeNull());
     fireEvent.click(overview);
@@ -74,11 +74,18 @@ describe('PrimaryNav sections', () => {
     expect(management.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it.each(['User', 'unknown', undefined])('hides Management and Software for role %s', (role) => {
+  it('shows Software in Overview and hides Management for User', () => {
+    renderNav('User');
+    expect(screen.getByRole('list', { name: 'Overview' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
+    expect(screen.queryByText('Management')).toBeNull();
+  });
+
+  it.each(['unknown', undefined])('keeps the shared catalog and hides Management for %s', (role) => {
     renderNav(role);
     expect(screen.getByRole('list', { name: 'Overview' })).toBeTruthy();
     expect(screen.queryByText('Management')).toBeNull();
-    expect(screen.queryByRole('link', { name: 'Software' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Software catalog' })).toBeTruthy();
   });
 
   it('keeps the current route marked and reports navigation to the drawer', () => {

@@ -1,19 +1,20 @@
-import type { Software } from '../types';
+import { useState } from 'react';
 
-import { useRef, useState, useCallback } from 'react';
-
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
+
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { ErrorState } from 'src/components/feedback';
 import { VisuallyHidden } from 'src/components/visually-hidden';
-import { ErrorState, LoadingState } from 'src/components/feedback';
 import { PageHeader, focusPageHeading } from 'src/components/page-header';
 
 import { useSoftware } from '../use-software';
-import { SoftwareGrid } from './software-grid';
-import { SoftwareEditorDrawer } from './software-editor-drawer';
+import { SoftwareCatalogView } from './software-catalog-view';
 
 // ----------------------------------------------------------------------
 
@@ -29,20 +30,6 @@ export function SoftwareView() {
   // Admin access is checked by RequireAdmin before this view renders.
   const software = useSoftware(true);
   const busy = software.isFetching;
-  const [editing, setEditing] = useState<Software | null>(null);
-  const editTrigger = useRef<HTMLButtonElement | null>(null);
-  const handleEdit = useCallback((row: Software, trigger: HTMLButtonElement) => {
-    editTrigger.current = trigger;
-    setEditing(row);
-  }, []);
-  const closeEditor = () => {
-    setEditing(null);
-    requestAnimationFrame(() => {
-      if (editTrigger.current?.isConnected) editTrigger.current.focus();
-      else focusPageHeading();
-    });
-  };
-
   // Only a refresh the user asked for is announced, not the initial load.
   const [refreshState, setRefreshState] = useState<RefreshState>('idle');
 
@@ -58,43 +45,60 @@ export function SoftwareView() {
   // The alert and its Retry button disappear on success, so focus moves to the page heading.
   const retry = async () => {
     const result = await software.refetch();
-    if (!result.isError) focusPageHeading();
+    if (!result.isError) requestAnimationFrame(() => focusPageHeading());
   };
+
+  const actions = (
+    <Stack
+      direction="row"
+      spacing={1}
+    >
+      <Button
+        component={RouterLink}
+        href={paths.requests.new}
+        variant="contained"
+      >
+        Request software
+      </Button>
+      <Button
+        aria-disabled={busy}
+        aria-busy={busy}
+        onClick={() => {
+          void handleRefresh();
+        }}
+        startIcon={
+          busy ? (
+            <CircularProgress
+              size={16}
+              color="inherit"
+              aria-hidden
+            />
+          ) : undefined
+        }
+        sx={busy ? { color: 'text.disabled', cursor: 'not-allowed' } : undefined}
+      >
+        Refresh
+      </Button>
+    </Stack>
+  );
 
   return (
     <DashboardContent maxWidth="xl">
-      <PageHeader
-        title="Software"
-        documentTitle="Software administration"
-        description="Manage existing software and accessibility review details."
-        actions={
-          <Button
-            aria-disabled={busy}
-            aria-busy={busy}
-            onClick={() => {
-              void handleRefresh();
-            }}
-            startIcon={
-              busy ? (
-                <CircularProgress
-                  size={16}
-                  color="inherit"
-                  aria-hidden
-                />
-              ) : undefined
-            }
-            sx={busy ? { color: 'text.disabled', cursor: 'not-allowed' } : undefined}
-          >
-            Refresh
-          </Button>
-        }
-      />
-
-      <VisuallyHidden>
-        <span role="status">{REFRESH_MESSAGES[refreshState]}</span>
-      </VisuallyHidden>
-
-      {software.isPending && <LoadingState message="Loading software..." />}
+      {!software.isError || software.data ? (
+        <SoftwareCatalogView
+          rows={software.data ?? []}
+          loading={!software.data && software.isPending ? true : busy}
+          editHref={paths.admin.softwareEdit}
+          actions={actions}
+        />
+      ) : (
+        <PageHeader
+          title="Software catalog"
+          documentTitle="Software catalog"
+          description="Browse software and its accessibility approval status."
+          actions={actions}
+        />
+      )}
 
       {software.isError && (
         <ErrorState
@@ -103,25 +107,13 @@ export function SoftwareView() {
           }}
           sx={{ mb: 2 }}
         >
-          Software could not be loaded. Retry or check your administrator access.
+          Software could not be loaded. Please try again.
         </ErrorState>
       )}
 
-      {software.data && (
-        <SoftwareGrid
-          rows={software.data}
-          loading={busy}
-          onEdit={handleEdit}
-        />
-      )}
-      {editing && (
-        <SoftwareEditorDrawer
-          key={editing.softwareId}
-          software={editing}
-          onClose={closeEditor}
-          onSaved={closeEditor}
-        />
-      )}
+      <VisuallyHidden>
+        <span role="status">{REFRESH_MESSAGES[refreshState]}</span>
+      </VisuallyHidden>
     </DashboardContent>
   );
 }

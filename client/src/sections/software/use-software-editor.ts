@@ -10,8 +10,8 @@ import { ApiError } from 'src/lib/api';
 
 import { useToast } from 'src/components/toast/toast-provider';
 
-import { SOFTWARE_QUERY_KEY } from './use-software';
 import { updateSoftware, fetchSoftwareOptions } from './api';
+import { SOFTWARE_QUERY_KEY, SOFTWARE_CATALOG_QUERY_KEY } from './use-software';
 import {
   softwareEditorInput,
   softwareEditorSchema,
@@ -39,6 +39,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
         rows?.map((row) => (row.softwareId === saved.softwareId ? saved : row))
       );
       void client.invalidateQueries({ queryKey: SOFTWARE_QUERY_KEY });
+      void client.invalidateQueries({ queryKey: SOFTWARE_CATALOG_QUERY_KEY });
       toast.showSuccess('Software changes saved.');
     },
   });

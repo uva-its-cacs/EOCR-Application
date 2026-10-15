@@ -1,9 +1,11 @@
-import type { GridColDef } from '@mui/x-data-grid';
-import type { Software } from '../types';
+import type { GridColDef, GridPaginationModel } from '@mui/x-data-grid';
+import type { SoftwareCatalogItem } from '../types';
 
 import { useMemo } from 'react';
 
 import Button from '@mui/material/Button';
+
+import { RouterLink } from 'src/routes/components';
 
 import { formatDateOnly } from 'src/utils/format';
 
@@ -18,7 +20,7 @@ import { SoftwareGridToolbar } from './software-grid-toolbar';
 
 const NOT_SET = 'Not set';
 
-const COLUMNS: GridColDef<Software>[] = [
+const COLUMNS: GridColDef<SoftwareCatalogItem>[] = [
   {
     field: 'softwareName',
     headerName: 'Software',
@@ -70,50 +72,78 @@ const COLUMNS: GridColDef<Software>[] = [
         NOT_SET
       ),
   },
+  {
+    field: 'createdAt',
+    headerName: 'Added',
+    type: 'dateTime',
+    valueGetter: (value: string) => new Date(value),
+  },
 ];
 
-const getRowId = (row: Software) => row.softwareId;
+const getRowId = (row: SoftwareCatalogItem) => row.softwareId;
 
 type Props = {
-  rows: Software[];
+  rows: SoftwareCatalogItem[];
+  emptyTitle?: string;
+  paginationModel: GridPaginationModel;
+  onPaginationModelChange: (model: GridPaginationModel) => void;
   // Shows the grid's loading overlay (a refresh while rows are shown).
   loading?: boolean;
-  onEdit: (software: Software, trigger: HTMLButtonElement) => void;
+  editHref?: (softwareId: number) => string;
 };
 
-export function SoftwareGrid({ rows, loading = false, onEdit }: Props) {
-  const columns = useMemo<GridColDef<Software>[]>(
-    () => [
-      ...COLUMNS,
-      {
-        field: 'actions',
-        headerName: 'Actions',
-        width: 90,
-        sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
-        renderCell: (params) => (
-          <Button
-            tabIndex={params.hasFocus ? 0 : -1}
-            aria-label={`Edit ${params.row.softwareName}`}
-            onClick={(event) => onEdit(params.row, event.currentTarget)}
-          >
-            Edit
-          </Button>
-        ),
-      },
-    ],
-    [onEdit]
-  );
+export function SoftwareGrid({
+  rows,
+  emptyTitle = 'No software is currently in the catalog.',
+  paginationModel,
+  onPaginationModelChange,
+  loading = false,
+  editHref,
+}: Props) {
+  const columns = useMemo<GridColDef<SoftwareCatalogItem>[]>(() => {
+    const adminColumns: GridColDef<SoftwareCatalogItem>[] = editHref
+      ? [
+          {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 90,
+            sortable: false,
+            filterable: false,
+            disableColumnMenu: true,
+            renderCell: (params) => (
+              <Button
+                component={RouterLink}
+                href={editHref(params.row.softwareId)}
+                tabIndex={params.hasFocus ? 0 : -1}
+                aria-label={`Edit ${params.row.softwareName}`}
+              >
+                Edit
+              </Button>
+            ),
+          },
+        ]
+      : [];
+
+    return [...COLUMNS, ...adminColumns];
+  }, [editHref]);
+
   return (
     <EocrDataGrid
-      aria-label="Software administration"
-      emptyTitle="No software has been added yet."
+      aria-label="Software catalog"
+      emptyTitle={emptyTitle}
       rows={rows}
       columns={columns}
       getRowId={getRowId}
+      paginationModel={paginationModel}
+      onPaginationModelChange={onPaginationModelChange}
       loading={loading}
       slots={{ toolbar: SoftwareGridToolbar }}
+      pageSizeOptions={[25, 50]}
+      initialState={{
+        pagination: { paginationModel: { pageSize: 25 } },
+        sorting: { sortModel: [{ field: 'createdAt', sort: 'desc' }] },
+        columns: { columnVisibilityModel: { createdAt: false } },
+      }}
     />
   );
 }

@@ -23,6 +23,19 @@ export interface Software {
   updatedAt: string;
 }
 
+// Public fields shown in the shared software catalog. Admin-only notes and owner details are omitted.
+export interface SoftwareCatalogItem {
+  softwareId: number;
+  softwareName: string;
+  vendorName: string;
+  softwareCategoryLabel: string | null;
+  currentApprovalStatusCode: string;
+  currentApprovalStatusLabel: string;
+  accessibilityRiskLabel: string | null;
+  approvalExpirationDate: string | null;
+  createdAt: string;
+}
+
 export interface CodeOption {
   codeId: number;
   value: string;

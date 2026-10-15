@@ -8,13 +8,18 @@ const ROOTS = {
 // ----------------------------------------------------------------------
 
 export const paths = {
+  // SOFTWARE CATALOG
+  catalog: {
+    root: '/',
+  },
   // REQUESTS
   requests: {
-    root: '/',
+    root: `${ROOTS.REQUESTS}`,
     new: `${ROOTS.REQUESTS}/new`,
   },
   // ADMIN
   admin: {
     software: `${ROOTS.ADMIN}/software`,
+    softwareEdit: (softwareId: number) => `${ROOTS.ADMIN}/software/${softwareId}/edit`,
   },
 };

@@ -9,20 +9,20 @@ const titles = (roleCode: string | undefined) =>
 
 describe('filterNavGroups', () => {
   it('shows the admin group to Admin', () => {
-    expect(titles('Admin')).toEqual(['My requests', 'New request', 'Software']);
+    expect(titles('Admin')).toEqual(['My requests', 'New request', 'Software catalog', 'Software']);
   });
 
-  it('hides the admin group from User', () => {
-    expect(titles('User')).toEqual(['My requests', 'New request']);
+  it('shows the catalog link to User and hides the admin group', () => {
+    expect(titles('User')).toEqual(['My requests', 'New request', 'Software catalog']);
   });
 
   it('hides the admin group while the user is loading, on an error or when not signed in (undefined)', () => {
-    expect(titles(undefined)).toEqual(['My requests', 'New request']);
+    expect(titles(undefined)).toEqual(['My requests', 'New request', 'Software catalog']);
   });
 
   it('compares role codes exactly (no case folding, no ids)', () => {
-    expect(titles('admin')).toEqual(['My requests', 'New request']);
-    expect(titles('3')).toEqual(['My requests', 'New request']);
+    expect(titles('admin')).toEqual(['My requests', 'New request', 'Software catalog']);
+    expect(titles('3')).toEqual(['My requests', 'New request', 'Software catalog']);
   });
 
   it('drops a group left without items, so its label and list are not rendered', () => {

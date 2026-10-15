@@ -7,6 +7,8 @@ import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
 export type NavItemData = {
   title: string;
   path: string;
+  // Role code (Codes.Value) required for this item; omit for everyone.
+  requiredRole?: string;
   // File name in public/assets/icons/navbar (template icon set), without the extension.
   icon: string;
 };
@@ -27,6 +29,7 @@ export const NAV_GROUPS: NavGroupData[] = [
     items: [
       { title: 'My requests', path: paths.requests.root, icon: 'ic-file' },
       { title: 'New request', path: paths.requests.new, icon: 'ic-blank' },
+      { title: 'Software catalog', path: paths.catalog.root, icon: 'ic-course' },
     ],
   },
   {
@@ -38,9 +41,8 @@ export const NAV_GROUPS: NavGroupData[] = [
 ];
 
 /**
- * Groups the user may see. `roleCode` is undefined while the current user is loading, on an error, or
- * when nobody is signed in: only groups without a required role are returned, so admin items never
- * flash in. Groups left without items are dropped (no empty label or list).
+ * Groups and items the user may see. `roleCode` is undefined while the current user is loading, on an
+ * error, or when nobody is signed in, so role-restricted links never flash in. Empty groups are dropped.
  */
 export function filterNavGroups(
   groups: NavGroupData[],
@@ -48,6 +50,10 @@ export function filterNavGroups(
 ): NavGroupData[] {
   return groups
     .filter((group) => !group.requiredRole || group.requiredRole === roleCode)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.requiredRole || item.requiredRole === roleCode),
+    }))
     .filter((group) => group.items.length > 0);
 }
 

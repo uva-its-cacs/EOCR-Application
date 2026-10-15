@@ -10,7 +10,7 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <Link
       component={RouterLink}
-      href={paths.requests.root}
+      href={paths.catalog.root}
       underline="hover"
       sx={(theme) => ({
         ...theme.typography.subtitle1,
