@@ -2,6 +2,7 @@ export interface RequestSummary {
   requestId: number;
   softwareName: string;
   vendor: string;
+  version: string;
   statusCode: string;
   statusLabel: string;
   updatedAt: string;
@@ -32,6 +33,7 @@ export interface RequestDetail {
   title: string;
   softwareName: string;
   vendor: string;
+  version: string;
   department: string;
   businessNeed: string;
   fundingSourceId: number | null;
@@ -52,6 +54,7 @@ export interface RequestDetail {
 export interface SaveRequestInput {
   softwareName: string;
   vendor: string;
+  version: string;
   department: string;
   businessNeed: string;
   fundingSourceId: number | null;

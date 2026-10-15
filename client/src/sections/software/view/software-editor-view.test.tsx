@@ -16,6 +16,7 @@ const SOFTWARE: Software = {
   softwareId: 12,
   softwareName: 'Fable Planner',
   vendorName: 'Fable Works',
+  version: '2.1',
   publisherWebsite: null,
   softwareCategoryId: 90,
   softwareCategoryCode: 'Archived',

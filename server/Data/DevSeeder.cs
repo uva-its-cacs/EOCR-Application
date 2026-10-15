@@ -10,6 +10,48 @@ public static class DevSeeder
         SeedSoftware(db);
         SeedFundingSources(db);
         SeedRequestIntake(db);
+        SeedVersions(db);
+    }
+
+    // Gives the seeded software and requests fictional versions (once: while any software has none), and
+    // adds a second Northstar Collaborate version so the catalog shows one product with two versions.
+    private static void SeedVersions(EocrDbContext db)
+    {
+        var unversioned = db.Software.Where(s => s.Version == "").OrderBy(s => s.SoftwareId).ToList();
+        if (unversioned.Count == 0) return;
+
+        var versions = new[] { "4.2", "2026.1", "3.0", "1.8", "5.5", "2.3a" };
+        for (var i = 0; i < unversioned.Count; i++)
+            unversioned[i].Version = versions[i % versions.Length];
+
+        foreach (var request in db.VettingRequests.Where(r => r.Version == "").ToList())
+            request.Version = $"{1 + request.RequestId % 5}.{request.RequestId % 3}";
+
+        var underReviewId = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.ApprovalStatus
+                && c.Value == CodeConstants.ApprovalStatuses.UnderReview)
+            .Select(c => c.CodeId)
+            .Single();
+        var northstar = unversioned.FirstOrDefault(s => s.SoftwareName == "Northstar Collaborate");
+        if (northstar is not null)
+        {
+            var now = DateTimeOffset.UtcNow;
+            db.Software.Add(new Software
+            {
+                SoftwareName = northstar.SoftwareName,
+                VendorName = northstar.VendorName,
+                Version = "5.0",
+                PublisherWebsite = northstar.PublisherWebsite,
+                SoftwareCategoryId = northstar.SoftwareCategoryId,
+                BusinessOwnerId = northstar.BusinessOwnerId,
+                TechnicalOwnerId = northstar.TechnicalOwnerId,
+                CurrentApprovalStatusId = underReviewId,
+                Notes = "New major version; review in progress. (Fictional seed data.)",
+                CreatedAt = now.AddDays(-4),
+                UpdatedAt = now.AddDays(-4),
+            });
+        }
+        db.SaveChanges();
     }
 
     // Funding source codes (IsSystem = false, admin-managed later). Added by (CodeType, Value) so it is

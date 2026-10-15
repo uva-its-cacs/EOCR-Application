@@ -52,6 +52,8 @@ export function RequestTableRow({ row }: Props) {
         </Box>
       </TableCell>
 
+      <TableCell>{row.version || 'Not set'}</TableCell>
+
       <TableCell>
         <ListItemText
           primary={<time dateTime={row.updatedAt}>{formatDateTime(row.updatedAt)}</time>}

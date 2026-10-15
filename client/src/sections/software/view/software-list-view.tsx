@@ -51,6 +51,7 @@ import { SoftwareTableFiltersResult } from '../software-table-filters-result';
 
 const BASE_TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'softwareName', label: 'Software' },
+  { id: 'version', label: 'Version' },
   { id: 'softwareCategoryLabel', label: 'Category' },
   { id: 'accessibilityRiskLabel', label: 'Risk' },
   { id: 'createdAt', label: 'Added' },
@@ -377,8 +378,8 @@ function applyFilter({ inputData, comparator, filters }: ApplyFilterProps) {
   const term = name.trim().toLocaleLowerCase();
 
   if (term) {
-    inputData = inputData.filter(({ softwareName, vendorName }) =>
-      [softwareName, vendorName].some((field) => field.toLocaleLowerCase().includes(term))
+    inputData = inputData.filter(({ softwareName, vendorName, version }) =>
+      [softwareName, vendorName, version].some((field) => field.toLocaleLowerCase().includes(term))
     );
   }
 

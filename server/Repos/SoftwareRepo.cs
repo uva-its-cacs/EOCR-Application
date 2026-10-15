@@ -21,6 +21,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         SoftwareId = s.SoftwareId,
         SoftwareName = s.SoftwareName,
         VendorName = s.VendorName,
+        Version = s.Version,
         PublisherWebsite = s.PublisherWebsite,
         SoftwareCategoryId = s.SoftwareCategoryId,
         SoftwareCategoryCode = s.SoftwareCategory == null ? null : s.SoftwareCategory.Value,
@@ -47,6 +48,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         SoftwareId = s.SoftwareId,
         SoftwareName = s.SoftwareName,
         VendorName = s.VendorName,
+        Version = s.Version,
         SoftwareCategoryLabel = s.SoftwareCategory == null ? null : s.SoftwareCategory.Label,
         CurrentApprovalStatusCode = s.CurrentApprovalStatus.Value,
         CurrentApprovalStatusLabel = s.CurrentApprovalStatus.Label,
@@ -57,7 +59,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
 
     public Task<List<SoftwareDto>> GetAllAsync(CancellationToken ct) =>
         db.Software.AsNoTracking()
-            .OrderBy(s => s.SoftwareName).ThenBy(s => s.SoftwareId)
+            .OrderBy(s => s.SoftwareName).ThenBy(s => s.Version).ThenBy(s => s.SoftwareId)
             .Select(Projection).ToListAsync(ct);
 
     public Task<List<SoftwareCatalogDto>> GetCatalogAsync(CancellationToken ct) =>
@@ -82,6 +84,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         var result = new SoftwareUpdateResultDto();
         var name = input.SoftwareName.Trim();
         var vendor = input.VendorName.Trim();
+        var version = input.Version?.Trim() ?? string.Empty;
         var website = string.IsNullOrWhiteSpace(input.PublisherWebsite) ? null : input.PublisherWebsite.Trim();
         var notes = string.IsNullOrWhiteSpace(input.Notes) ? null : input.Notes.Trim();
 
@@ -89,6 +92,11 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
             result.Errors[nameof(input.SoftwareName)] = ["Enter a software name of up to 200 characters."];
         if (vendor.Length == 0 || vendor.Length > 200)
             result.Errors[nameof(input.VendorName)] = ["Enter a vendor name of up to 200 characters."];
+        if (version.Length == 0 || version.Length > 50)
+            result.Errors[nameof(input.Version)] = ["Enter a version of up to 50 characters."];
+        else if (await db.Software.AnyAsync(s => s.SoftwareId != softwareId && s.SoftwareName == name
+            && s.VendorName == vendor && s.Version == version, ct))
+            result.Errors[nameof(input.Version)] = ["This version of the software is already in the catalog."];
         if (website is not null && (website.Length > 2000
             || !Uri.TryCreate(website, UriKind.Absolute, out var uri)
             || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)))
@@ -117,6 +125,7 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(s => s.SoftwareName, name)
                 .SetProperty(s => s.VendorName, vendor)
+                .SetProperty(s => s.Version, version)
                 .SetProperty(s => s.PublisherWebsite, website)
                 .SetProperty(s => s.SoftwareCategoryId, input.SoftwareCategoryId)
                 .SetProperty(s => s.BusinessOwnerId, input.BusinessOwnerId)

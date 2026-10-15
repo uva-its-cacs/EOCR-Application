@@ -5,6 +5,7 @@ public class SoftwareDto
     public int SoftwareId { get; set; }
     public string SoftwareName { get; set; } = string.Empty;
     public string VendorName { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
     public string? PublisherWebsite { get; set; }
     public int? SoftwareCategoryId { get; set; }
     public string? SoftwareCategoryCode { get; set; }

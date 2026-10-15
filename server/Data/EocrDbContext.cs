@@ -60,6 +60,7 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
         {
             e.Property(r => r.SoftwareName).HasMaxLength(200);
             e.Property(r => r.Vendor).HasMaxLength(200);
+            e.Property(r => r.Version).HasMaxLength(50);
             e.Property(r => r.Department).HasMaxLength(200);
             e.Property(r => r.BusinessNeed).HasMaxLength(4000);
             e.Property(r => r.Url).HasMaxLength(2000);
@@ -79,7 +80,8 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
                 .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(r => r.Requestor)
                 .WithMany(u => u.VettingRequests)
-                .HasForeignKey(r => r.RequestorId);
+                .HasForeignKey(r => r.RequestorId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<WorkflowHistory>(e =>
@@ -108,12 +110,15 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
         {
             e.Property(s => s.SoftwareName).HasMaxLength(200).IsRequired();
             e.Property(s => s.VendorName).HasMaxLength(200).IsRequired();
+            e.Property(s => s.Version).HasMaxLength(50).IsRequired();
             e.Property(s => s.PublisherWebsite).HasMaxLength(2000);
             e.Property(s => s.Notes).HasMaxLength(4000);
             e.Property(s => s.ApprovalDate).HasColumnType("date");
             e.Property(s => s.ApprovalExpirationDate).HasColumnType("date");
 
             e.HasIndex(s => s.SoftwareName);
+            // One catalog row per product version.
+            e.HasIndex(s => new { s.SoftwareName, s.VendorName, s.Version }).IsUnique();
 
             e.HasOne(s => s.SoftwareCategory)
                 .WithMany()

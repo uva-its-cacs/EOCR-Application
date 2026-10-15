@@ -7,6 +7,7 @@ public class Request
     public User Requestor { get; set; } = null!;
     public string SoftwareName { get; set; } = string.Empty;
     public string Vendor { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
     public string BusinessNeed { get; set; } = string.Empty;
     public int? FundingSourceId { get; set; }

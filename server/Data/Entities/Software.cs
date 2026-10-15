@@ -6,6 +6,8 @@ public class Software
 
     public string SoftwareName { get; set; } = string.Empty;
     public string VendorName { get; set; } = string.Empty;
+    // Each catalog row is one version of a product (e.g. 2.3a approved, 3.4 under review).
+    public string Version { get; set; } = string.Empty;
     public string? PublisherWebsite { get; set; }
 
     public int? SoftwareCategoryId { get; set; }

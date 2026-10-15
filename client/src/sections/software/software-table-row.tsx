@@ -84,6 +84,8 @@ export function SoftwareTableRow({ row, editHref }: Props) {
           </Box>
         </TableCell>
 
+        <TableCell>{row.version}</TableCell>
+
         <TableCell>{row.softwareCategoryLabel ?? NOT_SET}</TableCell>
 
         <TableCell>{row.accessibilityRiskLabel ?? NOT_SET}</TableCell>

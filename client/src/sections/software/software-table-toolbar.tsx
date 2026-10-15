@@ -107,7 +107,7 @@ export function SoftwareTableToolbar({ filters, options, onResetPage }: Props) {
           label="Search software"
           value={currentFilters.name}
           onChange={handleFilterName}
-          placeholder="Search software or vendor..."
+          placeholder="Search software, vendor or version..."
           slotProps={{
             input: {
               startAdornment: (

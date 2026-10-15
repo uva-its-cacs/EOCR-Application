@@ -36,6 +36,7 @@ export function RequestDetailsView({ request }: Props) {
       rows: [
         ['Name', request.softwareName || NOT_SET],
         ['Vendor', request.vendor || NOT_SET],
+        ['Version', request.version || NOT_SET],
         [
           'Website',
           request.url ? (

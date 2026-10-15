@@ -322,6 +322,11 @@ namespace Eocr.Server.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<bool>("VpatSubmitted")
                         .HasColumnType("bit");
 
@@ -391,6 +396,11 @@ namespace Eocr.Server.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("SoftwareId");
 
                     b.HasIndex("AccessibilityRiskId");
@@ -404,6 +414,9 @@ namespace Eocr.Server.Data.Migrations
                     b.HasIndex("SoftwareName");
 
                     b.HasIndex("TechnicalOwnerId");
+
+                    b.HasIndex("SoftwareName", "VendorName", "Version")
+                        .IsUnique();
 
                     b.ToTable("Software");
                 });
@@ -486,7 +499,7 @@ namespace Eocr.Server.Data.Migrations
                     b.HasOne("Eocr.Server.Data.Entities.User", "Requestor")
                         .WithMany("VettingRequests")
                         .HasForeignKey("RequestorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Eocr.Server.Data.Entities.Software", "Software")

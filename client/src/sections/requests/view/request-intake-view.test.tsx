@@ -17,6 +17,7 @@ const CATALOG = [
     softwareId: 7,
     softwareName: 'Northstar Collaborate',
     vendorName: 'Northstar Technologies',
+    version: '4.2',
     softwareCategoryLabel: null,
     currentApprovalStatusCode: 'Approved',
     currentApprovalStatusLabel: 'Approved',
@@ -28,6 +29,7 @@ const CATALOG = [
     softwareId: 8,
     softwareName: 'Ember Workflow',
     vendorName: 'Ember Systems LLC',
+    version: '1.8',
     softwareCategoryLabel: null,
     currentApprovalStatusCode: 'Expired',
     currentApprovalStatusLabel: 'Expired',
@@ -49,6 +51,7 @@ const saved = (body: Record<string, unknown> | null, statusCode = 'Draft'): Requ
   title: String(body?.softwareName ?? ''),
   softwareName: String(body?.softwareName ?? ''),
   vendor: String(body?.vendor ?? ''),
+  version: String(body?.version ?? ''),
   department: String(body?.department ?? ''),
   businessNeed: String(body?.businessNeed ?? ''),
   fundingSourceId: (body?.fundingSourceId as number | null) ?? null,
@@ -150,7 +153,7 @@ describe('RequestIntakeView', () => {
       within(list).getByText('The approval has expired. A new review is needed.')
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Request a review of Ember Workflow' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Request a review of Ember Workflow 1.8' }));
 
     expect(await screen.findByRole('heading', { level: 2, name: /Step 2 of 3/ })).toBeTruthy();
     expect((screen.getByRole('textbox', { name: /Software name/ }) as HTMLInputElement).value).toBe(
@@ -159,8 +162,35 @@ describe('RequestIntakeView', () => {
     expect((screen.getByRole('textbox', { name: /Vendor/ }) as HTMLInputElement).value).toBe(
       'Ember Systems LLC'
     );
+    expect((screen.getByRole('textbox', { name: /Version/ }) as HTMLInputElement).value).toBe(
+      '1.8'
+    );
     expect(
-      screen.getByText('This request is for Ember Workflow, from the software catalog.')
+      screen.getByText('This request is for Ember Workflow 1.8, from the software catalog.')
+    ).toBeTruthy();
+  });
+
+  it('requests a different version: prefills the product, leaves the version empty, links nothing', async () => {
+    renderIntake();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Software or vendor name' }), {
+      target: { value: 'northstar' },
+    });
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Request a different version of Northstar Collaborate',
+      })
+    );
+
+    const version = await screen.findByRole('textbox', { name: /Version/ });
+    expect((version as HTMLInputElement).value).toBe('');
+    expect((screen.getByRole('textbox', { name: /Software name/ }) as HTMLInputElement).value).toBe(
+      'Northstar Collaborate'
+    );
+    expect(
+      screen.getByText(
+        'This request is for a new version of Northstar Collaborate. Enter the version you need.'
+      )
     ).toBeTruthy();
   });
 
@@ -192,6 +222,9 @@ describe('RequestIntakeView', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /Vendor/ }), {
       target: { value: 'Quill Labs' },
     });
+    fireEvent.change(screen.getByRole('textbox', { name: /Version/ }), {
+      target: { value: '2.0' },
+    });
     fireEvent.change(screen.getByRole('textbox', { name: /Your department/ }), {
       target: { value: 'Library' },
     });
@@ -214,6 +247,7 @@ describe('RequestIntakeView', () => {
     expect(await screen.findByText('Status page')).toBeTruthy();
     expect(created()?.body).toMatchObject({
       fundingSourceId: 1202,
+      version: '2.0',
       vpatSubmitted: true,
       department: 'Library',
     });

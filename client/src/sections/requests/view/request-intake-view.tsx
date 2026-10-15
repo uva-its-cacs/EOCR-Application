@@ -79,13 +79,22 @@ export function RequestIntakeView({ draft }: Props) {
     void (action === 'save' ? saveDraft() : submitForReview());
   };
 
-  const chooseSoftware = (software: SoftwareCatalogItem | null) => {
-    methods.setValue('softwareId', software?.softwareId ?? null, { shouldDirty: true });
+  // A catalog version links the request to it; a different version prefills only the product.
+  const chooseSoftware = (software: SoftwareCatalogItem | null, sameVersion: boolean) => {
+    const linked = software && sameVersion ? software : null;
+    methods.setValue('softwareId', linked?.softwareId ?? null, { shouldDirty: true });
     if (software) {
       methods.setValue('softwareName', software.softwareName, { shouldDirty: true });
       methods.setValue('vendor', software.vendorName, { shouldDirty: true });
+      methods.setValue('version', sameVersion ? software.version : '', { shouldDirty: true });
     }
-    setLinkedSoftware(software?.softwareName ?? null);
+    setLinkedSoftware(
+      software
+        ? sameVersion
+          ? `This request is for ${software.softwareName} ${software.version}, from the software catalog.`
+          : `This request is for a new version of ${software.softwareName}. Enter the version you need.`
+        : null
+    );
     setActiveStep(1);
   };
 

@@ -2,6 +2,7 @@ export interface Software {
   softwareId: number;
   softwareName: string;
   vendorName: string;
+  version: string;
   publisherWebsite: string | null;
   softwareCategoryId: number | null;
   softwareCategoryCode: string | null;
@@ -28,6 +29,7 @@ export interface SoftwareCatalogItem {
   softwareId: number;
   softwareName: string;
   vendorName: string;
+  version: string;
   softwareCategoryLabel: string | null;
   currentApprovalStatusCode: string;
   currentApprovalStatusLabel: string;
@@ -57,6 +59,7 @@ export interface SoftwareOptions {
 export interface UpdateSoftwareInput {
   softwareName: string;
   vendorName: string;
+  version: string;
   publisherWebsite: string | null;
   softwareCategoryId: number | null;
   businessOwnerId: number | null;

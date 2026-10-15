@@ -5,6 +5,7 @@ import { softwareEditorInput, softwareEditorSchema } from './software-editor-sch
 const VALUES = {
   softwareName: 'Fable Planner',
   vendorName: 'Fable Works',
+  version: '2.1',
   publisherWebsite: '',
   softwareCategoryId: '',
   businessOwnerId: '',

@@ -10,6 +10,9 @@ public class UpdateSoftwareDto
     [Required, StringLength(200)]
     public string VendorName { get; set; } = string.Empty;
 
+    [Required, StringLength(50)]
+    public string Version { get; set; } = string.Empty;
+
     [StringLength(2000)]
     public string? PublisherWebsite { get; set; }
 

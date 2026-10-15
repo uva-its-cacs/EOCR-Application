@@ -20,6 +20,7 @@ const fields = {
     .min(1, 'Enter the software name.')
     .max(200, 'Use 200 characters or fewer.'),
   vendor: z.string().trim().max(200, 'Use 200 characters or fewer.'),
+  version: z.string().trim().max(50, 'Use 50 characters or fewer.'),
   department: z.string().trim().max(200, 'Use 200 characters or fewer.'),
   businessNeed: z.string().trim().max(4000, 'Use 4000 characters or fewer.'),
   fundingSourceId: z.string(),
@@ -39,6 +40,7 @@ export const requestDraftSchema = z.object(fields);
 export const requestSubmitSchema = z.object({
   ...fields,
   vendor: fields.vendor.min(1, 'Enter the vendor.'),
+  version: fields.version.min(1, 'Enter the version you need.'),
   department: fields.department.min(1, 'Enter your department.'),
   businessNeed: fields.businessNeed.min(1, 'Describe the business need.'),
   fundingSourceId: z.string().min(1, 'Select a funding source.'),
@@ -49,6 +51,7 @@ export type RequestIntakeValues = z.infer<typeof requestDraftSchema>;
 export const emptyIntakeValues: RequestIntakeValues = {
   softwareName: '',
   vendor: '',
+  version: '',
   department: '',
   businessNeed: '',
   fundingSourceId: '',
@@ -61,6 +64,7 @@ export function intakeValuesFrom(request: RequestDetail): RequestIntakeValues {
   return {
     softwareName: request.softwareName,
     vendor: request.vendor,
+    version: request.version,
     department: request.department,
     businessNeed: request.businessNeed,
     fundingSourceId: request.fundingSourceId?.toString() ?? '',
@@ -74,6 +78,7 @@ export function saveInputFrom(values: RequestIntakeValues, updatedAt?: string): 
   return {
     softwareName: values.softwareName.trim(),
     vendor: values.vendor.trim(),
+    version: values.version.trim(),
     department: values.department.trim(),
     businessNeed: values.businessNeed.trim(),
     fundingSourceId: values.fundingSourceId ? Number(values.fundingSourceId) : null,

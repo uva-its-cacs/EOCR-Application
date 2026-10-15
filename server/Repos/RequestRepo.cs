@@ -30,6 +30,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
                 RequestId = r.RequestId,
                 SoftwareName = r.SoftwareName,
                 Vendor = r.Vendor,
+                Version = r.Version,
                 StatusCode = r.Status.Value,
                 StatusLabel = r.Status.Label,
                 UpdatedAt = r.UpdatedAt,
@@ -48,6 +49,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
                 RequestId = r.RequestId,
                 SoftwareName = r.SoftwareName,
                 Vendor = r.Vendor,
+                Version = r.Version,
                 Department = r.Department,
                 BusinessNeed = r.BusinessNeed,
                 FundingSourceId = r.FundingSourceId,
@@ -147,6 +149,8 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             result.Errors[nameof(SaveRequestDto.SoftwareName)] = ["Enter the software name."];
         if (string.IsNullOrWhiteSpace(request.Vendor))
             result.Errors[nameof(SaveRequestDto.Vendor)] = ["Enter the vendor."];
+        if (string.IsNullOrWhiteSpace(request.Version))
+            result.Errors[nameof(SaveRequestDto.Version)] = ["Enter the version you need."];
         if (string.IsNullOrWhiteSpace(request.Department))
             result.Errors[nameof(SaveRequestDto.Department)] = ["Enter your department."];
         if (string.IsNullOrWhiteSpace(request.BusinessNeed))
@@ -215,6 +219,7 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
     {
         request.SoftwareName = input.SoftwareName.Trim();
         request.Vendor = input.Vendor.Trim();
+        request.Version = (input.Version ?? string.Empty).Trim();
         request.Department = input.Department.Trim();
         request.BusinessNeed = input.BusinessNeed.Trim();
         request.FundingSourceId = input.FundingSourceId;
@@ -231,6 +236,8 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             result.Errors[nameof(input.SoftwareName)] = ["Enter a software name of up to 200 characters."];
         if ((input.Vendor?.Trim().Length ?? 0) > 200)
             result.Errors[nameof(input.Vendor)] = ["Use 200 characters or fewer."];
+        if ((input.Version?.Trim().Length ?? 0) > 50)
+            result.Errors[nameof(input.Version)] = ["Use 50 characters or fewer."];
         if ((input.Department?.Trim().Length ?? 0) > 200)
             result.Errors[nameof(input.Department)] = ["Use 200 characters or fewer."];
         if ((input.BusinessNeed?.Trim().Length ?? 0) > 4000)

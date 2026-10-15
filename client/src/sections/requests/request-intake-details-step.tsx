@@ -15,7 +15,8 @@ import { useFundingSources } from './use-request';
 /**
  * Intake step 2, laid out like the template's create/edit form (invoice-create-edit-form.tsx): the
  * software at the top, the neutral row for department and funding, then the business need and VPAT.
- * Required to submit (marked *): software name, vendor, department, business need and funding source.
+ * Required to submit (marked *): software name, vendor, version, department, business need and funding
+ * source.
  */
 type Props = {
   busy: boolean;
@@ -45,7 +46,7 @@ export function RequestIntakeDetailsStep({ busy, linkedSoftwareName }: Props) {
               variant="body2"
               sx={{ gridColumn: { md: '1 / -1' }, color: 'text.secondary' }}
             >
-              This request is for {linkedSoftwareName}, from the software catalog.
+              {linkedSoftwareName}
             </Typography>
           )}
           <RHFTextField
@@ -61,12 +62,18 @@ export function RequestIntakeDetailsStep({ busy, linkedSoftwareName }: Props) {
             autoComplete="organization"
           />
           <RHFTextField
+            name="version"
+            label="Version"
+            required
+            autoComplete="off"
+            helperText="The version you need. Each version is reviewed on its own."
+          />
+          <RHFTextField
             name="url"
             label="Software or vendor website"
             type="url"
             autoComplete="url"
             helperText="Optional. Include http:// or https://."
-            sx={{ gridColumn: { md: '1 / -1' } }}
           />
         </Box>
 

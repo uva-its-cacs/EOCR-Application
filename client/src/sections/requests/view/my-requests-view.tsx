@@ -55,6 +55,7 @@ import { RequestTableFiltersResult } from '../request-table-filters-result';
 
 const TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'softwareName', label: 'Software' },
+  { id: 'version', label: 'Version' },
   { id: 'updatedAt', label: 'Last updated' },
   { id: 'statusLabel', label: 'Status' },
 ];

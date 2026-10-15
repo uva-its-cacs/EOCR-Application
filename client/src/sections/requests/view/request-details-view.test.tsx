@@ -14,9 +14,10 @@ import { RequestDetailsPageView } from './request-details-page-view';
 
 const REQUEST: RequestDetail = {
   requestId: 2,
-  title: 'Buildout Pro (Buildout Inc)',
+  title: 'Buildout Pro 3.1 (Buildout Inc)',
   softwareName: 'Buildout Pro',
   vendor: 'Buildout Inc',
+  version: '3.1',
   department: 'Library',
   businessNeed: 'Floor plans for building projects.',
   fundingSourceId: 1201,
@@ -97,12 +98,12 @@ describe('RequestDetailsPageView', () => {
     // The loading state has its own h1 ("Request"); wait for the loaded one.
     const heading = await screen.findByRole('heading', {
       level: 1,
-      name: 'Request: Buildout Pro (Buildout Inc)',
+      name: 'Request: Buildout Pro 3.1 (Buildout Inc)',
     });
     expect(heading.getAttribute('tabindex')).toBe('-1');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getAllByText('Human Review').length).toBeGreaterThan(0);
-    expect(document.title).toBe('Request: Buildout Pro (Buildout Inc) - EOCR');
+    expect(document.title).toBe('Request: Buildout Pro 3.1 (Buildout Inc) - EOCR');
     expect(screen.getByRole('link', { name: 'Back to My requests' }).getAttribute('href')).toBe(
       '/requests'
     );

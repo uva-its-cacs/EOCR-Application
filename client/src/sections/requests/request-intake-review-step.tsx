@@ -33,6 +33,7 @@ export function RequestIntakeReviewStep({ onEdit }: Props) {
   const rows: [string, string][] = [
     ['Software name', values.softwareName || NOT_SET],
     ['Vendor', values.vendor || NOT_SET],
+    ['Version', values.version || NOT_SET],
     ['Website', values.url || NOT_SET],
     ['Department', values.department || NOT_SET],
     ['Funding source', funding?.label ?? NOT_SET],

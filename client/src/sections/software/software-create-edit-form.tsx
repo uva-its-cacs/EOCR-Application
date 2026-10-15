@@ -104,12 +104,18 @@ export function SoftwareCreateEditForm({ software }: Props) {
                     autoComplete="organization"
                   />
                   <RHFTextField
+                    name="version"
+                    label="Version"
+                    required
+                    autoComplete="off"
+                    helperText="Each version is reviewed and approved on its own."
+                  />
+                  <RHFTextField
                     name="publisherWebsite"
                     label="Publisher website"
                     type="url"
                     autoComplete="url"
                     helperText="Optional. Include http:// or https://."
-                    sx={{ gridColumn: { md: '1 / -1' } }}
                   />
                 </Box>
 

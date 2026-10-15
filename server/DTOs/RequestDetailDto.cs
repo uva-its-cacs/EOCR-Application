@@ -4,9 +4,12 @@ public class RequestDetailDto
 {
     public int RequestId { get; set; }
     // Computed, not stored.
-    public string Title => string.IsNullOrWhiteSpace(Vendor) ? SoftwareName : $"{SoftwareName} ({Vendor})";
+    public string Title =>
+        $"{SoftwareName}{(string.IsNullOrWhiteSpace(Version) ? "" : $" {Version}")}"
+        + (string.IsNullOrWhiteSpace(Vendor) ? "" : $" ({Vendor})");
     public string SoftwareName { get; set; } = string.Empty;
     public string Vendor { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
     public string BusinessNeed { get; set; } = string.Empty;
     public int? FundingSourceId { get; set; }

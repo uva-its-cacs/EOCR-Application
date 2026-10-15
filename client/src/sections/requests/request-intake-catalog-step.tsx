@@ -24,12 +24,14 @@ import { APPROVAL_STATUS_COLORS } from './status-colors';
 
 /**
  * Intake step 1, the workflow's "Historical cases" check: search the catalog for the software or vendor
- * and see its approval status before starting a review. Choosing a match prefills the request and links
- * it to that software; "It's not listed" continues with an empty request. (Exception/EEAAP status will
+ * and see each version's approval status before starting a review. "Request a review of <version>" links
+ * the request to that catalog version; "Request a different version" prefills the product for a new
+ * version (each version is reviewed on its own); "It's not listed" continues with an empty request. (Exception/EEAAP status will
  * show here once exceptions exist.)
  */
 type Props = {
-  onChoose: (software: SoftwareCatalogItem | null) => void;
+  // `sameVersion`: review this catalog version (linked); otherwise a different version of the product.
+  onChoose: (software: SoftwareCatalogItem | null, sameVersion: boolean) => void;
 };
 
 const MIN_SEARCH = 2;
@@ -42,7 +44,9 @@ export function RequestIntakeCatalogStep({ onChoose }: Props) {
   const matches = useMemo(() => {
     if (term.length < MIN_SEARCH || !catalog.data) return [];
     return catalog.data.filter((row) =>
-      [row.softwareName, row.vendorName].some((field) => field.toLocaleLowerCase().includes(term))
+      [row.softwareName, row.vendorName, row.version].some((field) =>
+        field.toLocaleLowerCase().includes(term)
+      )
     );
   }, [catalog.data, term]);
 
@@ -121,7 +125,9 @@ export function RequestIntakeCatalogStep({ onChoose }: Props) {
               })}
             >
               <Box sx={{ flex: '1 1 240px', minWidth: 0 }}>
-                <Typography variant="subtitle2">{row.softwareName}</Typography>
+                <Typography variant="subtitle2">
+                  {row.softwareName} {row.version}
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{ color: 'text.secondary' }}
@@ -152,14 +158,23 @@ export function RequestIntakeCatalogStep({ onChoose }: Props) {
                 </Typography>
               </Box>
 
-              <Button
-                variant="outlined"
-                color="inherit"
-                aria-label={`Request a review of ${row.softwareName}`}
-                onClick={() => onChoose(row)}
-              >
-                Request a review
-              </Button>
+              <Box sx={{ gap: 1, display: 'flex', flexDirection: 'column' }}>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  aria-label={`Request a review of ${row.softwareName} ${row.version}`}
+                  onClick={() => onChoose(row, true)}
+                >
+                  Request a review of {row.version}
+                </Button>
+                <Button
+                  color="inherit"
+                  aria-label={`Request a different version of ${row.softwareName}`}
+                  onClick={() => onChoose(row, false)}
+                >
+                  Request a different version
+                </Button>
+              </Box>
             </Box>
           ))}
         </Box>
@@ -177,7 +192,7 @@ export function RequestIntakeCatalogStep({ onChoose }: Props) {
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           variant="contained"
-          onClick={() => onChoose(null)}
+          onClick={() => onChoose(null, false)}
           endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
         >
           It’s not listed: start a new request
@@ -200,7 +215,7 @@ function guidanceFor(row: SoftwareCatalogItem): string {
 
   switch (row.currentApprovalStatusCode) {
     case 'Approved':
-      return 'Already approved. You may not need a request.';
+      return 'This version is approved. You may not need a request; another version needs its own review.';
     case 'ApprovedWithConditions':
       return 'Approved with conditions. Check that the conditions cover your use before requesting a review.';
     case 'Denied':

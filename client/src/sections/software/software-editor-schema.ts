@@ -16,6 +16,7 @@ export const softwareEditorSchema = z
       .trim()
       .min(1, 'Enter a software name.')
       .max(200, 'Use 200 characters or fewer.'),
+    version: z.string().trim().min(1, 'Enter the version.').max(50, 'Use 50 characters or fewer.'),
     vendorName: z
       .string()
       .trim()
@@ -59,6 +60,7 @@ export function softwareEditorDefaults(software: Software): SoftwareEditorValues
   return {
     softwareName: software.softwareName,
     vendorName: software.vendorName,
+    version: software.version,
     publisherWebsite: software.publisherWebsite ?? '',
     softwareCategoryId: software.softwareCategoryId?.toString() ?? '',
     businessOwnerId: software.businessOwnerId?.toString() ?? '',
