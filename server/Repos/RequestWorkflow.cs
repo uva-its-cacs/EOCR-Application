@@ -20,8 +20,9 @@ public static class RequestWorkflow
         public const string SaveReview = "save-review";
     }
 
-    // Admin actions by current status (RequestStatus values). "More info needed" goes back to the
-    // requester, who resubmits it (RequestRepo.SubmitAsync moves it back to human review). Drafts and
+    // Admin actions by current status (RequestStatus values). "More info needed" and "Awaiting EEAAP" wait
+    // on the requester, who resubmits the request (RequestRepo.SubmitAsync) or submits the EEAAP
+    // (ExceptionRepo.SubmitAsync); both move it back to human review, where it is decided. Drafts and
     // decided requests allow nothing.
     private static readonly Dictionary<string, string[]> AdminMoves = new()
     {
@@ -30,8 +31,7 @@ public static class RequestWorkflow
         [CodeConstants.RequestStatuses.HumanReview] =
             [Actions.Assign, Actions.SaveReview, Actions.RequestInfo, Actions.SendForEeaap, Actions.Decide],
         [CodeConstants.RequestStatuses.MoreInfoNeeded] = [Actions.Assign],
-        [CodeConstants.RequestStatuses.AwaitingEeaap] =
-            [Actions.Assign, Actions.SaveReview, Actions.StartReview, Actions.Decide],
+        [CodeConstants.RequestStatuses.AwaitingEeaap] = [Actions.Assign, Actions.SaveReview, Actions.StartReview],
     };
 
     public static IReadOnlyList<string> AllowedActions(string statusValue) =>

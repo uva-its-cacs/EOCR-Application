@@ -22,6 +22,8 @@ const SOFTWARE: SoftwareCatalogItem[] = [
     accessibilityRiskLabel: 'Low',
     approvalExpirationDate: '2027-09-30',
     conditions: null,
+    exceptionExpirationDate: null,
+    exceptionExpired: false,
     createdAt: '2026-09-30T12:00:00Z',
   },
   {
@@ -35,6 +37,8 @@ const SOFTWARE: SoftwareCatalogItem[] = [
     accessibilityRiskLabel: null,
     approvalExpirationDate: null,
     conditions: null,
+    exceptionExpirationDate: null,
+    exceptionExpired: false,
     createdAt: '2026-10-01T12:00:00Z',
   },
 ];

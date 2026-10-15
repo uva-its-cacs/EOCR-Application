@@ -12,6 +12,7 @@ public static class CodeConstants
         public const string FundingSource = "FundingSource";
         public const string ReviewType = "ReviewType";
         public const string Recommendation = "Recommendation";
+        public const string ExceptionStatus = "ExceptionStatus";
     }
 
     public static class UserRoles
@@ -55,6 +56,17 @@ public static class CodeConstants
         public const string ApproveWithConditions = "ApproveWithConditions";
         public const string Deny = "Deny";
         public const string ExceptionNeeded = "ExceptionNeeded";
+    }
+
+    // An EEAAP exception: Requested (waiting on the requester), Submitted (waiting on the decision),
+    // Approved or Denied (by the request's decision), Withdrawn (the reviewer returned to review first).
+    public static class ExceptionStatuses
+    {
+        public const string Requested = "Requested";
+        public const string Submitted = "Submitted";
+        public const string Approved = "Approved";
+        public const string Denied = "Denied";
+        public const string Withdrawn = "Withdrawn";
     }
 
     public static class AccessibilityRisks

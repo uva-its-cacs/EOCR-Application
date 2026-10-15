@@ -55,6 +55,11 @@ public class SoftwareRepo(EocrDbContext db) : ISoftwareRepo
         AccessibilityRiskLabel = s.AccessibilityRisk == null ? null : s.AccessibilityRisk.Label,
         ApprovalExpirationDate = s.ApprovalExpirationDate,
         Conditions = s.Conditions,
+        ExceptionExpirationDate = s.Exceptions
+            .Where(x => x.Status.Value == CodeConstants.ExceptionStatuses.Approved)
+            .OrderByDescending(x => x.ExpirationDate)
+            .Select(x => x.ExpirationDate)
+            .FirstOrDefault(),
         CreatedAt = s.CreatedAt,
     };
 

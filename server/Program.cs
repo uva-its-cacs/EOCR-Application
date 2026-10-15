@@ -17,6 +17,7 @@ builder.Services.AddScoped<IRequestRepo, RequestRepo>();
 builder.Services.AddScoped<ISoftwareRepo, SoftwareRepo>();
 builder.Services.AddScoped<ICodeRepo, CodeRepo>();
 builder.Services.AddScoped<IReviewRepo, ReviewRepo>();
+builder.Services.AddScoped<IExceptionRepo, ExceptionRepo>();
 
 var app = builder.Build();
 

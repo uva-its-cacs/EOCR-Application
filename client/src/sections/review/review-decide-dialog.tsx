@@ -22,7 +22,7 @@ import { Form, Field } from 'src/components/hook-form';
 import { decideRequest } from './api';
 import { useReviewWrite } from './use-review-actions';
 import { todayDate, decideInput, decideSchema } from './review-schema';
-import { DENIED, defaultExpiryDate, APPROVED_WITH_CONDITIONS } from './review-workflow';
+import { DENIED, APPROVED, defaultExpiryDate, APPROVED_WITH_CONDITIONS } from './review-workflow';
 
 // ----------------------------------------------------------------------
 
@@ -46,17 +46,19 @@ export function ReviewDecideDialog({ open, detail, options, onClose, onDecided }
   const titleId = useId();
   const { request, review } = detail;
   const today = todayDate();
-  const schema = useMemo(() => decideSchema(today), [today]);
+  // A submitted EEAAP is decided with the request: approved with conditions, or denied.
+  const eeaap = request.exception?.statusCode === 'Submitted' ? request.exception : null;
+  const schema = useMemo(() => decideSchema(today, !!eeaap), [today, eeaap]);
 
   const defaultValues: DecideValues = useMemo(
     () => ({
       outcome: '',
       approvalExpirationDate: defaultExpiryDate(),
       accessibilityRiskId: review?.riskRatingId?.toString() ?? '',
-      conditions: review?.conditions ?? '',
+      conditions: review?.conditions ?? eeaap?.mitigationPlan ?? '',
       comments: '',
     }),
-    [review]
+    [review, eeaap]
   );
 
   const methods = useForm<DecideValues>({
@@ -157,14 +159,16 @@ export function ReviewDecideDialog({ open, detail, options, onClose, onDecided }
               >
                 Select a decision
               </MenuItem>
-              {options?.outcomes.map((option) => (
-                <MenuItem
-                  key={option.value}
-                  value={option.value}
-                >
-                  {option.label}
-                </MenuItem>
-              ))}
+              {options?.outcomes
+                .filter((option) => !eeaap || option.value !== APPROVED)
+                .map((option) => (
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                  >
+                    {option.label}
+                  </MenuItem>
+                ))}
             </Field.Select>
 
             {outcome === DENIED ? (
@@ -241,6 +245,10 @@ export function ReviewDecideDialog({ open, detail, options, onClose, onDecided }
                 {approved
                   ? `, approved today, expires ${expiry ? formatDateOnly(expiry) : 'not set'}.`
                   : ', with no approval or expiry dates.'}
+                {eeaap &&
+                  (approved
+                    ? ` The exception (EEAAP) is approved until ${expiry ? formatDateOnly(expiry) : 'the expiry date'}.`
+                    : ' The exception (EEAAP) is denied.')}
               </>
             )}
           </Alert>

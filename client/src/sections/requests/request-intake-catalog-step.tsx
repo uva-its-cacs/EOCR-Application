@@ -16,6 +16,7 @@ import { StatusChip } from 'src/components/status-chip';
 import { VisuallyHidden } from 'src/components/visually-hidden';
 import { ErrorState, LoadingState } from 'src/components/feedback';
 
+import { exceptionText } from 'src/sections/software/exception-text';
 import { useSoftwareCatalog } from 'src/sections/software/use-software';
 
 import { APPROVAL_STATUS_COLORS } from './status-colors';
@@ -26,8 +27,9 @@ import { APPROVAL_STATUS_COLORS } from './status-colors';
  * Intake step 1, the workflow's "Historical cases" check: search the catalog for the software or vendor
  * and see each version's approval status before starting a review. "Request a review of <version>" links
  * the request to that catalog version; "Request a different version" prefills the product for a new
- * version (each version is reviewed on its own); "It's not listed" continues with an empty request. (Exception/EEAAP status will
- * show here once exceptions exist.)
+ * version (each version is reviewed on its own); "It's not listed" continues with an empty request. A
+ * version approved under an EEAAP exception shows the exception's expiry, with the workflow's guidance:
+ * within its time frame, submit your own request for an exception; expired, a new review is needed.
  */
 type Props = {
   // `sameVersion`: review this catalog version (linked); otherwise a different version of the product.
@@ -156,6 +158,14 @@ export function RequestIntakeCatalogStep({ onChoose }: Props) {
                 >
                   Expires: {formatDateOnly(row.approvalExpirationDate)}
                 </Typography>
+                {row.exceptionExpirationDate && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    {exceptionText(row)}
+                  </Typography>
+                )}
               </Box>
 
               <Box sx={{ gap: 1, display: 'flex', flexDirection: 'column' }}>
@@ -210,6 +220,12 @@ function guidanceFor(row: SoftwareCatalogItem): string {
   const expired =
     row.currentApprovalStatusCode === 'Expired' ||
     (!!row.approvalExpirationDate && row.approvalExpirationDate < today);
+
+  if (row.exceptionExpirationDate) {
+    return row.exceptionExpired
+      ? `The exception (EEAAP) expired on ${formatDateOnly(row.exceptionExpirationDate)}. A new review is needed.`
+      : 'Approved under an exception (EEAAP). An exception covers specific uses: submit your own request for an exception.';
+  }
 
   if (expired) return 'The approval has expired. A new review is needed.';
 

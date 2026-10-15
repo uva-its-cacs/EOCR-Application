@@ -32,6 +32,8 @@ public class Software
     public string? Conditions { get; set; }
     public string? Notes { get; set; }
 
+    public ICollection<AccessibilityException> Exceptions { get; set; } = [];
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

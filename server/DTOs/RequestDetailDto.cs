@@ -24,4 +24,5 @@ public class RequestDetailDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public List<WorkflowHistoryDto> History { get; set; } = [];
+    public ExceptionDto? Exception { get; set; }
 }

@@ -20,6 +20,7 @@ public class Request
     public int? AssignedReviewerId { get; set; }
     public User? AssignedReviewer { get; set; }
     public Review? Review { get; set; }
+    public AccessibilityException? Exception { get; set; }
     public int StatusId { get; set; }
     public Code Status { get; set; } = null!;
     public DateTimeOffset? SubmittedAt { get; set; }

@@ -63,6 +63,21 @@ const REQUEST: RequestDetail = {
       comments: null,
     },
   ],
+  exception: null,
+};
+
+const EXCEPTION: NonNullable<RequestDetail['exception']> = {
+  exceptionId: 4,
+  statusCode: 'Approved',
+  statusLabel: 'Approved',
+  businessJustification: null,
+  accessibilityImpact: null,
+  mitigationPlan: null,
+  submittedAt: null,
+  approvalDate: null,
+  expirationDate: null,
+  updatedAt: '2026-10-14T12:00:00Z',
+  isExpired: false,
 };
 
 afterEach(() => {
@@ -162,6 +177,63 @@ describe('RequestDetailsPageView', () => {
     expect(screen.getByRole('link', { name: 'Update request' }).getAttribute('href')).toBe(
       '/requests/2/edit'
     );
+  });
+
+  it('asks for the EEAAP with the reviewer’s message and links to its page', async () => {
+    renderDetails(() =>
+      jsonResponse({
+        ...REQUEST,
+        statusCode: 'AwaitingEeaap',
+        statusLabel: 'Awaiting EEAAP',
+        history: [
+          ...REQUEST.history,
+          {
+            workflowHistoryId: 5,
+            previousStatusCode: 'HumanReview',
+            previousStatusLabel: 'Human Review',
+            newStatusCode: 'AwaitingEeaap',
+            newStatusLabel: 'Awaiting EEAAP',
+            changedByName: 'Admin Example',
+            changedAt: '2026-10-14T12:00:00Z',
+            comments: 'The floor plans need text descriptions.',
+          },
+        ],
+        exception: { ...EXCEPTION, statusCode: 'Requested', statusLabel: 'Requested' },
+      })
+    );
+
+    const note = await screen.findByRole('note');
+    expect(note.textContent).toContain('The floor plans need text descriptions.');
+    expect(screen.getByRole('link', { name: 'Complete the EEAAP' }).getAttribute('href')).toBe(
+      '/requests/2/eeaap'
+    );
+    const card = screen.getByRole('heading', { level: 2, name: 'Exception (EEAAP)' });
+    expect(card).toBeTruthy();
+    expect(screen.getAllByText('Not answered yet')).toHaveLength(3);
+  });
+
+  it('shows an approved exception with its dates, and an expired one as Expired', async () => {
+    renderDetails(() =>
+      jsonResponse({
+        ...REQUEST,
+        statusCode: 'ApprovedWithConditions',
+        statusLabel: 'Approved with Conditions',
+        exception: {
+          ...EXCEPTION,
+          mitigationPlan: 'Phone support with a screen reader user on staff.',
+          approvalDate: '2025-08-01',
+          expirationDate: '2026-08-01',
+          isExpired: true,
+        },
+      })
+    );
+
+    await screen.findByRole('heading', { level: 2, name: 'Exception (EEAAP)' });
+    expect(screen.getByText('Phone support with a screen reader user on staff.')).toBeTruthy();
+    // The chip and the date term both say Expired.
+    expect(screen.getAllByText('Expired')).toHaveLength(2);
+    expect(screen.getByText('Aug 1, 2026')).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Complete the EEAAP' })).toBeNull();
   });
 
   it('shows "Request not found" for a 404 (another user’s request)', async () => {

@@ -23,6 +23,8 @@ const CATALOG = [
     currentApprovalStatusLabel: 'Approved',
     accessibilityRiskLabel: null,
     approvalExpirationDate: '2099-01-01',
+    exceptionExpirationDate: '2099-01-01',
+    exceptionExpired: false,
     createdAt: '2026-01-01T00:00:00Z',
   },
   {
@@ -66,6 +68,7 @@ const saved = (body: Record<string, unknown> | null, statusCode = 'Draft'): Requ
   createdAt: '2026-10-15T12:00:00Z',
   updatedAt: '2026-10-15T12:00:00Z',
   history: [],
+  exception: null,
 });
 
 let calls: Call[] = [];
@@ -139,6 +142,17 @@ describe('RequestIntakeView', () => {
       .find((li) => li.getAttribute('aria-current') === 'step');
     expect(current?.textContent).toContain('Check the catalog');
     expect(screen.getByRole('heading', { level: 2, name: /Step 1 of 3/ })).toBeTruthy();
+  });
+
+  it('shows a current EEAAP exception with the workflow guidance', async () => {
+    renderIntake();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Software or vendor name' }), {
+      target: { value: 'north' },
+    });
+    const list = await screen.findByRole('list', { name: 'Matching software' });
+    expect(within(list).getByText('Exception (EEAAP) until Jan 1, 2099')).toBeTruthy();
+    expect(within(list).getByText(/submit your own request for an exception/)).toBeTruthy();
   });
 
   it('shows catalog matches with status text and guidance; a match prefills the request', async () => {
@@ -254,7 +268,7 @@ describe('RequestIntakeView', () => {
     expect(calls.some((c) => c.url === '/api/requests/42/submit')).toBe(true);
   });
 
-  it('opens a request sent back for more information with the reviewer’s message and resubmits it', async () => {
+  it('opens a request sent back for more information with the reviewerâ€™s message and resubmits it', async () => {
     const sentBack: RequestDetail = {
       ...saved(
         {

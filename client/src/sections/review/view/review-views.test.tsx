@@ -71,6 +71,7 @@ const DETAIL: ReviewRequestDetail = {
     createdAt: '2026-09-25T12:00:00Z',
     updatedAt: '2026-10-13T12:00:00Z',
     history: [],
+    exception: null,
   },
   requestorName: 'Dana Example',
   requestorEmail: 'dana@example.com',
@@ -89,6 +90,8 @@ const DETAIL: ReviewRequestDetail = {
       accessibilityRiskLabel: 'Low',
       approvalExpirationDate: '2027-01-31',
       conditions: null,
+      exceptionExpirationDate: null,
+      exceptionExpired: false,
       createdAt: '2025-01-01T00:00:00Z',
     },
   ],
@@ -331,6 +334,63 @@ describe('ReviewRequestPageView', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toContain('The review options');
     expect(within(alert).getByRole('button', { name: 'Retry' })).toBeTruthy();
+  });
+
+  it('decides a submitted EEAAP with the request: no plain approval, conditions from the plan', async () => {
+    const withEeaap: ReviewRequestDetail = {
+      ...DETAIL,
+      request: {
+        ...DETAIL.request,
+        exception: {
+          exceptionId: 5,
+          statusCode: 'Submitted',
+          statusLabel: 'Submitted',
+          businessJustification: 'Needed for building projects.',
+          accessibilityImpact: 'Plans are images.',
+          mitigationPlan: 'Text descriptions on request.',
+          submittedAt: '2026-10-14T12:00:00Z',
+          approvalDate: null,
+          expirationDate: null,
+          updatedAt: '2026-10-14T12:00:00Z',
+          isExpired: false,
+        },
+      },
+    };
+    renderPage(withEeaap);
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Exception (EEAAP)' })
+    ).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask for EEAAP changes' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Decide' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Record the decision' });
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: /Decision/ }));
+    const options = (await screen.findAllByRole('option')).map((option) => option.textContent);
+    expect(options).toContain('Approved with Conditions');
+    expect(options).toContain('Denied');
+    expect(options).not.toContain('Approved');
+    fireEvent.click(screen.getByRole('option', { name: 'Approved with Conditions' }));
+
+    await waitFor(() =>
+      expect(within(dialog).getByRole('status').textContent).toContain(
+        'The exception (EEAAP) is approved until'
+      )
+    );
+    expect(
+      (within(dialog).getByRole('textbox', { name: /^Conditions/ }) as HTMLTextAreaElement).value
+    ).toBe('Text descriptions on request.');
+  });
+
+  it('requires a message to ask for an EEAAP', async () => {
+    const calls = renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Send for EEAAP' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Ask for an EEAAP exception' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Send to the requester' }));
+
+    await within(dialog).findByText('Enter the message to the requester.');
+    expect(calls.some((call) => call.method === 'POST')).toBe(false);
   });
 
   it('shows "Request not found" for a draft or missing request', async () => {

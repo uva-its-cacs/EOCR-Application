@@ -18,6 +18,7 @@ const MyRequestsPage = lazy(() => import('src/pages/requests/list'));
 const NewRequestPage = lazy(() => import('src/pages/requests/new'));
 const RequestDetailsPage = lazy(() => import('src/pages/requests/details'));
 const RequestEditPage = lazy(() => import('src/pages/requests/edit'));
+const RequestEeaapPage = lazy(() => import('src/pages/requests/eeaap'));
 const SoftwareCatalogPage = lazy(() => import('src/pages/software/catalog'));
 const SoftwareEditPage = lazy(() => import('src/pages/admin/software-edit'));
 const ReviewQueuePage = lazy(() => import('src/pages/admin/review-queue'));
@@ -75,6 +76,14 @@ export const eocrRoutes: RouteObject[] = [
         element: <RequestEditPage />,
         handle: {
           crumb: 'Continue request',
+          parent: { crumb: 'My requests', path: paths.requests.root },
+        } satisfies RouteHandle,
+      },
+      {
+        path: 'requests/:requestId/eeaap',
+        element: <RequestEeaapPage />,
+        handle: {
+          crumb: 'Exception plan (EEAAP)',
           parent: { crumb: 'My requests', path: paths.requests.root },
         } satisfies RouteHandle,
       },

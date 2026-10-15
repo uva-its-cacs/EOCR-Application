@@ -21,6 +21,7 @@ import { focusPageHeading } from 'src/components/page-header';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 import { RequestDetailsHistory } from 'src/sections/requests/request-details-history';
 import { RequestDetailsToolbar } from 'src/sections/requests/request-details-toolbar';
+import { RequestDetailsException } from 'src/sections/requests/request-details-exception';
 import {
   NOT_SET,
   RequestDetailsSummary,
@@ -68,14 +69,24 @@ const REQUEST_INFO: CommentStep = {
 
 const SEND_FOR_EEAAP: CommentStep = {
   action: REVIEW_ACTIONS.sendForEeaap,
-  title: 'Send for an EEAAP exception',
+  title: 'Ask for an EEAAP exception',
   description:
-    'The request waits for an Equally Effective Alternate Access Plan. Return it to review or decide when the plan is ready.',
-  commentLabel: 'Comments',
-  commentHelp: 'Optional. Shown in the request history.',
-  commentRequired: false,
-  confirmLabel: 'Send for EEAAP',
-  success: 'Sent for an EEAAP exception.',
+    'The request goes back to the requester, who writes an Equally Effective Alternate Access Plan and submits it to you. You then decide the request and the plan together.',
+  commentLabel: 'Message to the requester',
+  commentHelp: 'What the plan needs to cover. Shown to the requester and in the history.',
+  commentRequired: true,
+  confirmLabel: 'Send to the requester',
+  success: 'Sent to the requester for an EEAAP.',
+};
+
+// The same step when the requester already submitted a plan: it goes back to them for changes.
+const EEAAP_CHANGES: CommentStep = {
+  ...SEND_FOR_EEAAP,
+  title: 'Ask for changes to the EEAAP',
+  description:
+    'The plan goes back to the requester with your message. Their answers are kept, and they submit it again.',
+  commentHelp: 'What needs to change. Shown to the requester and in the history.',
+  success: 'EEAAP sent back to the requester.',
 };
 
 type Props = {
@@ -106,6 +117,7 @@ export function ReviewRequestView({ detail }: Props) {
   );
 
   const busy = assign.pending || move.pending;
+  const eeaapSubmitted = request.exception?.statusCode === 'Submitted';
 
   const runMove = async (action: ReviewMoveAction) => {
     if (busy) return;
@@ -172,9 +184,9 @@ export function ReviewRequestView({ detail }: Props) {
           variant="outlined"
           color="inherit"
           aria-haspopup="dialog"
-          onClick={() => setCommentStep(SEND_FOR_EEAAP)}
+          onClick={() => setCommentStep(eeaapSubmitted ? EEAAP_CHANGES : SEND_FOR_EEAAP)}
         >
-          Send for EEAAP
+          {eeaapSubmitted ? 'Ask for EEAAP changes' : 'Send for EEAAP'}
         </Button>
       )}
       {allowed(REVIEW_ACTIONS.decide) && (
@@ -228,6 +240,8 @@ export function ReviewRequestView({ detail }: Props) {
                 {request.businessNeed || NOT_SET}
               </Typography>
             </Card>
+
+            {request.exception && <RequestDetailsException exception={request.exception} />}
 
             <ReviewForm
               detail={detail}

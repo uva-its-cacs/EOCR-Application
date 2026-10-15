@@ -11,6 +11,7 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
     public DbSet<Software> Software => Set<Software>();
     public DbSet<WorkflowHistory> WorkflowHistory => Set<WorkflowHistory>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<AccessibilityException> Exceptions => Set<AccessibilityException>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,7 +52,13 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
                 new Code { CodeId = 501, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.Approve,                 Label = "Approve",                  SortOrder = 1, IsActive = true, IsSystem = true },
                 new Code { CodeId = 502, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.ApproveWithConditions,   Label = "Approve with conditions",  SortOrder = 2, IsActive = true, IsSystem = true },
                 new Code { CodeId = 503, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.Deny,                    Label = "Deny",                     SortOrder = 3, IsActive = true, IsSystem = true },
-                new Code { CodeId = 504, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.ExceptionNeeded,         Label = "Exception (EEAAP) needed", SortOrder = 4, IsActive = true, IsSystem = true }
+                new Code { CodeId = 504, CodeType = CodeConstants.CodeTypes.Recommendation, Value = CodeConstants.Recommendations.ExceptionNeeded,         Label = "Exception (EEAAP) needed", SortOrder = 4, IsActive = true, IsSystem = true },
+                // ExceptionStatus — Ids 601-605
+                new Code { CodeId = 601, CodeType = CodeConstants.CodeTypes.ExceptionStatus, Value = CodeConstants.ExceptionStatuses.Requested, Label = "Requested", SortOrder = 1, IsActive = true, IsSystem = true },
+                new Code { CodeId = 602, CodeType = CodeConstants.CodeTypes.ExceptionStatus, Value = CodeConstants.ExceptionStatuses.Submitted, Label = "Submitted", SortOrder = 2, IsActive = true, IsSystem = true },
+                new Code { CodeId = 603, CodeType = CodeConstants.CodeTypes.ExceptionStatus, Value = CodeConstants.ExceptionStatuses.Approved,  Label = "Approved",  SortOrder = 3, IsActive = true, IsSystem = true },
+                new Code { CodeId = 604, CodeType = CodeConstants.CodeTypes.ExceptionStatus, Value = CodeConstants.ExceptionStatuses.Denied,    Label = "Denied",    SortOrder = 4, IsActive = true, IsSystem = true },
+                new Code { CodeId = 605, CodeType = CodeConstants.CodeTypes.ExceptionStatus, Value = CodeConstants.ExceptionStatuses.Withdrawn, Label = "Withdrawn", SortOrder = 5, IsActive = true, IsSystem = true }
             );
         });
 
@@ -94,6 +101,37 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
             e.HasOne(r => r.Requestor)
                 .WithMany(u => u.VettingRequests)
                 .HasForeignKey(r => r.RequestorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<AccessibilityException>(e =>
+        {
+            e.ToTable("Exceptions");
+            e.HasKey(x => x.ExceptionId);
+            e.Property(x => x.BusinessJustification).HasMaxLength(4000);
+            e.Property(x => x.AccessibilityImpact).HasMaxLength(4000);
+            e.Property(x => x.MitigationPlan).HasMaxLength(4000);
+            e.Property(x => x.ApprovalDate).HasColumnType("date");
+            e.Property(x => x.ExpirationDate).HasColumnType("date");
+            // A stale EEAAP form cannot overwrite a newer save.
+            e.Property(x => x.UpdatedAt).IsConcurrencyToken();
+            e.HasIndex(x => x.RequestId).IsUnique();
+            e.HasIndex(x => x.SoftwareId);
+            e.HasOne(x => x.Request)
+                .WithOne(r => r.Exception)
+                .HasForeignKey<AccessibilityException>(x => x.RequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Software)
+                .WithMany(s => s.Exceptions)
+                .HasForeignKey(x => x.SoftwareId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Requestor)
+                .WithMany()
+                .HasForeignKey(x => x.RequestorId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Status)
+                .WithMany()
+                .HasForeignKey(x => x.StatusId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

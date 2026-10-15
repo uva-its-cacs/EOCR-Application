@@ -2,7 +2,7 @@ import type { Review, DecideInput, SaveReviewInput } from './types';
 
 import { z } from 'zod';
 
-import { DENIED, DECISION_OUTCOMES, APPROVED_WITH_CONDITIONS } from './review-workflow';
+import { DENIED, APPROVED, DECISION_OUTCOMES, APPROVED_WITH_CONDITIONS } from './review-workflow';
 
 // ----------------------------------------------------------------------
 
@@ -55,7 +55,9 @@ export function saveReviewInput(
 // ----------------------------------------------------------------------
 
 // The decision. Approvals need an expiry after today; "approved with conditions" needs the conditions.
-export function decideSchema(today: string) {
+// With a submitted EEAAP (`hasEeaap`), a plain approval is not allowed: the plan is approved with
+// conditions or denied with the request.
+export function decideSchema(today: string, hasEeaap = false) {
   return z
     .object({
       outcome: z
@@ -81,6 +83,13 @@ export function decideSchema(today: string) {
             message: 'Enter a date after today.',
           });
         }
+      }
+      if (hasEeaap && value.outcome === APPROVED) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['outcome'],
+          message: 'An EEAAP was submitted: approve with conditions, or deny.',
+        });
       }
       if (value.outcome === APPROVED_WITH_CONDITIONS && !value.conditions.trim()) {
         ctx.addIssue({

@@ -16,6 +16,7 @@ import { CONFIG } from 'src/global-config';
 import { Iconify } from 'src/components/iconify';
 import { StatusChip } from 'src/components/status-chip';
 
+import { needsEeaap } from './request-messages';
 import { REQUEST_STATUS_COLORS } from './status-colors';
 
 // ----------------------------------------------------------------------
@@ -24,8 +25,9 @@ import { REQUEST_STATUS_COLORS } from './status-colors';
 // page's only h1 (styled h4, focusable by the route-focus hook) and the page sets its document title;
 // the back arrow is named; the status is a StatusChip (text, not color alone); the date uses
 // text.secondary (the template's text.disabled is below 4.5:1). The template's status menu, Print and
-// Edit buttons are replaced by the requester's next step ("Continue draft", or "Update request" when the
-// reviewer asked for more information), or by the `actions` the admin review page passes.
+// Edit buttons are replaced by the requester's next step ("Continue draft", "Complete the EEAAP", or
+// "Update request" when the reviewer asked for more information), or by the `actions` the admin review
+// page passes.
 type Props = {
   request: RequestDetail;
   backHref: string;
@@ -51,6 +53,16 @@ export function RequestDetailsToolbar({
         startIcon={<Iconify icon="solar:pen-bold" />}
       >
         Continue draft
+      </Button>
+    ) : needsEeaap(request) ? (
+      <Button
+        component={RouterLink}
+        href={paths.requests.eeaap(request.requestId)}
+        color="inherit"
+        variant="contained"
+        startIcon={<Iconify icon="solar:pen-bold" />}
+      >
+        Complete the EEAAP
       </Button>
     ) : request.statusCode === 'MoreInfoNeeded' ? (
       <Button

@@ -33,6 +33,17 @@ export const APPROVAL_STATUS_COLORS: StatusColorMap = {
   Expired: 'warning',
 };
 
+// CodeType ExceptionStatus (server/Data/CodeConstants.cs, ExceptionStatuses), the EEAAP exception.
+export const EXCEPTION_STATUS_COLORS: StatusColorMap = {
+  Requested: 'warning',
+  Submitted: 'info',
+  Approved: 'success',
+  Denied: 'error',
+  Withdrawn: 'default',
+  // Not a stored code: an approved exception past its expiration date.
+  Expired: 'warning',
+};
+
 export const UNKNOWN_STATUS_COLOR: LabelColor = 'default';
 
 export function getStatusColor(colors: StatusColorMap, code: string): LabelColor {

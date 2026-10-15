@@ -27,6 +27,29 @@ export interface WorkflowHistoryItem {
   comments: string | null;
 }
 
+// Matches server/DTOs/ExceptionDto.cs (isExpired is computed by the server).
+export interface RequestException {
+  exceptionId: number;
+  statusCode: string;
+  statusLabel: string;
+  businessJustification: string | null;
+  accessibilityImpact: string | null;
+  mitigationPlan: string | null;
+  submittedAt: string | null;
+  approvalDate: string | null;
+  expirationDate: string | null;
+  updatedAt: string;
+  isExpired: boolean;
+}
+
+// Matches server/DTOs/SaveExceptionDto.cs.
+export interface SaveExceptionInput {
+  businessJustification: string | null;
+  accessibilityImpact: string | null;
+  mitigationPlan: string | null;
+  updatedAt: string;
+}
+
 // Matches server/DTOs/RequestDetailDto.cs (title is computed by the server).
 export interface RequestDetail {
   requestId: number;
@@ -48,6 +71,7 @@ export interface RequestDetail {
   createdAt: string;
   updatedAt: string;
   history: WorkflowHistoryItem[];
+  exception: RequestException | null;
 }
 
 // Matches server/DTOs/SaveRequestDto.cs.

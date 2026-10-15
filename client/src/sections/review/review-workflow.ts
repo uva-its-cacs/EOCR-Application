@@ -21,6 +21,7 @@ export type ReviewMoveAction =
 // RequestStatus values a decision may set (CodeConstants.RequestStatuses on the server). Labels come from
 // the server's codes.
 export const DECISION_OUTCOMES = ['Approved', 'ApprovedWithConditions', 'Denied'];
+export const APPROVED = 'Approved';
 export const APPROVED_WITH_CONDITIONS = 'ApprovedWithConditions';
 export const DENIED = 'Denied';
 

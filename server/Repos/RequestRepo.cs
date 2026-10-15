@@ -54,6 +54,19 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
                 Comments = h.Comments,
             })
             .ToList(),
+        Exception = r.Exception == null ? null : new ExceptionDto
+        {
+            ExceptionId = r.Exception.ExceptionId,
+            StatusCode = r.Exception.Status.Value,
+            StatusLabel = r.Exception.Status.Label,
+            BusinessJustification = r.Exception.BusinessJustification,
+            AccessibilityImpact = r.Exception.AccessibilityImpact,
+            MitigationPlan = r.Exception.MitigationPlan,
+            SubmittedAt = r.Exception.SubmittedAt,
+            ApprovalDate = r.Exception.ApprovalDate,
+            ExpirationDate = r.Exception.ExpirationDate,
+            UpdatedAt = r.Exception.UpdatedAt,
+        },
     };
 
     // The requester can edit a request while it is a draft or when the reviewer asked for more information.

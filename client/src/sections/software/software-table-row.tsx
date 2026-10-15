@@ -22,6 +22,8 @@ import { CustomPopover } from 'src/components/custom-popover';
 
 import { APPROVAL_STATUS_COLORS } from 'src/sections/requests/status-colors';
 
+import { exceptionText } from './exception-text';
+
 // ----------------------------------------------------------------------
 
 // Adapted from the template's invoice-table-row.tsx. There is no checkbox (no row selection) and no
@@ -117,6 +119,14 @@ export function SoftwareTableRow({ row, editHref }: Props) {
             label={row.currentApprovalStatusLabel}
             colors={APPROVAL_STATUS_COLORS}
           />
+          {row.exceptionExpirationDate && (
+            <Box
+              component="span"
+              sx={{ display: 'block', mt: 0.5, typography: 'caption', color: 'text.secondary' }}
+            >
+              {exceptionText(row)}
+            </Box>
+          )}
         </TableCell>
 
         {editHref && (

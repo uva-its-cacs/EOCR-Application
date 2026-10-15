@@ -12,9 +12,10 @@ import { paths } from 'src/routes/paths';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { latestReviewerMessage } from '../request-messages';
 import { RequestDetailsHistory } from '../request-details-history';
 import { RequestDetailsToolbar } from '../request-details-toolbar';
+import { RequestDetailsException } from '../request-details-exception';
+import { needsEeaap, latestReviewerMessage } from '../request-messages';
 import { NOT_SET, RequestDetailsSummary, requestDetailSections } from '../request-details-summary';
 
 // ----------------------------------------------------------------------
@@ -22,7 +23,8 @@ import { NOT_SET, RequestDetailsSummary, requestDetailSections } from '../reques
 // Adapted from the template's sections/order/view/order-details-view.tsx: the toolbar, then an 8/4 grid
 // with the request (business need) and its history on the left and the details sections (software,
 // funding, VPAT) on the right, separated by dashed dividers as in the template's order sidebar. When the
-// reviewer asked for more information, their message is shown above the grid.
+// reviewer asked for more information or an EEAAP, their message is shown above the grid; the EEAAP
+// exception (unless withdrawn) has its own card.
 
 type Props = {
   request: RequestDetail;
@@ -31,6 +33,7 @@ type Props = {
 export function RequestDetailsView({ request }: Props) {
   const reviewerMessage =
     request.statusCode === 'MoreInfoNeeded' ? latestReviewerMessage(request) : null;
+  const eeaapNeeded = needsEeaap(request);
 
   return (
     <DashboardContent>
@@ -47,6 +50,18 @@ export function RequestDetailsView({ request }: Props) {
         >
           <AlertTitle component="h2">The reviewer needs more information</AlertTitle>
           {reviewerMessage ?? 'Update your request and send it back for review.'}
+        </Alert>
+      )}
+
+      {eeaapNeeded && (
+        <Alert
+          severity="warning"
+          role="note"
+          sx={{ mb: 3 }}
+        >
+          <AlertTitle component="h2">The reviewer needs an exception plan (EEAAP)</AlertTitle>
+          {latestReviewerMessage(request, 'AwaitingEeaap') ??
+            'Explain how people will get equally effective access, then submit the plan.'}
         </Alert>
       )}
 
@@ -68,6 +83,10 @@ export function RequestDetailsView({ request }: Props) {
                 {request.businessNeed || NOT_SET}
               </Typography>
             </Card>
+
+            {request.exception && request.exception.statusCode !== 'Withdrawn' && (
+              <RequestDetailsException exception={request.exception} />
+            )}
 
             <RequestDetailsHistory request={request} />
           </Box>

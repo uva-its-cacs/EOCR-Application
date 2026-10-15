@@ -22,6 +22,68 @@ namespace Eocr.Server.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Eocr.Server.Data.Entities.AccessibilityException", b =>
+                {
+                    b.Property<int>("ExceptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ExceptionId"));
+
+                    b.Property<string>("AccessibilityImpact")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateOnly?>("ApprovalDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("BusinessJustification")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly?>("ExpirationDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("MitigationPlan")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SoftwareId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("ExceptionId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("RequestorId");
+
+                    b.HasIndex("SoftwareId");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("Exceptions", (string)null);
+                });
+
             modelBuilder.Entity("Eocr.Server.Data.Entities.Code", b =>
                 {
                     b.Property<int>("CodeId")
@@ -325,6 +387,56 @@ namespace Eocr.Server.Data.Migrations
                             Label = "Exception (EEAAP) needed",
                             SortOrder = 4,
                             Value = "ExceptionNeeded"
+                        },
+                        new
+                        {
+                            CodeId = 601,
+                            CodeType = "ExceptionStatus",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Requested",
+                            SortOrder = 1,
+                            Value = "Requested"
+                        },
+                        new
+                        {
+                            CodeId = 602,
+                            CodeType = "ExceptionStatus",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Submitted",
+                            SortOrder = 2,
+                            Value = "Submitted"
+                        },
+                        new
+                        {
+                            CodeId = 603,
+                            CodeType = "ExceptionStatus",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Approved",
+                            SortOrder = 3,
+                            Value = "Approved"
+                        },
+                        new
+                        {
+                            CodeId = 604,
+                            CodeType = "ExceptionStatus",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Denied",
+                            SortOrder = 4,
+                            Value = "Denied"
+                        },
+                        new
+                        {
+                            CodeId = 605,
+                            CodeType = "ExceptionStatus",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Withdrawn",
+                            SortOrder = 5,
+                            Value = "Withdrawn"
                         });
                 });
 
@@ -620,6 +732,40 @@ namespace Eocr.Server.Data.Migrations
                     b.ToTable("WorkflowHistory");
                 });
 
+            modelBuilder.Entity("Eocr.Server.Data.Entities.AccessibilityException", b =>
+                {
+                    b.HasOne("Eocr.Server.Data.Entities.Request", "Request")
+                        .WithOne("Exception")
+                        .HasForeignKey("Eocr.Server.Data.Entities.AccessibilityException", "RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.User", "Requestor")
+                        .WithMany()
+                        .HasForeignKey("RequestorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.Software", "Software")
+                        .WithMany("Exceptions")
+                        .HasForeignKey("SoftwareId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Request");
+
+                    b.Navigation("Requestor");
+
+                    b.Navigation("Software");
+
+                    b.Navigation("Status");
+                });
+
             modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
                     b.HasOne("Eocr.Server.Data.Entities.User", "AssignedReviewer")
@@ -787,9 +933,16 @@ namespace Eocr.Server.Data.Migrations
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
+                    b.Navigation("Exception");
+
                     b.Navigation("History");
 
                     b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Eocr.Server.Data.Entities.Software", b =>
+                {
+                    b.Navigation("Exceptions");
                 });
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>

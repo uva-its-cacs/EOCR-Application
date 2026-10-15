@@ -12,6 +12,127 @@ public static class DevSeeder
         SeedRequestIntake(db);
         SeedVersions(db);
         SeedReviews(db);
+        SeedExceptions(db);
+    }
+
+    // Once (while no exception exists): EEAAP exceptions in each visible state, on fictional requests.
+    // Driftwood Analytics has a current approved exception, Ember Workflow an expired one, and Kestrel Chat
+    // is waiting on its requester's EEAAP.
+    private static void SeedExceptions(EocrDbContext db)
+    {
+        if (db.Exceptions.Any()) return;
+
+        var dana = db.Users.SingleOrDefault(u => u.Email == "dana@example.com");
+        var sam = db.Users.SingleOrDefault(u => u.Email == "sam@example.com");
+        var admin = db.Users.SingleOrDefault(u => u.Email == "admin@example.com");
+        if (dana is null || sam is null || admin is null) return;
+
+        int Code(string type, string value) => db.Codes
+            .Where(c => c.CodeType == type && c.Value == value)
+            .Select(c => c.CodeId)
+            .Single();
+        int Status(string value) => Code(CodeConstants.CodeTypes.RequestStatus, value);
+        int ExceptionStatus(string value) => Code(CodeConstants.CodeTypes.ExceptionStatus, value);
+        var fundingId = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.FundingSource)
+            .OrderBy(c => c.SortOrder)
+            .Select(c => c.CodeId)
+            .First();
+        var now = DateTimeOffset.UtcNow;
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        Request NewRequest(User requestor, string name, string vendor, string version, Software? software,
+            string status, int daysAgo) => new()
+        {
+            Requestor = requestor,
+            SoftwareName = name,
+            Vendor = vendor,
+            Version = version,
+            Department = "Student Affairs",
+            BusinessNeed = $"Our team needs {name} for day-to-day work. (Fictional seed data.)",
+            FundingSourceId = fundingId,
+            VpatSubmitted = true,
+            Software = software,
+            AssignedReviewerId = admin.UserId,
+            StatusId = Status(status),
+            SubmittedAt = now.AddDays(-daysAgo),
+            CreatedAt = now.AddDays(-daysAgo).AddHours(-1),
+            UpdatedAt = now.AddDays(-daysAgo + 10),
+        };
+
+        void History(Request request, params (string? From, string To, User By, int DaysAgo, string? Comment)[] steps)
+        {
+            foreach (var (from, to, by, daysAgo, comment) in steps)
+                db.WorkflowHistory.Add(new WorkflowHistory
+                {
+                    Request = request,
+                    PreviousStatusId = from is null ? null : Status(from),
+                    NewStatusId = Status(to),
+                    ChangedById = by.UserId,
+                    ChangedAt = now.AddDays(-daysAgo),
+                    Comments = comment,
+                });
+        }
+
+        const string Eeaap = "Please submit an EEAAP: the charts have no text alternative.";
+        const string Draft = CodeConstants.RequestStatuses.Draft;
+        const string Submitted = CodeConstants.RequestStatuses.Submitted;
+        const string Human = CodeConstants.RequestStatuses.HumanReview;
+        const string Awaiting = CodeConstants.RequestStatuses.AwaitingEeaap;
+        const string Conditional = CodeConstants.RequestStatuses.ApprovedWithConditions;
+
+        foreach (var (software, requestor, daysAgo, expires) in new[]
+        {
+            (db.Software.FirstOrDefault(s => s.SoftwareName == "Driftwood Analytics"), sam, 190, today.AddDays(175)),
+            (db.Software.FirstOrDefault(s => s.SoftwareName == "Ember Workflow"), dana, 410, today.AddDays(-35)),
+        })
+        {
+            if (software is null) continue;
+            var request = NewRequest(requestor, software.SoftwareName, software.VendorName, software.Version,
+                software, Conditional, daysAgo);
+            db.VettingRequests.Add(request);
+            History(request,
+                (null, Draft, requestor, daysAgo + 1, "Request started."),
+                (Draft, Submitted, requestor, daysAgo, "Request submitted for review."),
+                (Submitted, Human, admin, daysAgo - 2, null),
+                (Human, Awaiting, admin, daysAgo - 4, Eeaap),
+                (Awaiting, Human, requestor, daysAgo - 8, "EEAAP submitted for review."),
+                (Human, Conditional, admin, daysAgo - 10, "Approved with the EEAAP."));
+            db.Exceptions.Add(new AccessibilityException
+            {
+                Request = request,
+                Software = software,
+                RequestorId = requestor.UserId,
+                BusinessJustification = "Required for the department's reporting. (Fictional seed data.)",
+                AccessibilityImpact = "Screen reader users cannot read the charts.",
+                MitigationPlan = "Staff send the chart data as an accessible table on request within one business day.",
+                StatusId = ExceptionStatus(CodeConstants.ExceptionStatuses.Approved),
+                SubmittedAt = now.AddDays(-daysAgo + 8),
+                ApprovalDate = expires.AddDays(-365),
+                ExpirationDate = expires,
+                CreatedAt = now.AddDays(-daysAgo + 4),
+                UpdatedAt = now.AddDays(-daysAgo + 10),
+            });
+        }
+
+        var kestrel = NewRequest(dana, "Kestrel Chat", "Kestrel Labs", "2.0", null, Awaiting, 6);
+        kestrel.UpdatedAt = now.AddDays(-2);
+        db.VettingRequests.Add(kestrel);
+        History(kestrel,
+            (null, Draft, dana, 7, "Request started."),
+            (Draft, Submitted, dana, 6, "Request submitted for review."),
+            (Submitted, Human, admin, 4, null),
+            (Human, Awaiting, admin, 2, "Please submit an EEAAP: the chat window does not announce new messages."));
+        db.Exceptions.Add(new AccessibilityException
+        {
+            Request = kestrel,
+            RequestorId = dana.UserId,
+            StatusId = ExceptionStatus(CodeConstants.ExceptionStatuses.Requested),
+            CreatedAt = now.AddDays(-2),
+            UpdatedAt = now.AddDays(-2),
+        });
+
+        db.SaveChanges();
     }
 
     // Adds a second administrator (so requests can be reassigned) and, once, an assigned reviewer and a

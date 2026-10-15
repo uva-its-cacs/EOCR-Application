@@ -214,13 +214,44 @@ public class ReviewRepo(EocrDbContext db) : IReviewRepo
         CheckLength(result, nameof(input.Comments), input.Comments);
         if (action == RequestWorkflow.Actions.RequestInfo && string.IsNullOrWhiteSpace(input.Comments))
             result.Errors[nameof(input.Comments)] = ["Tell the requester what information you need."];
+        if (action == RequestWorkflow.Actions.SendForEeaap && string.IsNullOrWhiteSpace(input.Comments))
+            result.Errors[nameof(input.Comments)] = ["Tell the requester what the EEAAP needs to cover."];
         if (result.Errors.Count > 0) return result;
 
         if (action is RequestWorkflow.Actions.StartAiReview or RequestWorkflow.Actions.StartReview)
             request.AssignedReviewerId ??= adminId;
 
-        await RequestWorkflow.ChangeStatusAsync(db, request, target, adminId, DateTimeOffset.UtcNow,
-            input.Comments, ct);
+        var now = DateTimeOffset.UtcNow;
+        if (action == RequestWorkflow.Actions.SendForEeaap)
+        {
+            // A new EEAAP, or a submitted one sent back for changes: it waits on the requester again.
+            var requestedId = await ExceptionStatusIdAsync(CodeConstants.ExceptionStatuses.Requested, ct);
+            if (request.Exception is null)
+            {
+                db.Exceptions.Add(new AccessibilityException
+                {
+                    Request = request,
+                    RequestorId = request.RequestorId,
+                    StatusId = requestedId,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                });
+            }
+            else
+            {
+                request.Exception.StatusId = requestedId;
+                request.Exception.UpdatedAt = now;
+            }
+        }
+        else if (action == RequestWorkflow.Actions.StartReview
+            && request.Exception?.Status.Value == CodeConstants.ExceptionStatuses.Requested)
+        {
+            // Back to review before the requester submitted the EEAAP: the request for one is withdrawn.
+            request.Exception.StatusId = await ExceptionStatusIdAsync(CodeConstants.ExceptionStatuses.Withdrawn, ct);
+            request.Exception.UpdatedAt = now;
+        }
+
+        await RequestWorkflow.ChangeStatusAsync(db, request, target, adminId, now, input.Comments, ct);
         return await SaveAsync(request, input.UpdatedAt, ct);
     }
 
@@ -249,6 +280,13 @@ public class ReviewRepo(EocrDbContext db) : IReviewRepo
         if (outcome == CodeConstants.RequestStatuses.ApprovedWithConditions
             && string.IsNullOrWhiteSpace(input.Conditions))
             result.Errors[nameof(input.Conditions)] = ["Enter the conditions of this approval."];
+        // A submitted EEAAP is decided with the request: approved with conditions or denied.
+        var exception = request.Exception?.Status.Value == CodeConstants.ExceptionStatuses.Submitted
+            ? request.Exception
+            : null;
+        if (exception is not null && outcome == CodeConstants.RequestStatuses.Approved)
+            result.Errors[nameof(input.Outcome)] =
+                ["An EEAAP was submitted: approve with conditions, or deny."];
         CheckLength(result, nameof(input.Conditions), input.Conditions);
         CheckLength(result, nameof(input.Comments), input.Comments);
         await CheckCodeAsync(result, nameof(input.AccessibilityRiskId), input.AccessibilityRiskId,
@@ -286,17 +324,29 @@ public class ReviewRepo(EocrDbContext db) : IReviewRepo
         software.UpdatedAt = now;
         request.Software = software;
 
+        if (exception is not null)
+        {
+            var approved = outcome == CodeConstants.RequestStatuses.ApprovedWithConditions;
+            exception.StatusId = await ExceptionStatusIdAsync(
+                approved ? CodeConstants.ExceptionStatuses.Approved : CodeConstants.ExceptionStatuses.Denied, ct);
+            exception.Software = software;
+            exception.ApprovalDate = approved ? today : null;
+            exception.ExpirationDate = approved ? input.ApprovalExpirationDate : null;
+            exception.UpdatedAt = now;
+        }
+
         await RequestWorkflow.ChangeStatusAsync(db, request, outcome, adminId, now, input.Comments, ct);
         return await SaveAsync(request, input.UpdatedAt, ct);
     }
 
     // ----------------------------------------------------------------------
 
-    // A submitted request (drafts are the requester's and are "not found" here).
+    // A submitted request with its exception (drafts are the requester's and are "not found" here).
     private async Task<Request?> LoadAsync(int requestId, CancellationToken ct)
     {
         var request = await db.VettingRequests
             .Include(r => r.Status)
+            .Include(r => r.Exception).ThenInclude(x => x!.Status)
             .SingleOrDefaultAsync(r => r.RequestId == requestId, ct);
         return request is null || request.Status.Value == CodeConstants.RequestStatuses.Draft ? null : request;
     }
@@ -324,6 +374,11 @@ public class ReviewRepo(EocrDbContext db) : IReviewRepo
 
     private static AdminWriteResultDto WithError(string field, string message) =>
         new() { Errors = { [field] = [message] } };
+
+    private Task<int> ExceptionStatusIdAsync(string value, CancellationToken ct) => db.Codes
+        .Where(c => c.CodeType == CodeConstants.CodeTypes.ExceptionStatus && c.Value == value)
+        .Select(c => c.CodeId)
+        .SingleAsync(ct);
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

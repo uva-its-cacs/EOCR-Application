@@ -37,6 +37,9 @@ export interface SoftwareCatalogItem {
   approvalExpirationDate: string | null;
   // The conditions of an "approved with conditions" decision.
   conditions: string | null;
+  // The latest approved EEAAP exception's expiry, and whether it has passed (computed by the server).
+  exceptionExpirationDate: string | null;
+  exceptionExpired: boolean;
   createdAt: string;
 }
 

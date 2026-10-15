@@ -1,4 +1,10 @@
-import type { RequestDetail, RequestSummary, SaveRequestInput, FundingSourceOption } from './types';
+import type {
+  RequestDetail,
+  RequestSummary,
+  SaveRequestInput,
+  SaveExceptionInput,
+  FundingSourceOption,
+} from './types';
 
 import { apiFetch } from 'src/lib/api';
 
@@ -34,6 +40,25 @@ export function updateRequest(requestId: number, input: SaveRequestInput): Promi
 
 export function submitRequest(requestId: number, updatedAt: string): Promise<RequestDetail> {
   return apiFetch<RequestDetail>(`/api/requests/${requestId}/submit`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ updatedAt }),
+  });
+}
+
+export function saveException(
+  requestId: number,
+  input: SaveExceptionInput
+): Promise<RequestDetail> {
+  return apiFetch<RequestDetail>(`/api/requests/${requestId}/exception`, {
+    method: 'PUT',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(input),
+  });
+}
+
+export function submitException(requestId: number, updatedAt: string): Promise<RequestDetail> {
+  return apiFetch<RequestDetail>(`/api/requests/${requestId}/exception/submit`, {
     method: 'POST',
     headers: JSON_HEADERS,
     body: JSON.stringify({ updatedAt }),
