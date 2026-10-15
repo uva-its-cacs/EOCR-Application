@@ -27,6 +27,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { VisuallyHidden } from 'src/components/visually-hidden';
+import { AnalyticSummary } from 'src/components/analytic-summary';
 import { ErrorState, LoadingState } from 'src/components/feedback';
 import { PageHeader, focusPageHeading } from 'src/components/page-header';
 import {
@@ -39,8 +40,6 @@ import {
   TableHeadCustom,
   TablePaginationCustom,
 } from 'src/components/table';
-
-import { SoftwareAnalytic } from 'src/sections/software/software-analytic';
 
 import { useMyRequests } from '../use-my-requests';
 import { RequestTableRow } from '../request-table-row';
@@ -184,7 +183,7 @@ export function MyRequestsView() {
                 }
                 sx={{ py: 2, flexDirection: 'row' }}
               >
-                <SoftwareAnalytic
+                <AnalyticSummary
                   title="Total"
                   total={counts ? rows.length : null}
                   percent={100}
@@ -196,7 +195,7 @@ export function MyRequestsView() {
                   const style = GROUP_STYLE[group];
                   const count = counts ? counts[group] : null;
                   return (
-                    <SoftwareAnalytic
+                    <AnalyticSummary
                       key={group}
                       title={group}
                       total={count}

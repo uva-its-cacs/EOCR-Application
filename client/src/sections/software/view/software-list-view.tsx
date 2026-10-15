@@ -25,6 +25,7 @@ import { Label } from 'src/components/label';
 import { LoadingState } from 'src/components/feedback';
 import { PageHeader } from 'src/components/page-header';
 import { VisuallyHidden } from 'src/components/visually-hidden';
+import { AnalyticSummary } from 'src/components/analytic-summary';
 import {
   useTable,
   emptyRows,
@@ -38,7 +39,6 @@ import {
 
 import { getStatusColor, APPROVAL_STATUS_COLORS } from 'src/sections/requests/status-colors';
 
-import { SoftwareAnalytic } from '../software-analytic';
 import { SoftwareTableRow } from '../software-table-row';
 import { SoftwareTableToolbar } from '../software-table-toolbar';
 import { SoftwareTableFiltersResult } from '../software-table-filters-result';
@@ -186,7 +186,7 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
             }
             sx={{ py: 2, flexDirection: 'row' }}
           >
-            <SoftwareAnalytic
+            <AnalyticSummary
               title="Total"
               total={rows.length}
               percent={100}
@@ -195,7 +195,7 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
             />
 
             {statuses.map((status) => (
-              <SoftwareAnalytic
+              <AnalyticSummary
                 key={status.code}
                 title={status.label}
                 total={status.count}

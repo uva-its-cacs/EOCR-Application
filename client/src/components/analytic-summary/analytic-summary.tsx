@@ -11,8 +11,8 @@ import { VisuallyHidden } from 'src/components/visually-hidden';
 
 // ----------------------------------------------------------------------
 
-// Adapted from the template's invoice-analytic.tsx: a count and a share of the catalog instead of an
-// invoice total. The icon and rings are decorative (aria-hidden); the title, count and percent are text.
+// Adapted from the template's invoice-analytic.tsx: a count and a share of a list (the software catalog,
+// My requests) instead of an invoice total. The icon and rings are decorative (aria-hidden); the title, count and percent are text.
 // `total` is null while the data loads: an em dash (read as "Loading"), never a 0 for data not yet here.
 type Props = {
   title: string;
@@ -22,7 +22,7 @@ type Props = {
   icon: IconifyName;
 };
 
-export function SoftwareAnalytic({ title, total, icon, color, percent }: Props) {
+export function AnalyticSummary({ title, total, icon, color, percent }: Props) {
   return (
     <Box
       sx={{
@@ -43,11 +43,7 @@ export function SoftwareAnalytic({ title, total, icon, color, percent }: Props) 
           justifyContent: 'center',
         }}
       >
-        <Iconify
-          icon={icon}
-          width={32}
-          sx={{ color, position: 'absolute' }}
-        />
+        <Iconify icon={icon} width={32} sx={{ color, position: 'absolute' }} />
 
         <CircularProgress
           size={56}
@@ -75,10 +71,7 @@ export function SoftwareAnalytic({ title, total, icon, color, percent }: Props) 
       </Box>
 
       <div>
-        <Typography
-          variant="subtitle1"
-          component="h3"
-        >
+        <Typography variant="subtitle1" component="h3">
           {title}
         </Typography>
 
@@ -97,10 +90,7 @@ export function SoftwareAnalytic({ title, total, icon, color, percent }: Props) 
           )}
         </Box>
 
-        <Box
-          component="span"
-          sx={{ typography: 'subtitle2' }}
-        >
+        <Box component="span" sx={{ typography: 'subtitle2' }}>
           {total === null ? <span aria-hidden>—</span> : `${Math.round(percent)}%`}
         </Box>
       </div>

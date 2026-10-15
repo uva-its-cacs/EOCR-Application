@@ -35,12 +35,9 @@ export function ToastProvider({ children }: Props) {
   const showError = useCallback((message: string) => show('error', message), [show]);
   const value = useMemo(() => ({ showSuccess, showError }), [showSuccess, showError]);
 
-  const handleClose = useCallback(
-    (_event: Event | React.SyntheticEvent, reason: string) => {
-      if (reason !== 'clickaway') setToast(null);
-    },
-    []
-  );
+  const handleClose = useCallback((_event: Event | React.SyntheticEvent, reason: string) => {
+    if (reason !== 'clickaway') setToast(null);
+  }, []);
 
   return (
     <ToastContext.Provider value={value}>
