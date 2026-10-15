@@ -262,3 +262,7 @@ Status changes happen only through the repo layer, never by writing the column d
 - Check affected code for errors.
 - Run relevant tests when available.
 - Report any validation not performed.
+
+## UI
+- Frontend (`client/`) uses Material UI (MUI). Use the `mui-mcp` server to look up component APIs and examples before writing MUI code.
+- Reuse existing shared components and the theme before creating new ones.
