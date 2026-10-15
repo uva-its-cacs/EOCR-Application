@@ -1,4 +1,5 @@
 using Eocr.Server.Data;
+using Eocr.Server.Data.Entities;
 using Eocr.Server.DTOs;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,12 @@ namespace Eocr.Server.Repos;
 public interface IRequestRepo
 {
     Task<IEnumerable<RequestSummaryDto>> GetMyRequestsAsync(int requestorId, CancellationToken ct);
+    Task<RequestDetailDto?> GetMyRequestAsync(int requestorId, int requestId, CancellationToken ct);
+    Task<RequestWriteResultDto> CreateDraftAsync(int requestorId, SaveRequestDto input, CancellationToken ct);
+    Task<RequestWriteResultDto> UpdateDraftAsync(
+        int requestorId, int requestId, SaveRequestDto input, CancellationToken ct);
+    Task<RequestWriteResultDto> SubmitAsync(
+        int requestorId, int requestId, SubmitRequestDto input, CancellationToken ct);
 }
 
 public class RequestRepo(EocrDbContext db) : IRequestRepo
@@ -29,4 +36,225 @@ public class RequestRepo(EocrDbContext db) : IRequestRepo
             })
             .ToListAsync(ct);
     }
+
+    // Only the requestor's own request (anything else is "not found" to the caller).
+    public async Task<RequestDetailDto?> GetMyRequestAsync(
+        int requestorId, int requestId, CancellationToken ct)
+    {
+        return await db.VettingRequests.AsNoTracking()
+            .Where(r => r.RequestId == requestId && r.RequestorId == requestorId)
+            .Select(r => new RequestDetailDto
+            {
+                RequestId = r.RequestId,
+                SoftwareName = r.SoftwareName,
+                Vendor = r.Vendor,
+                Department = r.Department,
+                BusinessNeed = r.BusinessNeed,
+                FundingSourceId = r.FundingSourceId,
+                FundingSourceCode = r.FundingSource == null ? null : r.FundingSource.Value,
+                FundingSourceLabel = r.FundingSource == null ? null : r.FundingSource.Label,
+                Url = r.Url,
+                VpatSubmitted = r.VpatSubmitted,
+                SoftwareId = r.SoftwareId,
+                StatusCode = r.Status.Value,
+                StatusLabel = r.Status.Label,
+                SubmittedAt = r.SubmittedAt,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt,
+                History = r.History
+                    .OrderBy(h => h.ChangedAt)
+                    .ThenBy(h => h.WorkflowHistoryId)
+                    .Select(h => new WorkflowHistoryDto
+                    {
+                        WorkflowHistoryId = h.WorkflowHistoryId,
+                        PreviousStatusCode = h.PreviousStatus == null ? null : h.PreviousStatus.Value,
+                        PreviousStatusLabel = h.PreviousStatus == null ? null : h.PreviousStatus.Label,
+                        NewStatusCode = h.NewStatus.Value,
+                        NewStatusLabel = h.NewStatus.Label,
+                        ChangedByName = h.ChangedBy.Name,
+                        ChangedAt = h.ChangedAt,
+                        Comments = h.Comments,
+                    })
+                    .ToList(),
+            })
+            .SingleOrDefaultAsync(ct);
+    }
+
+    public async Task<RequestWriteResultDto> CreateDraftAsync(
+        int requestorId, SaveRequestDto input, CancellationToken ct)
+    {
+        var result = new RequestWriteResultDto();
+        await ValidateDraftAsync(input, result, ct);
+        if (result.Errors.Count > 0) return result;
+
+        var now = DateTimeOffset.UtcNow;
+        var draftId = await StatusIdAsync(CodeConstants.RequestStatuses.Draft, ct);
+        var request = new Request
+        {
+            RequestorId = requestorId,
+            StatusId = draftId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        Apply(request, input);
+        db.VettingRequests.Add(request);
+        AddHistory(request, null, draftId, requestorId, now, "Request started.");
+
+        await db.SaveChangesAsync(ct);
+        result.Request = await GetMyRequestAsync(requestorId, request.RequestId, ct);
+        return result;
+    }
+
+    public async Task<RequestWriteResultDto> UpdateDraftAsync(
+        int requestorId, int requestId, SaveRequestDto input, CancellationToken ct)
+    {
+        var request = await db.VettingRequests
+            .Include(r => r.Status)
+            .SingleOrDefaultAsync(r => r.RequestId == requestId && r.RequestorId == requestorId, ct);
+        if (request is null) return new RequestWriteResultDto { NotFound = true };
+        if (request.Status.Value != CodeConstants.RequestStatuses.Draft)
+            return new RequestWriteResultDto { NotDraft = true };
+        if (input.UpdatedAt != request.UpdatedAt) return new RequestWriteResultDto { Conflict = true };
+
+        var result = new RequestWriteResultDto();
+        await ValidateDraftAsync(input, result, ct);
+        if (result.Errors.Count > 0) return result;
+
+        Apply(request, input);
+        request.UpdatedAt = DateTimeOffset.UtcNow;
+
+        if (!await SaveCheckingConcurrencyAsync(request, input.UpdatedAt.Value, ct))
+            return new RequestWriteResultDto { Conflict = true };
+
+        result.Request = await GetMyRequestAsync(requestorId, requestId, ct);
+        return result;
+    }
+
+    public async Task<RequestWriteResultDto> SubmitAsync(
+        int requestorId, int requestId, SubmitRequestDto input, CancellationToken ct)
+    {
+        var request = await db.VettingRequests
+            .Include(r => r.Status)
+            .SingleOrDefaultAsync(r => r.RequestId == requestId && r.RequestorId == requestorId, ct);
+        if (request is null) return new RequestWriteResultDto { NotFound = true };
+        if (request.Status.Value != CodeConstants.RequestStatuses.Draft)
+            return new RequestWriteResultDto { NotDraft = true };
+        if (input.UpdatedAt != request.UpdatedAt) return new RequestWriteResultDto { Conflict = true };
+
+        // Required to submit (a draft may be saved without them).
+        var result = new RequestWriteResultDto();
+        if (string.IsNullOrWhiteSpace(request.SoftwareName))
+            result.Errors[nameof(SaveRequestDto.SoftwareName)] = ["Enter the software name."];
+        if (string.IsNullOrWhiteSpace(request.Vendor))
+            result.Errors[nameof(SaveRequestDto.Vendor)] = ["Enter the vendor."];
+        if (string.IsNullOrWhiteSpace(request.Department))
+            result.Errors[nameof(SaveRequestDto.Department)] = ["Enter your department."];
+        if (string.IsNullOrWhiteSpace(request.BusinessNeed))
+            result.Errors[nameof(SaveRequestDto.BusinessNeed)] = ["Describe the business need."];
+        if (request.FundingSourceId is null)
+            result.Errors[nameof(SaveRequestDto.FundingSourceId)] = ["Select a funding source."];
+        if (result.Errors.Count > 0) return result;
+
+        var now = DateTimeOffset.UtcNow;
+        await ChangeStatusAsync(request, CodeConstants.RequestStatuses.Submitted, requestorId, now,
+            "Request submitted for review.", ct);
+        request.SubmittedAt = now;
+
+        if (!await SaveCheckingConcurrencyAsync(request, input.UpdatedAt, ct))
+            return new RequestWriteResultDto { Conflict = true };
+
+        result.Request = await GetMyRequestAsync(requestorId, requestId, ct);
+        return result;
+    }
+
+    // ----------------------------------------------------------------------
+
+    // Every status change goes through here so it always writes a Workflow History record.
+    private async Task ChangeStatusAsync(Request request, string newStatusValue, int changedById,
+        DateTimeOffset now, string? comments, CancellationToken ct)
+    {
+        var previousId = request.StatusId;
+        var newId = await StatusIdAsync(newStatusValue, ct);
+        request.StatusId = newId;
+        request.UpdatedAt = now;
+        AddHistory(request, previousId, newId, changedById, now, comments);
+    }
+
+    private void AddHistory(Request request, int? previousStatusId, int newStatusId, int changedById,
+        DateTimeOffset now, string? comments)
+    {
+        db.WorkflowHistory.Add(new WorkflowHistory
+        {
+            Request = request,
+            PreviousStatusId = previousStatusId,
+            NewStatusId = newStatusId,
+            ChangedById = changedById,
+            ChangedAt = now,
+            Comments = comments,
+        });
+    }
+
+    // Saves only if no one else changed the request since it was loaded (UpdatedAt as the token).
+    private async Task<bool> SaveCheckingConcurrencyAsync(
+        Request request, DateTimeOffset loadedUpdatedAt, CancellationToken ct)
+    {
+        db.Entry(request).Property(r => r.UpdatedAt).OriginalValue = loadedUpdatedAt;
+        db.Entry(request).Property(r => r.UpdatedAt).IsModified = true;
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
+    }
+
+    private static void Apply(Request request, SaveRequestDto input)
+    {
+        request.SoftwareName = input.SoftwareName.Trim();
+        request.Vendor = input.Vendor.Trim();
+        request.Department = input.Department.Trim();
+        request.BusinessNeed = input.BusinessNeed.Trim();
+        request.FundingSourceId = input.FundingSourceId;
+        request.Url = string.IsNullOrWhiteSpace(input.Url) ? null : input.Url.Trim();
+        request.VpatSubmitted = input.VpatSubmitted;
+        request.SoftwareId = input.SoftwareId;
+    }
+
+    private async Task ValidateDraftAsync(SaveRequestDto input, RequestWriteResultDto result,
+        CancellationToken ct)
+    {
+        var name = input.SoftwareName?.Trim() ?? string.Empty;
+        if (name.Length is 0 or > 200)
+            result.Errors[nameof(input.SoftwareName)] = ["Enter a software name of up to 200 characters."];
+        if ((input.Vendor?.Trim().Length ?? 0) > 200)
+            result.Errors[nameof(input.Vendor)] = ["Use 200 characters or fewer."];
+        if ((input.Department?.Trim().Length ?? 0) > 200)
+            result.Errors[nameof(input.Department)] = ["Use 200 characters or fewer."];
+        if ((input.BusinessNeed?.Trim().Length ?? 0) > 4000)
+            result.Errors[nameof(input.BusinessNeed)] = ["Use 4000 characters or fewer."];
+
+        var url = input.Url?.Trim();
+        if (!string.IsNullOrEmpty(url)
+            && (url.Length > 2000
+                || !Uri.TryCreate(url, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)))
+            result.Errors[nameof(input.Url)] = ["Enter a valid HTTP or HTTPS address."];
+
+        if (input.FundingSourceId.HasValue
+            && !await db.Codes.AnyAsync(c => c.CodeId == input.FundingSourceId
+                && c.CodeType == CodeConstants.CodeTypes.FundingSource && c.IsActive, ct))
+            result.Errors[nameof(input.FundingSourceId)] = ["Select an active option from this list."];
+
+        if (input.SoftwareId.HasValue
+            && !await db.Software.AnyAsync(s => s.SoftwareId == input.SoftwareId, ct))
+            result.Errors[nameof(input.SoftwareId)] = ["Select software from the catalog."];
+    }
+
+    private Task<int> StatusIdAsync(string value, CancellationToken ct) => db.Codes
+        .Where(c => c.CodeType == CodeConstants.CodeTypes.RequestStatus && c.Value == value)
+        .Select(c => c.CodeId)
+        .SingleAsync(ct);
 }

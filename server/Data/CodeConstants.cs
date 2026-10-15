@@ -9,6 +9,7 @@ public static class CodeConstants
         public const string ApprovalStatus = "ApprovalStatus";
         public const string AccessibilityRisk = "AccessibilityRisk";
         public const string SoftwareCategory = "SoftwareCategory";
+        public const string FundingSource = "FundingSource";
     }
 
     public static class UserRoles

@@ -9,6 +9,7 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
     public DbSet<User> Users => Set<User>();
     public DbSet<Request> VettingRequests => Set<Request>();
     public DbSet<Software> Software => Set<Software>();
+    public DbSet<WorkflowHistory> WorkflowHistory => Set<WorkflowHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,19 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
         {
             e.Property(r => r.SoftwareName).HasMaxLength(200);
             e.Property(r => r.Vendor).HasMaxLength(200);
+            e.Property(r => r.Department).HasMaxLength(200);
+            e.Property(r => r.BusinessNeed).HasMaxLength(4000);
+            e.Property(r => r.Url).HasMaxLength(2000);
+            // Draft edits and submit check it, so a stale form cannot overwrite a newer change.
+            e.Property(r => r.UpdatedAt).IsConcurrencyToken();
+            e.HasOne(r => r.FundingSource)
+                .WithMany()
+                .HasForeignKey(r => r.FundingSourceId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(r => r.Software)
+                .WithMany()
+                .HasForeignKey(r => r.SoftwareId)
+                .OnDelete(DeleteBehavior.Restrict);
             e.HasOne(r => r.Status)
                 .WithMany()
                 .HasForeignKey(r => r.StatusId)
@@ -66,6 +80,28 @@ public class EocrDbContext(DbContextOptions<EocrDbContext> options) : DbContext(
             e.HasOne(r => r.Requestor)
                 .WithMany(u => u.VettingRequests)
                 .HasForeignKey(r => r.RequestorId);
+        });
+
+        modelBuilder.Entity<WorkflowHistory>(e =>
+        {
+            e.Property(h => h.Comments).HasMaxLength(4000);
+            e.HasIndex(h => new { h.RequestId, h.ChangedAt });
+            e.HasOne(h => h.Request)
+                .WithMany(r => r.History)
+                .HasForeignKey(h => h.RequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(h => h.PreviousStatus)
+                .WithMany()
+                .HasForeignKey(h => h.PreviousStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(h => h.NewStatus)
+                .WithMany()
+                .HasForeignKey(h => h.NewStatusId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(h => h.ChangedBy)
+                .WithMany()
+                .HasForeignKey(h => h.ChangedById)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Software>(e =>

@@ -8,6 +8,119 @@ public static class DevSeeder
     {
         SeedUsers(db);
         SeedSoftware(db);
+        SeedFundingSources(db);
+        SeedRequestIntake(db);
+    }
+
+    // Funding source codes (IsSystem = false, admin-managed later). Added by (CodeType, Value) so it is
+    // safe on an existing database.
+    private static void SeedFundingSources(EocrDbContext db)
+    {
+        var values = new[]
+        {
+            ("DepartmentBudget", "Department budget"),
+            ("Grant",            "Grant"),
+            ("CentralIt",        "Central IT"),
+            ("Other",            "Other"),
+        };
+
+        var existing = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.FundingSource)
+            .Select(c => c.Value)
+            .ToHashSet();
+
+        var sortOrder = 1;
+        foreach (var (value, label) in values)
+        {
+            if (!existing.Contains(value))
+            {
+                db.Codes.Add(new Code
+                {
+                    CodeType  = CodeConstants.CodeTypes.FundingSource,
+                    Value     = value,
+                    Label     = label,
+                    SortOrder = sortOrder,
+                    IsActive  = true,
+                    IsSystem  = false,
+                });
+            }
+            sortOrder++;
+        }
+        db.SaveChanges();
+    }
+
+    // Gives the seeded requests fictional intake fields and a workflow history (once: only while no
+    // history exists). Drafts get their start record; submitted requests also get Submitted and, past
+    // that, a change to their current status.
+    private static void SeedRequestIntake(EocrDbContext db)
+    {
+        if (db.WorkflowHistory.Any()) return;
+
+        var statuses = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.RequestStatus)
+            .ToDictionary(c => c.Value, c => c.CodeId);
+        var fundingIds = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.FundingSource)
+            .OrderBy(c => c.SortOrder)
+            .Select(c => c.CodeId)
+            .ToList();
+        var departments = new[] { "Library", "School of Nursing", "Facilities", "Student Affairs" };
+
+        var requests = db.VettingRequests.OrderBy(r => r.RequestId).ToList();
+        var index = 0;
+        foreach (var request in requests)
+        {
+            var isDraft = request.StatusId == statuses[CodeConstants.RequestStatuses.Draft];
+
+            if (string.IsNullOrEmpty(request.Department))
+            {
+                request.Department = departments[index % departments.Length];
+                request.BusinessNeed = $"Our team needs {request.SoftwareName} for day-to-day work. (Fictional seed data.)";
+                request.FundingSourceId = isDraft ? null : fundingIds[index % fundingIds.Count];
+                request.Url = $"https://{request.Vendor.ToLowerInvariant().Replace(' ', '-')}.example.com";
+                request.VpatSubmitted = index % 2 == 0;
+            }
+
+            db.WorkflowHistory.Add(new WorkflowHistory
+            {
+                RequestId = request.RequestId,
+                PreviousStatusId = null,
+                NewStatusId = statuses[CodeConstants.RequestStatuses.Draft],
+                ChangedById = request.RequestorId,
+                ChangedAt = request.CreatedAt,
+                Comments = "Request started.",
+            });
+
+            if (!isDraft)
+            {
+                var submittedAt = request.CreatedAt.AddHours(1);
+                request.SubmittedAt ??= submittedAt;
+                db.WorkflowHistory.Add(new WorkflowHistory
+                {
+                    RequestId = request.RequestId,
+                    PreviousStatusId = statuses[CodeConstants.RequestStatuses.Draft],
+                    NewStatusId = statuses[CodeConstants.RequestStatuses.Submitted],
+                    ChangedById = request.RequestorId,
+                    ChangedAt = submittedAt,
+                    Comments = "Request submitted for review.",
+                });
+
+                if (request.StatusId != statuses[CodeConstants.RequestStatuses.Submitted])
+                {
+                    db.WorkflowHistory.Add(new WorkflowHistory
+                    {
+                        RequestId = request.RequestId,
+                        PreviousStatusId = statuses[CodeConstants.RequestStatuses.Submitted],
+                        NewStatusId = request.StatusId,
+                        ChangedById = request.RequestorId,
+                        ChangedAt = request.UpdatedAt,
+                        Comments = null,
+                    });
+                }
+            }
+            index++;
+        }
+        db.SaveChanges();
     }
 
     private static void SeedUsers(EocrDbContext db)

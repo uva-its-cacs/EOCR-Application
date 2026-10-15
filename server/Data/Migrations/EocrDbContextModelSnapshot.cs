@@ -276,10 +276,26 @@ namespace Eocr.Server.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RequestId"));
 
+                    b.Property<string>("BusinessNeed")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int?>("FundingSourceId")
+                        .HasColumnType("int");
+
                     b.Property<int>("RequestorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SoftwareId")
                         .HasColumnType("int");
 
                     b.Property<string>("SoftwareName")
@@ -290,17 +306,32 @@ namespace Eocr.Server.Data.Migrations
                     b.Property<int>("StatusId")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("SubmittedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("Vendor")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<bool>("VpatSubmitted")
+                        .HasColumnType("bit");
+
                     b.HasKey("RequestId");
 
+                    b.HasIndex("FundingSourceId");
+
                     b.HasIndex("RequestorId");
+
+                    b.HasIndex("SoftwareId");
 
                     b.HasIndex("StatusId");
 
@@ -405,13 +436,63 @@ namespace Eocr.Server.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Eocr.Server.Data.Entities.WorkflowHistory", b =>
+                {
+                    b.Property<int>("WorkflowHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkflowHistoryId"));
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("ChangedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int>("NewStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PreviousStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("int");
+
+                    b.HasKey("WorkflowHistoryId");
+
+                    b.HasIndex("ChangedById");
+
+                    b.HasIndex("NewStatusId");
+
+                    b.HasIndex("PreviousStatusId");
+
+                    b.HasIndex("RequestId", "ChangedAt");
+
+                    b.ToTable("WorkflowHistory");
+                });
+
             modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
                 {
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "FundingSource")
+                        .WithMany()
+                        .HasForeignKey("FundingSourceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Eocr.Server.Data.Entities.User", "Requestor")
                         .WithMany("VettingRequests")
                         .HasForeignKey("RequestorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.Software", "Software")
+                        .WithMany()
+                        .HasForeignKey("SoftwareId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Eocr.Server.Data.Entities.Code", "Status")
                         .WithMany()
@@ -419,7 +500,11 @@ namespace Eocr.Server.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("FundingSource");
+
                     b.Navigation("Requestor");
+
+                    b.Navigation("Software");
 
                     b.Navigation("Status");
                 });
@@ -472,6 +557,45 @@ namespace Eocr.Server.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Eocr.Server.Data.Entities.WorkflowHistory", b =>
+                {
+                    b.HasOne("Eocr.Server.Data.Entities.User", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "NewStatus")
+                        .WithMany()
+                        .HasForeignKey("NewStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Eocr.Server.Data.Entities.Code", "PreviousStatus")
+                        .WithMany()
+                        .HasForeignKey("PreviousStatusId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Eocr.Server.Data.Entities.Request", "Request")
+                        .WithMany("History")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChangedBy");
+
+                    b.Navigation("NewStatus");
+
+                    b.Navigation("PreviousStatus");
+
+                    b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("Eocr.Server.Data.Entities.Request", b =>
+                {
+                    b.Navigation("History");
                 });
 
             modelBuilder.Entity("Eocr.Server.Data.Entities.User", b =>
