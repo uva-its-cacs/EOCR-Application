@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -16,6 +17,10 @@ import { PageHeader, focusPageHeading } from 'src/components/page-header';
 
 import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
+import { useMyRequests } from 'src/sections/requests/use-my-requests';
+import { MyRequestsSummary } from 'src/sections/requests/my-requests-summary';
+import { RecentRequestsCard } from 'src/sections/requests/recent-requests-card';
+import { ReviewQueueSummaryCard } from 'src/sections/review/review-queue-summary-card';
 
 import { useSoftwareCatalog } from '../use-software';
 import { SoftwareListView } from './software-list-view';
@@ -30,8 +35,12 @@ const REFRESH_MESSAGES = {
 
 type RefreshState = keyof typeof REFRESH_MESSAGES;
 
+// The landing page for everyone: the catalog is the focal point (is my version approved and current?),
+// with the viewer's own requests around it: a summary strip above (only once they have requests) and the
+// recent requests card below; admins also get the review queue card.
 export function SoftwareCatalogPageView() {
   const software = useSoftwareCatalog(true);
+  const myRequests = useMyRequests();
   const current = useCurrentUser();
   // Edit links only show once the user is known to be an admin. The server still enforces access.
   const isAdmin = current.status === 'authenticated' && current.user.roleCode === ADMIN_ROLE_CODE;
@@ -91,20 +100,16 @@ export function SoftwareCatalogPageView() {
 
   return (
     <DashboardContent>
-      {!software.isError || software.data ? (
-        <SoftwareListView
-          rows={software.data ?? []}
-          loading={busy}
-          editHref={isAdmin ? paths.admin.softwareEdit : undefined}
-          actions={actions}
-        />
-      ) : (
-        <PageHeader
-          title="Software catalog"
-          documentTitle="Software catalog"
-          description="Browse software and its accessibility approval status."
-          actions={actions}
-        />
+      <PageHeader
+        title="Software catalog"
+        documentTitle="Software catalog"
+        description="Check whether your version is approved and current before you request software."
+        actions={actions}
+      />
+
+      {/* The viewer's own requests (hidden until they have some; em dashes while loading). */}
+      {(myRequests.isPending || (myRequests.data?.length ?? 0) > 0) && (
+        <MyRequestsSummary requests={myRequests.data} />
       )}
 
       {software.isError && (
@@ -119,6 +124,36 @@ export function SoftwareCatalogPageView() {
             : 'The software catalog could not be loaded. Please try again.'}
         </ErrorState>
       )}
+
+      {(!software.isError || software.data) && (
+        <SoftwareListView
+          rows={software.data ?? []}
+          loading={busy}
+          editHref={isAdmin ? paths.admin.softwareEdit : undefined}
+        />
+      )}
+
+      <Grid
+        container
+        spacing={3}
+        sx={{ mt: { xs: 3, md: 5 } }}
+      >
+        <Grid size={{ xs: 12, md: isAdmin ? 8 : 12 }}>
+          <RecentRequestsCard
+            requests={myRequests.data}
+            loading={myRequests.isPending}
+            error={myRequests.isError}
+            onRetry={() => {
+              void myRequests.refetch();
+            }}
+          />
+        </Grid>
+        {isAdmin && (
+          <Grid size={{ xs: 12, md: 4 }}>
+            <ReviewQueueSummaryCard />
+          </Grid>
+        )}
+      </Grid>
 
       <VisuallyHidden>
         <span role="status">{REFRESH_MESSAGES[refreshState]}</span>

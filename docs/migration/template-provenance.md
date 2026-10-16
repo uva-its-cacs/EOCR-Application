@@ -278,6 +278,16 @@ Copied unmodified from `Minimal_TypeScript_v7.7.0/vite-ts` in commit `142571f` (
 
 Ours, built on these: `sections/review/view/review-queue-view.tsx` and `review-table-{row,toolbar,filters-result}.tsx` (the My requests list layout, from the invoice list), `view/review-request-view.tsx` and `review-request-page-view.tsx` (the request status layout), `review-form.tsx`, `review-people-card.tsx`, `review-catalog-versions.tsx`, `review-schema.ts`, `review-workflow.ts`, `use-review.ts`, `use-review-actions.ts`, `api.ts` and `types.ts`. Changed: `sections/requests/request-details-toolbar.tsx` (optional back label and actions; "Update request" when more information is needed), `view/request-details-view.tsx` (the details card moved to `request-details-summary.tsx`; the reviewer's message), `view/request-intake-view.tsx` and `view/request-edit-page-view.tsx` (update and resubmit a request sent back), and `components/eocr-nav/nav-data.ts` (the Management group, admins only).
 
+## Catalog page as the home dashboard (2026-10-16)
+
+Copied unmodified from `Minimal_TypeScript_v7.7.0/vite-ts` in commit `ae5c6ab` ("vendor: Minimal UI v7.7.0 app new invoices card (unmodified)"), then adapted.
+
+| Our path | Template path (`vite-ts/`) | Status | Changes |
+| --- | --- | --- | --- |
+| `client/src/sections/requests/recent-requests-card.tsx` | `src/sections/overview/app/app-new-invoices.tsx` | modified | The viewer's five most recent requests (software linked to its status page, version, last updated, `StatusChip`) instead of mock invoices; the row menu removed; the title is an `h2`; the scroll region is named; "View all requests" links to My requests; loading, empty (`EmptyContent` with Request software) and error states. |
+
+Ours: `sections/requests/my-requests-summary.tsx` (the "Your requests" strip on `AnalyticSummary`), `sections/review/review-queue-summary-card.tsx` (admins). Changed: `sections/software/view/software-list-view.tsx` (the catalog-wide analytics strip removed; a "Find your software" card header; the page header moved to `software-catalog-page-view.tsx`, which composes the page), and `sections/requests/status-groups.ts` (now holds `GROUP_STYLE`, shared with `my-requests-view.tsx`).
+
 ## EEAAP exceptions (2026-10-15)
 
 No template files were ported. Ours, built on existing layouts: `sections/requests/view/request-eeaap-view.tsx` and `request-eeaap-page-view.tsx` (the intake card layout), `request-details-exception.tsx` (the order details description list, shared with the review page), `request-eeaap-schema.ts`, `use-request-exception.ts`, `sections/software/exception-text.ts`. Changed: `request-details-toolbar.tsx` ("Complete the EEAAP"), `view/request-details-view.tsx`, `request-intake-catalog-step.tsx` and `software-table-row.tsx` (exception expiry text), and on the review page `view/review-request-view.tsx` and `review-decide-dialog.tsx` (adapted from the template's quick edit form in an earlier commit: outcomes and conditions with a submitted EEAAP).

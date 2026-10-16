@@ -1,168 +1,177 @@
 import type { CardProps } from '@mui/material/Card';
+import type { RequestSummary } from './types';
 import type { TableHeadCellProps } from 'src/components/table';
-
-import { usePopover } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
+import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import MenuList from '@mui/material/MenuList';
-import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import CardHeader from '@mui/material/CardHeader';
-import IconButton from '@mui/material/IconButton';
 
-import { fCurrency } from 'src/utils/format-number';
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
-import { Label } from 'src/components/label';
+import { formatDateTime } from 'src/utils/format';
+
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { TableHeadCustom } from 'src/components/table';
-import { CustomPopover } from 'src/components/custom-popover';
+import { StatusChip } from 'src/components/status-chip';
+import { EmptyContent } from 'src/components/empty-content';
+import { ErrorState, LoadingState } from 'src/components/feedback';
+
+import { REQUEST_STATUS_COLORS } from './status-colors';
 
 // ----------------------------------------------------------------------
 
+// Adapted from the template's sections/overview/app/app-new-invoices.tsx: the viewer's most recently
+// updated requests on the catalog page. EOCR changes: real request rows (software linked to its status
+// page, version, last updated, StatusChip); the row menu removed; the title is an h2; the table scroll
+// region is named; "View all" links to My requests; loading, empty and error states.
+
+const LIMIT = 5;
+
+const HEAD_CELLS: TableHeadCellProps[] = [
+  { id: 'softwareName', label: 'Software' },
+  { id: 'version', label: 'Version' },
+  { id: 'updatedAt', label: 'Last updated' },
+  { id: 'status', label: 'Status' },
+];
+
 type Props = CardProps & {
-  title?: string;
-  subheader?: string;
-  headCells: TableHeadCellProps[];
-  tableData: {
-    id: string;
-    price: number;
-    status: string;
-    category: string;
-    invoiceNumber: string;
-  }[];
+  requests: RequestSummary[] | undefined;
+  loading: boolean;
+  error: boolean;
+  onRetry: () => void;
 };
 
-export function AppNewInvoices({ title, subheader, tableData, headCells, sx, ...other }: Props) {
-  return (
-    <Card sx={sx} {...other}>
-      <CardHeader title={title} subheader={subheader} sx={{ mb: 3 }} />
+export function RecentRequestsCard({ requests, loading, error, onRetry, sx, ...other }: Props) {
+  const recent = [...(requests ?? [])]
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, LIMIT);
 
-      <Scrollbar sx={{ minHeight: 402 }}>
-        <Table sx={{ minWidth: 680 }}>
-          <TableHeadCustom headCells={headCells} />
+  const renderBody = () => {
+    if (error && !requests) {
+      return (
+        <ErrorState
+          onRetry={onRetry}
+          sx={{ mx: 3, mb: 3 }}
+        >
+          Your requests could not be loaded. Please try again.
+        </ErrorState>
+      );
+    }
+    if (loading && !requests) {
+      return (
+        <Box sx={{ px: 3, pb: 3 }}>
+          <LoadingState message="Loading your requests..." />
+        </Box>
+      );
+    }
+    if (!recent.length) {
+      return (
+        <EmptyContent
+          title="You have no requests yet"
+          description="If your software or version is not in the catalog, or its approval has expired, request a review."
+          action={
+            <Button
+              component={RouterLink}
+              href={paths.requests.new}
+              variant="contained"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              sx={{ mt: 2 }}
+            >
+              Request software
+            </Button>
+          }
+          slotProps={{ title: { component: 'p' } }}
+          sx={{ py: 5 }}
+        />
+      );
+    }
+    return (
+      <Scrollbar label="Your recent requests table">
+        <Table
+          aria-label="Your recent requests"
+          sx={{ minWidth: 560 }}
+        >
+          <TableHeadCustom headCells={HEAD_CELLS} />
 
           <TableBody>
-            {tableData.map((row) => (
-              <RowItem key={row.id} row={row} />
+            {recent.map((row) => (
+              <TableRow key={row.requestId}>
+                <TableCell>
+                  <Link
+                    component={RouterLink}
+                    href={paths.requests.details(row.requestId)}
+                    color="inherit"
+                  >
+                    {row.softwareName}
+                  </Link>
+                </TableCell>
+
+                <TableCell>{row.version || 'Not set'}</TableCell>
+
+                <TableCell>
+                  <time dateTime={row.updatedAt}>{formatDateTime(row.updatedAt)}</time>
+                </TableCell>
+
+                <TableCell>
+                  <StatusChip
+                    code={row.statusCode}
+                    label={row.statusLabel}
+                    colors={REQUEST_STATUS_COLORS}
+                  />
+                </TableCell>
+              </TableRow>
             ))}
           </TableBody>
         </Table>
       </Scrollbar>
+    );
+  };
+
+  return (
+    <Card
+      sx={sx}
+      {...other}
+    >
+      <CardHeader
+        title="Your recent requests"
+        subheader="Your latest requests and where they are in review."
+        slotProps={{
+          title: { component: 'h2' },
+          subheader: { sx: { color: 'text.secondary' } },
+        }}
+        sx={{ mb: 3 }}
+      />
+
+      {renderBody()}
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 
       <Box sx={{ p: 2, textAlign: 'right' }}>
         <Button
+          component={RouterLink}
+          href={paths.requests.root}
           size="small"
           color="inherit"
-          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" width={18} sx={{ ml: -0.5 }} />}
+          endIcon={
+            <Iconify
+              icon="eva:arrow-ios-forward-fill"
+              width={18}
+              sx={{ ml: -0.5 }}
+            />
+          }
         >
-          View all
+          View all requests
         </Button>
       </Box>
     </Card>
-  );
-}
-
-// ----------------------------------------------------------------------
-
-type RowItemProps = {
-  row: Props['tableData'][number];
-};
-
-function RowItem({ row }: RowItemProps) {
-  const menuActions = usePopover();
-
-  const handleDownload = () => {
-    menuActions.onClose();
-    console.info('DOWNLOAD', row.id);
-  };
-
-  const handlePrint = () => {
-    menuActions.onClose();
-    console.info('PRINT', row.id);
-  };
-
-  const handleShare = () => {
-    menuActions.onClose();
-    console.info('SHARE', row.id);
-  };
-
-  const handleDelete = () => {
-    menuActions.onClose();
-    console.info('DELETE', row.id);
-  };
-
-  const renderMenuActions = () => (
-    <CustomPopover
-      open={menuActions.open}
-      anchorEl={menuActions.anchorEl}
-      onClose={menuActions.onClose}
-      slotProps={{ arrow: { placement: 'right-top' } }}
-    >
-      <MenuList>
-        <MenuItem onClick={handleDownload}>
-          <Iconify icon="eva:cloud-download-fill" />
-          Download
-        </MenuItem>
-
-        <MenuItem onClick={handlePrint}>
-          <Iconify icon="solar:printer-minimalistic-bold" />
-          Print
-        </MenuItem>
-
-        <MenuItem onClick={handleShare}>
-          <Iconify icon="solar:share-bold" />
-          Share
-        </MenuItem>
-
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
-        </MenuItem>
-      </MenuList>
-    </CustomPopover>
-  );
-
-  return (
-    <>
-      <TableRow>
-        <TableCell>{row.invoiceNumber}</TableCell>
-
-        <TableCell>{row.category}</TableCell>
-
-        <TableCell>{fCurrency(row.price)}</TableCell>
-
-        <TableCell>
-          <Label
-            variant="soft"
-            color={
-              (row.status === 'progress' && 'warning') ||
-              (row.status === 'out of date' && 'error') ||
-              'success'
-            }
-          >
-            {row.status}
-          </Label>
-        </TableCell>
-
-        <TableCell align="right" sx={{ pr: 1 }}>
-          <IconButton color={menuActions.open ? 'inherit' : 'default'} onClick={menuActions.onOpen}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
-        </TableCell>
-      </TableRow>
-
-      {renderMenuActions()}
-    </>
   );
 }

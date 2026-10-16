@@ -1,4 +1,3 @@
-import type { IconifyName } from 'src/components/iconify';
 import type { TableHeadCellProps } from 'src/components/table';
 import type { RequestSummary, RequestTableFilters } from '../types';
 
@@ -44,8 +43,8 @@ import {
 import { useMyRequests } from '../use-my-requests';
 import { RequestTableRow } from '../request-table-row';
 import { RequestTableToolbar } from '../request-table-toolbar';
-import { countByGroup, STATUS_GROUPS } from '../status-groups';
 import { getStatusColor, REQUEST_STATUS_COLORS } from '../status-colors';
+import { GROUP_STYLE, countByGroup, STATUS_GROUPS } from '../status-groups';
 import { RequestTableFiltersResult } from '../request-table-filters-result';
 
 // ----------------------------------------------------------------------
@@ -59,16 +58,6 @@ const TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'updatedAt', label: 'Last updated' },
   { id: 'statusLabel', label: 'Status' },
 ];
-
-// Icon and color per status group (the template's invoice analytics: Draft, Pending, Overdue, Paid).
-type GroupColor = 'default' | 'info' | 'warning' | 'success';
-
-const GROUP_STYLE: Record<string, { icon: IconifyName; color: GroupColor }> = {
-  Drafts: { icon: 'solar:file-corrupted-bold-duotone', color: 'default' },
-  'In review': { icon: 'solar:sort-by-time-bold-duotone', color: 'info' },
-  'Needs your action': { icon: 'solar:bell-bing-bold-duotone', color: 'warning' },
-  Decided: { icon: 'solar:file-check-bold-duotone', color: 'success' },
-};
 
 type StatusTab = {
   code: string;

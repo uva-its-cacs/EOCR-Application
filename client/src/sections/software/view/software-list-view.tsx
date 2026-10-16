@@ -1,7 +1,4 @@
-import type { ReactNode } from 'react';
-import type { Theme } from '@mui/material/styles';
 import type { LabelColor } from 'src/components/label';
-import type { IconifyName } from 'src/components/iconify';
 import type { TableHeadCellProps } from 'src/components/table';
 import type { SoftwareCatalogItem, SoftwareTableFilters } from '../types';
 
@@ -13,19 +10,16 @@ import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
 import Tabs from '@mui/material/Tabs';
 import Table from '@mui/material/Table';
-import Stack from '@mui/material/Stack';
-import Divider from '@mui/material/Divider';
 import TableRow from '@mui/material/TableRow';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import { useTheme } from '@mui/material/styles';
+import CardHeader from '@mui/material/CardHeader';
 
 import { Label } from 'src/components/label';
 import { Scrollbar } from 'src/components/scrollbar';
 import { LoadingState } from 'src/components/feedback';
-import { PageHeader } from 'src/components/page-header';
 import { VisuallyHidden } from 'src/components/visually-hidden';
-import { AnalyticSummary } from 'src/components/analytic-summary';
 import {
   useTable,
   emptyRows,
@@ -46,7 +40,8 @@ import { SoftwareTableFiltersResult } from '../software-table-filters-result';
 // ----------------------------------------------------------------------
 
 // Adapted from the template's invoice-list-view.tsx, with catalog rows from the API instead of mock
-// data. Not ported: checkbox selection and bulk actions (no selection), Delete (no endpoint), date
+// data. The catalog-wide analytics strip was removed (the catalog page shows the viewer's own requests
+// instead; the status tabs still filter by approval status), and the page header lives in the page view. Not ported: checkbox selection and bulk actions (no selection), Delete (no endpoint), date
 // filters (date pickers are not approved).
 
 const BASE_TABLE_HEAD: TableHeadCellProps[] = [
@@ -65,14 +60,6 @@ const ACTIONS_HEAD: TableHeadCellProps = {
   sortable: false,
 };
 
-// Icon per Label color for the analytics strip (registered offline icons only).
-const STATUS_ICONS: Partial<Record<LabelColor, IconifyName>> = {
-  info: 'solar:sort-by-time-bold-duotone',
-  success: 'solar:file-check-bold-duotone',
-  warning: 'solar:bell-bing-bold-duotone',
-  error: 'solar:file-corrupted-bold-duotone',
-};
-
 type StatusSummary = {
   code: string;
   label: string;
@@ -84,10 +71,9 @@ type Props = {
   rows: SoftwareCatalogItem[];
   loading?: boolean;
   editHref?: (softwareId: number) => string;
-  actions?: ReactNode;
 };
 
-export function SoftwareListView({ rows, loading = false, editHref, actions }: Props) {
+export function SoftwareListView({ rows, loading = false, editHref }: Props) {
   const theme = useTheme();
 
   const table = useTable({ defaultOrderBy: 'createdAt', defaultOrder: 'desc' });
@@ -144,8 +130,6 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
 
   const tableHead = editHref ? [...BASE_TABLE_HEAD, ACTIONS_HEAD] : BASE_TABLE_HEAD;
 
-  const getPercent = (count: number) => (rows.length ? (count / rows.length) * 100 : 0);
-
   const handleFilterStatus = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
       table.onResetPage();
@@ -155,204 +139,144 @@ export function SoftwareListView({ rows, loading = false, editHref, actions }: P
   );
 
   return (
-    <>
-      <PageHeader
-        title="Software catalog"
-        documentTitle="Software catalog"
-        description="Browse software and its accessibility approval status."
-        actions={actions}
+    <Card>
+      <CardHeader
+        title="Find your software"
+        subheader="Search by name, vendor or version. Each version is reviewed and approved on its own."
+        slotProps={{
+          title: { component: 'h2' },
+          subheader: { sx: { color: 'text.secondary' } },
+        }}
+        sx={{ pb: 1 }}
+      />
+      <Tabs
+        value={activeStatus ? activeStatus.code : 'all'}
+        onChange={handleFilterStatus}
+        aria-label="Filter software by approval status"
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          px: { md: 2.5 },
+          boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
+        }}
+      >
+        {[
+          { value: 'all', label: 'All', color: 'default' as LabelColor, count: rows.length },
+          ...statuses.map((status) => ({
+            value: status.code,
+            label: status.label,
+            color: status.color,
+            count: status.count,
+          })),
+        ].map((tab) => (
+          <Tab
+            key={tab.value}
+            value={tab.value}
+            label={tab.label}
+            aria-label={
+              tab.value === 'all' ? `All software (${tab.count})` : `${tab.label} (${tab.count})`
+            }
+            iconPosition="end"
+            icon={
+              <Label
+                variant={
+                  ((tab.value === 'all' || tab.value === effectiveFilters.status) && 'filled') ||
+                  'soft'
+                }
+                color={tab.color}
+              >
+                {tab.count}
+              </Label>
+            }
+          />
+        ))}
+      </Tabs>
+
+      <SoftwareTableToolbar
+        filters={filters}
+        onResetPage={table.onResetPage}
+        options={{ categories }}
       />
 
-      <Card sx={{ mb: { xs: 3, md: 5 } }}>
-        <Scrollbar
-          label="Approval summary"
-          sx={{ minHeight: 108 }}
-        >
-          <VisuallyHidden
-            component="h2"
-            id="software-summary-heading"
-          >
-            Approval summary
-          </VisuallyHidden>
-          <Stack
-            divider={
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ borderStyle: 'dashed' }}
-              />
-            }
-            sx={{ py: 2, flexDirection: 'row' }}
-          >
-            <AnalyticSummary
-              title="Total"
-              total={rows.length}
-              percent={100}
-              icon="solar:bill-list-bold-duotone"
-              color={theme.vars.palette.info.main}
-            />
-
-            {statuses.map((status) => (
-              <AnalyticSummary
-                key={status.code}
-                title={status.label}
-                total={status.count}
-                percent={getPercent(status.count)}
-                icon={STATUS_ICONS[status.color] ?? 'solar:file-bold-duotone'}
-                color={analyticColor(theme, status.color)}
-              />
-            ))}
-          </Stack>
-        </Scrollbar>
-      </Card>
-
-      <Card>
-        <Tabs
-          value={activeStatus ? activeStatus.code : 'all'}
-          onChange={handleFilterStatus}
-          aria-label="Filter software by approval status"
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            px: { md: 2.5 },
-            boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
-          }}
-        >
-          {[
-            { value: 'all', label: 'All', color: 'default' as LabelColor, count: rows.length },
-            ...statuses.map((status) => ({
-              value: status.code,
-              label: status.label,
-              color: status.color,
-              count: status.count,
-            })),
-          ].map((tab) => (
-            <Tab
-              key={tab.value}
-              value={tab.value}
-              label={tab.label}
-              aria-label={
-                tab.value === 'all' ? `All software (${tab.count})` : `${tab.label} (${tab.count})`
-              }
-              iconPosition="end"
-              icon={
-                <Label
-                  variant={
-                    ((tab.value === 'all' || tab.value === effectiveFilters.status) && 'filled') ||
-                    'soft'
-                  }
-                  color={tab.color}
-                >
-                  {tab.count}
-                </Label>
-              }
-            />
-          ))}
-        </Tabs>
-
-        <SoftwareTableToolbar
+      {canReset && (
+        <SoftwareTableFiltersResult
           filters={filters}
           onResetPage={table.onResetPage}
-          options={{ categories }}
+          totalResults={dataFiltered.length}
+          statusLabel={activeStatus?.label}
+          sx={{ p: 2.5, pt: 0 }}
         />
+      )}
 
-        {canReset && (
-          <SoftwareTableFiltersResult
-            filters={filters}
-            onResetPage={table.onResetPage}
-            totalResults={dataFiltered.length}
-            statusLabel={activeStatus?.label}
-            sx={{ p: 2.5, pt: 0 }}
-          />
-        )}
+      {/* Announces the result count as filters change (the visible count shows only while filtering). */}
+      <VisuallyHidden>
+        <span role="status">{loading ? '' : `${dataFiltered.length} results found`}</span>
+      </VisuallyHidden>
 
-        {/* Announces the result count as filters change (the visible count shows only while filtering). */}
-        <VisuallyHidden>
-          <span role="status">{loading ? '' : `${dataFiltered.length} results found`}</span>
-        </VisuallyHidden>
-
-        <Scrollbar
-          label="Software catalog table"
-          sx={{ minHeight: 444 }}
+      <Scrollbar
+        label="Software catalog table"
+        sx={{ minHeight: 444 }}
+      >
+        <Table
+          aria-label="Software catalog"
+          size={table.dense ? 'small' : 'medium'}
+          sx={{ minWidth: 800 }}
         >
-          <Table
-            aria-label="Software catalog"
-            size={table.dense ? 'small' : 'medium'}
-            sx={{ minWidth: 800 }}
-          >
-            <TableHeadCustom
-              order={table.order}
-              orderBy={table.orderBy}
-              headCells={tableHead}
-              onSort={table.onSort}
+          <TableHeadCustom
+            order={table.order}
+            orderBy={table.orderBy}
+            headCells={tableHead}
+            onSort={table.onSort}
+          />
+
+          <TableBody aria-busy={loading}>
+            {dataInPage.map((row) => (
+              <SoftwareTableRow
+                key={row.softwareId}
+                row={row}
+                editHref={editHref?.(row.softwareId)}
+              />
+            ))}
+
+            {loading && !dataFiltered.length && (
+              <TableRow>
+                <TableCell colSpan={12}>
+                  <LoadingState message="Loading software..." />
+                </TableCell>
+              </TableRow>
+            )}
+
+            <TableEmptyRows
+              height={table.dense ? 56 : 56 + 20}
+              emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
             />
 
-            <TableBody aria-busy={loading}>
-              {dataInPage.map((row) => (
-                <SoftwareTableRow
-                  key={row.softwareId}
-                  row={row}
-                  editHref={editHref?.(row.softwareId)}
-                />
-              ))}
+            <TableNoData
+              notFound={notFound}
+              title={
+                canReset
+                  ? 'No software matches your search or filters.'
+                  : 'No software is currently in the catalog.'
+              }
+            />
+          </TableBody>
+        </Table>
+      </Scrollbar>
 
-              {loading && !dataFiltered.length && (
-                <TableRow>
-                  <TableCell colSpan={12}>
-                    <LoadingState message="Loading software..." />
-                  </TableCell>
-                </TableRow>
-              )}
-
-              <TableEmptyRows
-                height={table.dense ? 56 : 56 + 20}
-                emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
-              />
-
-              <TableNoData
-                notFound={notFound}
-                title={
-                  canReset
-                    ? 'No software matches your search or filters.'
-                    : 'No software is currently in the catalog.'
-                }
-              />
-            </TableBody>
-          </Table>
-        </Scrollbar>
-
-        <TablePaginationCustom
-          page={table.page}
-          dense={table.dense}
-          count={dataFiltered.length}
-          rowsPerPage={table.rowsPerPage}
-          onPageChange={table.onChangePage}
-          onChangeDense={table.onChangeDense}
-          onRowsPerPageChange={table.onChangeRowsPerPage}
-        />
-      </Card>
-    </>
+      <TablePaginationCustom
+        page={table.page}
+        dense={table.dense}
+        count={dataFiltered.length}
+        rowsPerPage={table.rowsPerPage}
+        onPageChange={table.onChangePage}
+        onChangeDense={table.onChangeDense}
+        onRowsPerPageChange={table.onChangeRowsPerPage}
+      />
+    </Card>
   );
 }
 
 // ----------------------------------------------------------------------
-
-// Theme color for an analytics icon and ring (decorative): the status's main color, or text.secondary
-// for statuses without one.
-function analyticColor(theme: Theme, color: LabelColor): string {
-  const { palette } = theme.vars;
-  switch (color) {
-    case 'info':
-    case 'success':
-    case 'warning':
-    case 'error':
-    case 'primary':
-    case 'secondary':
-      return palette[color].main;
-    default:
-      return palette.text.secondary;
-  }
-}
 
 // ----------------------------------------------------------------------
 

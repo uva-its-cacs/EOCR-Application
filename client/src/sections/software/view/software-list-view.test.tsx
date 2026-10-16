@@ -71,14 +71,11 @@ const firstCellText = () =>
   bodyRows().map((row) => within(row).getAllByRole('cell')[0].textContent);
 
 describe('SoftwareListView', () => {
-  it('shows the approval summary, rows with status text, and "Not set" for empty values', () => {
+  it('shows the catalog under its heading (no catalog-wide summary), rows with status text, and "Not set" for empty values', () => {
     renderView(<SoftwareListView rows={SOFTWARE} />);
 
-    const summary = screen.getByRole('region', { name: 'Approval summary' });
-    expect(within(summary).getByRole('heading', { name: 'Total' })).toBeTruthy();
-    expect(within(summary).getByText('2 items')).toBeTruthy();
-    expect(within(summary).getByRole('heading', { name: 'Denied' })).toBeTruthy();
-    expect(within(summary).getAllByText('50%')).toHaveLength(2);
+    expect(screen.queryByRole('region', { name: 'Approval summary' })).toBeNull();
+    expect(screen.getByRole('heading', { level: 2, name: 'Find your software' })).toBeTruthy();
 
     expect(within(table()).getByText('Acme Reader')).toBeTruthy();
     expect(within(table()).getByText('Acme Tools')).toBeTruthy();
@@ -201,12 +198,18 @@ const USER: MeDto = {
 };
 const ADMIN: MeDto = { ...USER, roleCode: 'Admin', roleLabel: 'Admin' };
 
+// The viewer's requests and the review queue (both empty unless a test sets them).
+let myRequests: () => Promise<Response> = () => Promise.resolve(jsonResponse([]));
+let reviewQueue: () => Promise<Response> = () => Promise.resolve(jsonResponse([]));
+
 /** Answers /api/me; each catalog call gets the next handler (the last repeats). */
 function mockCatalogApi(me: MeDto | null, ...catalog: (() => Promise<Response>)[]) {
   let catalogCall = 0;
   const fetchMock = vi.fn((input: RequestInfo | URL) => {
     const url = String(input);
     if (url === '/api/me') return Promise.resolve(me ? jsonResponse(me) : jsonResponse({}, 401));
+    if (url === '/api/requests/mine') return myRequests();
+    if (url === '/api/admin/requests') return reviewQueue();
     if (url === '/api/software/catalog') {
       const handler = catalog[Math.min(catalogCall, catalog.length - 1)];
       catalogCall += 1;
@@ -229,14 +232,95 @@ const refreshStatus = () =>
     .getAllByRole('status')
     .find((s) => s.textContent === '' || /Refreshing|updated/.test(s.textContent ?? ''));
 
+const request = (id: number, statusCode: string, updatedAt: string) => ({
+  requestId: id,
+  softwareName: `Tool ${id}`,
+  vendor: 'Vendor',
+  version: '1.0',
+  statusCode,
+  statusLabel: statusCode,
+  updatedAt,
+});
+
 describe('SoftwareCatalogPageView', () => {
+  afterEach(() => {
+    myRequests = () => Promise.resolve(jsonResponse([]));
+    reviewQueue = () => Promise.resolve(jsonResponse([]));
+  });
+
+  it('shows the viewer’s request counts and their five most recent requests, with View all', async () => {
+    myRequests = ok([
+      request(1, 'Draft', '2026-10-01T00:00:00Z'),
+      request(2, 'HumanReview', '2026-10-06T00:00:00Z'),
+      request(3, 'MoreInfoNeeded', '2026-10-05T00:00:00Z'),
+      request(4, 'Approved', '2026-10-04T00:00:00Z'),
+      request(5, 'Submitted', '2026-10-03T00:00:00Z'),
+      request(6, 'Denied', '2026-10-02T00:00:00Z'),
+    ]);
+    mockCatalogApi(USER, ok(SOFTWARE));
+    renderView(<SoftwareCatalogPageView />);
+
+    const strip = await screen.findByRole('region', { name: 'Your requests' });
+    // In review (Submitted, Human review) and Decided (Approved, Denied) have two each.
+    expect(await within(strip).findAllByText('2 items')).toHaveLength(2);
+    expect(within(strip).getByRole('heading', { name: 'Decided' })).toBeTruthy();
+    expect(within(strip).getAllByText('1 item')).toHaveLength(2);
+
+    const recent = screen.getByRole('table', { name: 'Your recent requests' });
+    const links = within(recent)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(links).toEqual(['Tool 2', 'Tool 3', 'Tool 4', 'Tool 5', 'Tool 6']);
+    expect(screen.getByRole('link', { name: 'View all requests' }).getAttribute('href')).toBe(
+      '/requests'
+    );
+    expect(screen.queryByRole('heading', { name: 'Review queue' })).toBeNull();
+  });
+
+  it('hides the counts for a viewer with no requests and offers a request instead', async () => {
+    mockCatalogApi(USER, ok(SOFTWARE));
+    renderView(<SoftwareCatalogPageView />);
+
+    expect(await screen.findByText('You have no requests yet')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Your requests' })).toBeNull();
+    expect(screen.getAllByRole('link', { name: 'Request software' })).toHaveLength(2);
+  });
+
+  it('never shows 0 while the viewer’s requests load', async () => {
+    myRequests = pending;
+    mockCatalogApi(USER, ok(SOFTWARE));
+    renderView(<SoftwareCatalogPageView />);
+
+    const strip = await screen.findByRole('region', { name: 'Your requests' });
+    expect(within(strip).queryByText(/^0/)).toBeNull();
+    expect(within(strip).getAllByText('Loading').length).toBeGreaterThan(0);
+  });
+
+  it('shows admins the review queue counts with a link to the queue', async () => {
+    reviewQueue = ok([
+      { requestId: 1, statusCode: 'Submitted' },
+      { requestId: 2, statusCode: 'HumanReview' },
+      { requestId: 3, statusCode: 'AwaitingEeaap' },
+      { requestId: 4, statusCode: 'Approved' },
+    ]);
+    mockCatalogApi(ADMIN, ok(SOFTWARE));
+    renderView(<SoftwareCatalogPageView />);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Review queue' })).toBeTruthy();
+    await screen.findByText('Waiting to start');
+    expect(screen.getByRole('link', { name: 'Open the review queue' }).getAttribute('href')).toBe(
+      '/admin/requests'
+    );
+  });
+
   it('loads the shared catalog and offers Request software without row actions for a User', async () => {
     const fetchMock = mockCatalogApi(USER, ok(SOFTWARE));
     renderView(<SoftwareCatalogPageView />);
 
     expect(await screen.findByText('Acme Reader')).toBeTruthy();
     expect(catalogCalls(fetchMock)).toHaveLength(1);
-    expect(screen.getByRole('link', { name: 'Request software' })).toBeTruthy();
+    // The header action (and the empty recent requests card's, for a viewer with no requests).
+    expect(screen.getAllByRole('link', { name: 'Request software' }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /Actions for/ })).toBeNull();
   });
 
