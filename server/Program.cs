@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<EocrDbContext>(o =>
@@ -22,6 +24,8 @@ builder.Services.AddScoped<IExceptionRepo, ExceptionRepo>();
 builder.Services.AddScoped<IDevUserRepo, DevUserRepo>();
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

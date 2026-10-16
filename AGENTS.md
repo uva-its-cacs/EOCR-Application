@@ -12,11 +12,14 @@ The app is built in small **slices**. Each slice is a thin, end-to-end piece of 
 
 - **server/**: .NET 10, ASP.NET Core with controllers, EF Core with SQL Server (LocalDB in development, Azure SQL in production). Namespace root: `Eocr.Server`.
 - **client/**: React + TypeScript, Vite, React Router, TanStack Query, Material UI (MUI) with the MUI X Data Grid (community), built on the **Minimal UI** template foundation (see "UI" below).
-- **Solution file**: `EOCR.slnx` (contains `server/` only; `client/` is a Vite project).
+- **Solution file**: `EOCR.slnx` (contains `server/`, `EOCR.AppHost/` and `EOCR.ServiceDefaults/`; `client/` is a Vite project).
+- **Aspire**: `EOCR.AppHost` runs the API and the Vite client together (`api`, `client`). `EOCR.ServiceDefaults` is referenced by the API for OpenTelemetry, health checks and service discovery.
 
 ## Run locally
 
 Run `dotnet` commands from the repo root and `npm` / `npx` commands from `client/`.
+
+Easiest: `aspire start` from the repo root runs the API and the client together (dashboard URL is printed; `aspire stop` ends it). The client gets a dynamic port, and the API keeps the ports in its `launchSettings.json`, so do not run it alongside `dotnet run --project server`. Or run them by hand:
 
 ```bash
 # Both in one terminal, from client/: the API with dotnet watch (reloads on save) and Vite, output
@@ -30,7 +33,7 @@ dotnet run --project server
 cd client && npm run dev
 ```
 
-Vite proxies `/api` to the API (see `client/vite.config.ts`). The browser only talks to the Vite origin, so no CORS configuration is needed in development. The client dev server stays on port 5173 (the template's default of 8081 is not used). In Development the server applies EF migrations and seeds dummy data on startup (`Data/DevSeeder.cs`).
+Vite proxies `/api` to the API (see `client/vite.config.ts`). The browser only talks to the Vite origin, so no CORS configuration is needed in development. Under Aspire the proxy target comes from `services__api__https__0` (falling back to `__http__0`, then `http://localhost:5246`) and the port from `PORT`; standalone, the client dev server stays on port 5173 (the template's default of 8081 is not used). In Development the server applies EF migrations and seeds dummy data on startup (`Data/DevSeeder.cs`).
 
 Migrations:
 

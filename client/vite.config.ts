@@ -5,7 +5,13 @@ import checker from 'vite-plugin-checker';
 
 // ----------------------------------------------------------------------
 
-const PORT = 5173;
+// Aspire injects PORT and services__api__http__0; the fallbacks keep standalone `npm run dev` working.
+const PORT = Number(process.env.PORT) || 5173;
+// Prefer https: the API redirects http to https when an https endpoint exists.
+const API_TARGET =
+  process.env.services__api__https__0 ??
+  process.env.services__api__http__0 ??
+  'http://localhost:5246';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -34,8 +40,9 @@ export default defineConfig({
     port: PORT,
     proxy: {
       '/api': {
-        target: 'http://localhost:5246',
+        target: API_TARGET,
         changeOrigin: true,
+        secure: false, // local ASP.NET dev certificate
       },
     },
   },

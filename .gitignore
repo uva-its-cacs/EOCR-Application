@@ -486,3 +486,5 @@ dist/
 .env
 .env.local
 .env.*.local
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
