@@ -3,4 +3,5 @@
     <Project Path="server/Eocr.Server.csproj" />
   </Folder>
   <Project Path="EOCR.AppHost/EOCR.AppHost.csproj" />
+  <Project Path="EOCR.ServiceDefaults/EOCR.ServiceDefaults.csproj" />
 </Solution>

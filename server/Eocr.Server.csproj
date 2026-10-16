@@ -20,4 +20,8 @@
     <Folder Include="Data\Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\EOCR.ServiceDefaults\EOCR.ServiceDefaults.csproj" />
+  </ItemGroup>
+
 </Project>
