@@ -19,6 +19,7 @@ import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 
 import { AccountButton } from './account-button';
+import { DevUserSwitcher } from '../eocr/dev-user-switcher';
 
 // ----------------------------------------------------------------------
 
@@ -30,6 +31,7 @@ import { AccountButton } from './account-button';
 // - The popover is a dialog named "Account". The email wraps instead of being truncated, and each menu
 //   item is the link itself (the template nests a Link inside a MenuItem).
 // - No sign-out yet: the identity provider is undecided.
+// - Development builds add the user switcher (layouts/eocr/dev-user-switcher.tsx).
 export type AccountPopoverProps = IconButtonProps & {
   data?: {
     label: string;
@@ -88,10 +90,22 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
       anchorEl={anchorEl}
       onClose={onClose}
       slotProps={{
-        paper: { role: 'dialog', 'aria-label': 'Account', sx: { p: 0, width: 220 } },
+        paper: {
+          role: 'dialog',
+          'aria-label': 'Account',
+          sx: { p: 0, width: import.meta.env.DEV ? 300 : 220 },
+        },
       }}
     >
       <Box sx={{ p: 2, pb: 1.5 }}>{renderUser()}</Box>
+
+      {/* EOCR: development builds only (the server honors the switch only in Development). */}
+      {import.meta.env.DEV && (
+        <>
+          <Divider sx={{ borderStyle: 'dashed' }} />
+          <DevUserSwitcher onSwitched={onClose} />
+        </>
+      )}
 
       {!!data.length && (
         <>

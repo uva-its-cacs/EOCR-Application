@@ -11,6 +11,7 @@ builder.Services.AddDbContext<EocrDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ICurrentUser, DevCurrentUser>();
 builder.Services.AddScoped<IRequestRepo, RequestRepo>();
@@ -18,6 +19,7 @@ builder.Services.AddScoped<ISoftwareRepo, SoftwareRepo>();
 builder.Services.AddScoped<ICodeRepo, CodeRepo>();
 builder.Services.AddScoped<IReviewRepo, ReviewRepo>();
 builder.Services.AddScoped<IExceptionRepo, ExceptionRepo>();
+builder.Services.AddScoped<IDevUserRepo, DevUserRepo>();
 
 var app = builder.Build();
 

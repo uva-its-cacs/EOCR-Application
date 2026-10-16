@@ -2,7 +2,7 @@
 import { it, vi, expect, describe, afterEach, beforeEach } from 'vitest';
 import { screen, within, cleanup, fireEvent } from '@testing-library/react';
 
-import { ok, mockFetch, renderView } from 'src/test/render-view';
+import { renderView, jsonResponse } from 'src/test/render-view';
 
 import { AccountPopover } from './account-popover';
 
@@ -35,7 +35,12 @@ afterEach(() => {
 
 describe('AccountPopover (template popover fed by /api/me)', () => {
   it('opens a dialog named Account with the full name, email, role and links', async () => {
-    mockFetch(ok(ME));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url === '/api/me' ? jsonResponse(ME) : jsonResponse(url === '/api/dev/users' ? [] : {}, 404)
+      )
+    );
     renderView(<AccountPopover data={[{ label: 'My requests', href: '/requests' }]} />);
 
     const button = screen.getByRole('button', { name: 'Account' });

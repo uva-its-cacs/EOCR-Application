@@ -19,7 +19,11 @@ The app is built in small **slices**. Each slice is a thin, end-to-end piece of 
 Run `dotnet` commands from the repo root and `npm` / `npx` commands from `client/`.
 
 ```bash
-# API (http://localhost:5246), from the repo root
+# Both in one terminal, from client/: the API with dotnet watch (reloads on save) and Vite, output
+# prefixed [api] and [web]. Ctrl+C stops both.
+cd client && npm run dev:all
+
+# Or separately. API (http://localhost:5246), from the repo root
 dotnet run --project server
 
 # Client (http://localhost:5173), in a second terminal
@@ -95,6 +99,7 @@ Rules:
 - Controllers depend on `ICurrentUser` only. Never read provider-specific claims in feature code. `ICurrentUser` exposes the role as its code `Value` string.
 - Admin-only endpoints use an "Admin" authorization policy that checks the user's role code. Until real auth is in place, checks go through `ICurrentUser`.
 - In Development, `DevCurrentUser` acts as the seeded user configured by `DevAuth:Email` in `appsettings.Development.json`, and looks codes up by `(CodeType, Value)`. Keep it set to the standard dev user (`dana@example.com`) when committing.
+- To test as another user, use the **development user switcher** in the account menu ("Development: view as") instead of editing `DevAuth:Email`. It lists the seeded users (`GET /api/dev/users`) and sets an HttpOnly `eocr-dev-user` cookie (`POST /api/dev/users/switch`, `DELETE` resets) that `DevCurrentUser` reads before `DevAuth:Email`. `DevUsersController` answers 404 and the cookie is ignored outside Development; the client renders the switcher only when `import.meta.env.DEV` (production bundles leave it out). Authorization is unchanged: every check still goes through `ICurrentUser`.
 - Users must only ever see their own requests. Always filter by the current user's ID in user-facing queries.
 - The client has **no authentication scaffolding of its own**. The template's JWT, guest/auth guards, sign-in and sign-up views, and mocked user are not used. The client learns who the user is from `GET /api/me` (`useCurrentUser`) and gates navigation and pages by `roleCode`. The server remains the authority on authorization.
 
