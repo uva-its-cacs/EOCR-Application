@@ -27,9 +27,10 @@ export const NAV_GROUPS: NavGroupData[] = [
     id: 'overview',
     label: 'Overview',
     items: [
+      // The catalog is everyone's landing page ("/"), so it comes first.
+      { title: 'Software catalog', path: paths.catalog.root, icon: 'ic-course' },
       { title: 'My requests', path: paths.requests.root, icon: 'ic-file' },
       { title: 'New request', path: paths.requests.new, icon: 'ic-blank' },
-      { title: 'Software catalog', path: paths.catalog.root, icon: 'ic-course' },
     ],
   },
   {

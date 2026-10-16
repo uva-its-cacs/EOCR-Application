@@ -41,7 +41,7 @@ describe('PrimaryNav sections', () => {
       within(overview)
         .getAllByRole('link')
         .map((link) => link.textContent)
-    ).toEqual(['My requests', 'New request', 'Software catalog']);
+    ).toEqual(['Software catalog', 'My requests', 'New request']);
     expect(screen.getByRole('button', { name: 'Overview' }).getAttribute('aria-expanded')).toBe(
       'true'
     );
@@ -100,7 +100,7 @@ describe('PrimaryNav collapsed (template mini navigation)', () => {
       within(nav)
         .getAllByRole('link')
         .map((link) => link.textContent)
-    ).toEqual(['My requests', 'New request', 'Software catalog']);
+    ).toEqual(['Software catalog', 'My requests', 'New request']);
     expect(screen.queryByRole('button', { name: 'Overview' })).toBeNull();
   });
 

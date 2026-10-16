@@ -10,13 +10,13 @@ const titles = (roleCode: string | undefined) =>
 describe('filterNavGroups', () => {
   it('adds the Review queue for Admin only (admin editing of software lives on the catalog page)', () => {
     expect(titles('Admin')).toEqual([
+      'Software catalog',
       'My requests',
       'New request',
-      'Software catalog',
       'Review queue',
     ]);
-    expect(titles('User')).toEqual(['My requests', 'New request', 'Software catalog']);
-    expect(titles(undefined)).toEqual(['My requests', 'New request', 'Software catalog']);
+    expect(titles('User')).toEqual(['Software catalog', 'My requests', 'New request']);
+    expect(titles(undefined)).toEqual(['Software catalog', 'My requests', 'New request']);
   });
 
   it('drops a group left without items, so its label and list are not rendered', () => {
