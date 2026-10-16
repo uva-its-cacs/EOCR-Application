@@ -278,6 +278,10 @@ Copied unmodified from `Minimal_TypeScript_v7.7.0/vite-ts` in commit `142571f` (
 
 Ours, built on these: `sections/review/view/review-queue-view.tsx` and `review-table-{row,toolbar,filters-result}.tsx` (the My requests list layout, from the invoice list), `view/review-request-view.tsx` and `review-request-page-view.tsx` (the request status layout), `review-form.tsx`, `review-people-card.tsx`, `review-catalog-versions.tsx`, `review-schema.ts`, `review-workflow.ts`, `use-review.ts`, `use-review-actions.ts`, `api.ts` and `types.ts`. Changed: `sections/requests/request-details-toolbar.tsx` (optional back label and actions; "Update request" when more information is needed), `view/request-details-view.tsx` (the details card moved to `request-details-summary.tsx`; the reviewer's message), `view/request-intake-view.tsx` and `view/request-edit-page-view.tsx` (update and resubmit a request sent back), and `components/eocr-nav/nav-data.ts` (the Management group, admins only).
 
+## Outlined buttons (2026-10-16)
+
+`client/src/components/custom-breadcrumbs/back-link.tsx` (template, already adapted): the back arrow is a 36px outlined circle (`shared.buttonOutlined`) with a hover tint instead of the template's floating arrow that fades on hover. Theme default in our `eocr-components.ts` (no template theme file edited).
+
 ## Development tooling (2026-10-16)
 
 `client/src/layouts/components/account-popover.tsx` (template, already adapted) renders our `layouts/eocr/dev-user-switcher.tsx` in development builds only, and widens to 300px there. `client/scripts/dev-all.mjs` (ours) runs the API and Vite together (`npm run dev:all`).

@@ -8,6 +8,17 @@ WCAG 2.1 AA contrast of the real theme (the Minimal template plus our overrides 
 - **Browser pairs:** some pairs need real CSS (alpha tints, `color-mix`, hover states, DOM structure). They are measured in a real browser (see "Browser measurements") and the code that produces them is guarded by `src/theme/theme-composition.test.ts`.
 - **Not changed on purpose:** `text.disabled`, `divider` and `shared.paperOutlined`.
 
+## Outlined buttons by default (2026-10-16)
+
+Buttons without a `variant` are now outlined (`MuiButton` `defaultProps.variant: 'outlined'` in `eocr-components.ts`), so none reads as floating text. The back arrows beside page titles (`custom-breadcrumbs/back-link.tsx`, the request toolbar's back `IconButton`) get a 1px `shared.buttonOutlined` ring. No token changed; the borders use the existing, asserted `shared.buttonOutlined` pairs. Measured in the browser (border against the surface behind it, non-text 3:1):
+
+| Control | Light | Dark |
+| --- | --- | --- |
+| Refresh, Back, Save as draft, back arrows (on `background.default`) | 4.88 | 6.41 |
+| View all requests (on `background.paper`) | 4.88 | 5.68 |
+
+Contained buttons keep their fill. Text and hover colors are unchanged (the outlined `inherit` hover is the template's `action.hover` tint under `text.primary`).
+
 ## Template scrollbar and toasts (2026-10-15)
 
 - Scrollbar thumb (`components/scrollbar/styles.css`): `text.secondary` at 0.64 opacity, computed against each surface: 3.29:1 on `background.default` and `background.paper` and 3.17:1 on `background.neutral` (light); 5.17:1 on `background.default` and 4.82:1 on `background.paper` (dark). UI component minimum 3:1. The template's `text.disabled` at 0.48 is below 3:1.

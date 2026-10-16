@@ -103,7 +103,11 @@ const chipAvatarVariants = COLORS.map((color) => ({
 // ----------------------------------------------------------------------
 
 export const eocrComponents: Components<Theme> = {
+  // Buttons are outlined unless a variant is given: a borderless text button reads as plain text. The
+  // default (inherit) outline is `shared.buttonOutlined` (3:1 or better on every surface, guarded by the
+  // contrast test); colored outlines use `main` (the variants above).
   MuiButton: {
+    defaultProps: { variant: 'outlined' },
     styleOverrides: {
       root: extend(templateStyle('MuiButton', 'root'), { variants: buttonVariants }) as never,
     },

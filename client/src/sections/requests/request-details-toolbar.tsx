@@ -93,6 +93,7 @@ export function RequestDetailsToolbar({
           component={RouterLink}
           href={backHref}
           aria-label={backLabel}
+          sx={{ border: (theme) => `1px solid ${theme.vars.palette.shared.buttonOutlined}` }}
         >
           <Iconify icon="eva:arrow-ios-back-fill" />
         </IconButton>

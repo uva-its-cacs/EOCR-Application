@@ -8,7 +8,8 @@ import { Iconify, iconifyClasses } from '../iconify';
 
 // ----------------------------------------------------------------------
 
-// EOCR: the link holds only the arrow and is named by `aria-label` (the caller's "Back to ...").
+// EOCR: the link holds only the arrow and is named by `aria-label` (the caller's "Back to ..."). It is an
+// outlined circle (shared.buttonOutlined, 3:1 or better) so it reads as a control, not floating text.
 export type BackLinkProps = LinkProps & {
   label?: string;
 };
@@ -21,24 +22,21 @@ export function BackLink({ sx, label, ...other }: BackLinkProps) {
       underline="none"
       sx={[
         (theme) => ({
+          width: 36,
+          height: 36,
+          flexShrink: 0,
+          borderRadius: '50%',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           verticalAlign: 'middle',
-          [`& .${iconifyClasses.root}`]: {
-            verticalAlign: 'inherit',
-            transform: 'translateY(-2px)',
-            ml: {
-              xs: '-14px',
-              md: '-18px',
-            },
-            transition: theme.transitions.create(['opacity'], {
-              duration: theme.transitions.duration.shorter,
-              easing: theme.transitions.easing.sharp,
-            }),
-          },
-          '&:hover': {
-            [`& .${iconifyClasses.root}`]: {
-              opacity: 0.48,
-            },
-          },
+          border: `1px solid ${theme.vars.palette.shared.buttonOutlined}`,
+          transition: theme.transitions.create(['background-color'], {
+            duration: theme.transitions.duration.shorter,
+            easing: theme.transitions.easing.sharp,
+          }),
+          [`& .${iconifyClasses.root}`]: { verticalAlign: 'inherit' },
+          '&:hover': { backgroundColor: theme.vars.palette.action.hover },
         }),
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
