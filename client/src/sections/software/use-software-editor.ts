@@ -65,7 +65,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
               first = false;
             }
           }
-          toast.showError(
+          setSaveError(
             error.status === 409
               ? 'Another administrator changed this software. Your edits are still here. Cancel, refresh the list, and reopen the editor before saving.'
               : error.status === 403 || error.status === 401
@@ -74,7 +74,7 @@ export function useSoftwareEditor(software: Software, onSaved: () => void) {
                   'Software could not be saved. Check the fields or try again.')
           );
         } else {
-          toast.showError('Software could not be saved. Your edits are still here. Try again.');
+          setSaveError('Software could not be saved. Your edits are still here. Try again.');
         }
       }
     },
