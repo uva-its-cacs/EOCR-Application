@@ -59,3 +59,6 @@ app.MapFallback("/api/{**path}", () => Results.NotFound());
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+// Lets the test project's WebApplicationFactory<Program> see this top-level program.
+public partial class Program { }

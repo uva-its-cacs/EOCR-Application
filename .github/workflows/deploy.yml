@@ -30,6 +30,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Test server
+        run: dotnet test --project server.Tests
+
       - name: Publish server
         run: dotnet publish server -c Release -o publish
 

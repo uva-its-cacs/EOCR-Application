@@ -2,6 +2,9 @@
   <Folder Name="/server/">
     <Project Path="server/Eocr.Server.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="server.Tests/Eocr.Server.Tests.csproj" />
+  </Folder>
   <Project Path="EOCR.AppHost/EOCR.AppHost.csproj" />
   <Project Path="EOCR.ServiceDefaults/EOCR.ServiceDefaults.csproj" />
 </Solution>

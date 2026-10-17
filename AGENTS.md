@@ -12,7 +12,8 @@ The app is built in small **slices**. Each slice is a thin, end-to-end piece of 
 
 - **server/**: .NET 10, ASP.NET Core with controllers, EF Core with SQL Server (LocalDB in development, Azure SQL in production). Namespace root: `Eocr.Server`.
 - **client/**: React + TypeScript, Vite, React Router, TanStack Query, Material UI (MUI) with the MUI X Data Grid (community), built on the **Minimal UI** template foundation (see "UI" below).
-- **Solution file**: `EOCR.slnx` (contains `server/`, `EOCR.AppHost/` and `EOCR.ServiceDefaults/`; `client/` is a Vite project).
+- **server.Tests/**: xUnit v3 tests for the server (`Eocr.Server.Tests`). Unit tests for pure rules (`Roles`, `RequestWorkflow`) and API tests through `WebApplicationFactory<Program>` on in-memory SQLite (`Infrastructure/EocrApiFactory`: environment `Testing`, the caller named by an `X-Test-User` header, system codes from `HasData`; `SeededApiFactory` adds the four role users). Run `dotnet test --project server.Tests` from the repo root (`global.json` opts in to the Microsoft.Testing.Platform runner that xUnit v3 needs on the .NET 10 SDK). Each slice adds tests for the endpoints and rules it changes; SQLite is not SQL Server, so a behavior that depends on SQL Server specifics needs a different check.
+- **Solution file**: `EOCR.slnx` (contains `server/`, `server.Tests/`, `EOCR.AppHost/` and `EOCR.ServiceDefaults/`; `client/` is a Vite project).
 - **Aspire**: `EOCR.AppHost` runs the API and the Vite client together (`api`, `client`). `EOCR.ServiceDefaults` is referenced by the API for OpenTelemetry, health checks and service discovery.
 
 ## Run locally
@@ -34,6 +35,8 @@ cd client && npm run dev
 ```
 
 Vite proxies `/api` to the API (see `client/vite.config.ts`). The browser only talks to the Vite origin, so no CORS configuration is needed in development. Under Aspire the proxy target comes from `services__api__https__0` (falling back to `__http__0`, then `http://localhost:5246`) and the port from `PORT`; standalone, the client dev server stays on port 5173 (the template's default of 8081 is not used). In Development the server applies EF migrations and seeds dummy data on startup (`Data/DevSeeder.cs`).
+
+Server tests (from the repo root): `dotnet test --project server.Tests`.
 
 Migrations:
 
@@ -247,6 +250,7 @@ Code lists the review page reads (`GET /api/codes/{type}`, staff-only): `Accessi
 ## Definition of done
 
 - `dotnet build` succeeds with no new warnings.
+- `dotnet test --project server.Tests` passes.
 - `npm run build` and `npm run lint` pass in `client/`, and `npm run fm:check` passes once the tooling slice has added Prettier.
 - The slice's acceptance checks pass when run manually.
 - When the theme or any color changes, the contrast ratios were measured and reported for light and dark modes.
