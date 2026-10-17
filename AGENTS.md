@@ -52,6 +52,7 @@ dotnet ef migrations add <Name> --project server --output-dir Data/Migrations
 4. Do not add features, tables, endpoints, packages, or abstractions that the slice does not call for. Do not refactor unrelated code.
 5. When finished, summarize what changed, how to verify it, and anything you noticed but did not change.
 6. Do not run `git commit`, `git push`, or create branches unless asked. The human reviews each diff and commits per slice.
+7. Project and config files (`*.csproj`, `package.json`, `appsettings*.json`) can be silently reverted when an editor or IDE holds a stale copy and saves it over a change made on disk. Humans: reload such files from disk (or close their tabs) after an agent edits them and before committing, and check `git diff` for deletions you did not make. Agents: after editing one, re-check it before finishing. `server.Tests/Project/ServerProjectFileTests` fails if `server/Eocr.Server.csproj` loses its `UserSecretsId`, the Azure Blob packages or the Pkcs CVE pin.
 
 ## Server architecture
 
