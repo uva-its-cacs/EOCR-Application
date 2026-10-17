@@ -39,6 +39,16 @@ export const NAV_GROUPS: NavGroupData[] = [
     requiredRole: ADMIN_ROLE_CODE,
     items: [{ title: 'Review queue', path: paths.admin.requests, icon: 'ic-kanban' }],
   },
+  // Dev-only proof of concept; left out of production bundles and of tests (MODE is 'test' there).
+  ...(import.meta.env.MODE === 'development'
+    ? [
+        {
+          id: 'dev',
+          label: 'Development',
+          items: [{ title: 'Dev file manager', path: paths.dev.files, icon: 'ic-file' }],
+        },
+      ]
+    : []),
 ];
 
 /**

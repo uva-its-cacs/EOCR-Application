@@ -22,6 +22,7 @@ builder.Services.AddScoped<ICodeRepo, CodeRepo>();
 builder.Services.AddScoped<IReviewRepo, ReviewRepo>();
 builder.Services.AddScoped<IExceptionRepo, ExceptionRepo>();
 builder.Services.AddScoped<IDevUserRepo, DevUserRepo>();
+builder.Services.AddScoped<IDevBlobRepo, DevBlobRepo>();
 
 var app = builder.Build();
 
@@ -39,8 +40,22 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));
 
+// ServiceDefaults maps /health in Development only; App Service's health check needs it everywhere.
+if (!app.Environment.IsDevelopment())
+{
+    app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+}
+
 app.MapControllers();
+
+// Unknown API paths are a 404, not the SPA.
+app.MapFallback("/api/{**path}", () => Results.NotFound());
+
+app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -23,6 +23,7 @@ const SoftwareCatalogPage = lazy(() => import('src/pages/software/catalog'));
 const SoftwareEditPage = lazy(() => import('src/pages/admin/software-edit'));
 const ReviewQueuePage = lazy(() => import('src/pages/admin/review-queue'));
 const ReviewRequestPage = lazy(() => import('src/pages/admin/review-request'));
+const DevFilesPage = lazy(() => import('src/pages/dev-files'));
 const NotFoundPage = lazy(() => import('src/pages/not-found'));
 
 // ----------------------------------------------------------------------
@@ -114,6 +115,16 @@ export const eocrRoutes: RouteObject[] = [
           },
         ],
       },
+      // Dev-only proof of concept (blob storage file manager); not registered in production builds.
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: paths.dev.files.slice(1),
+              element: <DevFilesPage />,
+              handle: { crumb: 'Dev file manager' } satisfies RouteHandle,
+            },
+          ]
+        : []),
       {
         // The admin catalog merged into the shared catalog; keep old links working.
         path: paths.admin.software,

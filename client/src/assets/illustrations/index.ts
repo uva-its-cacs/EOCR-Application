@@ -1,3 +1,5 @@
+export { default as UploadIllustration } from './upload-illustration';
+
 // EOCR: only the illustrations the ported error views use (the template's index exports thirteen).
 export { default as ForbiddenIllustration } from './forbidden-illustration';
 

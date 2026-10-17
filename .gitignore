@@ -488,3 +488,7 @@ dist/
 .env.*.local
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+# React build output (built into server/wwwroot by client)
+server/wwwroot/*
+!server/wwwroot/.gitkeep

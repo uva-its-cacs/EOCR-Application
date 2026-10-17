@@ -20,6 +20,10 @@ export const paths = {
     edit: (requestId: number) => `${ROOTS.REQUESTS}/${requestId}/edit`,
     eeaap: (requestId: number) => `${ROOTS.REQUESTS}/${requestId}/eeaap`,
   },
+  // DEV ONLY (proof of concept, registered only when import.meta.env.DEV)
+  dev: {
+    files: '/dev/files',
+  },
   // ADMIN
   admin: {
     software: `${ROOTS.ADMIN}/software`,

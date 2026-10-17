@@ -299,3 +299,18 @@ Ours: `sections/requests/my-requests-summary.tsx` (the "Your requests" strip on 
 ## EEAAP exceptions (2026-10-15)
 
 No template files were ported. Ours, built on existing layouts: `sections/requests/view/request-eeaap-view.tsx` and `request-eeaap-page-view.tsx` (the intake card layout), `request-details-exception.tsx` (the order details description list, shared with the review page), `request-eeaap-schema.ts`, `use-request-exception.ts`, `sections/software/exception-text.ts`. Changed: `request-details-toolbar.tsx` ("Complete the EEAAP"), `view/request-details-view.tsx`, `request-intake-catalog-step.tsx` and `software-table-row.tsx` (exception expiry text), and on the review page `view/review-request-view.tsx` and `review-decide-dialog.tsx` (adapted from the template's quick edit form in an earlier commit: outcomes and conditions with a submitted EEAAP).
+
+## Dev file manager (blob storage proof of concept)
+
+Dev-only page (`/dev/files`, Development builds only) that is not meant to ship. Ported from the **full `vite-ts` demo** (v7.7.0). These files have not been committed as separate `vendor:` commits yet (the working tree holds the ported and adapted versions together); split them if the proof of concept is kept.
+
+| Our path | Template path | Status | Note |
+| --- | --- | --- | --- |
+| `client/src/components/upload/` (`classes.ts`, `types.ts`, `default/`, `components/`) | `src/components/upload/` | modified | The avatar and box variants and their exports are not ported. `index.ts` exports the default uploader, previews and rejected files only. Needs `react-dropzone` 15.0.0 (added, exact pin, matches the template). |
+| `client/src/components/file-thumbnail/` | `src/components/file-thumbnail/` | modified (`use-file-preview.ts` only) | The previews derive the object URL with `useMemo` and a per-File cache instead of setState in an effect (the compiler lint rules forbid it). URLs are not revoked: revoking in an effect cleanup breaks under StrictMode. Unused setters removed from the return types. |
+| `client/src/assets/illustrations/upload-illustration.tsx` | `src/assets/illustrations/upload-illustration.tsx` | verbatim | Exported from the illustrations index. |
+| `client/public/assets/icons/files/*.svg` | `public/assets/icons/files/` | verbatim | File type icons used by `FileThumbnail`. |
+| `client/src/utils/format-number.ts` | `src/utils/format-number.ts` | modified | Only `fData`, without the locale code. |
+| `client/src/sections/dev-files/file-item-slots.tsx` | `src/sections/file-manager/file-manager-file-item-slots.tsx` | modified | Avatar group and favorite checkbox removed; actions button has an accessible name; `title` accepts a node. |
+| `client/src/sections/dev-files/` (other files) | n/a (modeled on `file-manager-folder-item`, `file-manager-file-item`, `file-manager-create-folder-dialog`, `file-manager-view`) | ours-only | Grid view, folder navigation, upload, new folder, move or rename and delete wired to `/api/dev/blobs`. The template's share, details drawer, filters (date picker), table view and mock data are not ported. |
+| `client/src/pages/dev-files.tsx`, `routes/paths.ts`, `routes/sections/eocr.tsx`, `components/eocr-nav/nav-data.ts` | n/a | modified or ours-only | Route and nav entry registered only in development (`import.meta.env.DEV`; the nav entry uses `MODE === 'development'` so tests are unaffected). |

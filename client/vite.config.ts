@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT) || 5173;
 const API_TARGET =
   process.env.services__api__https__0 ??
   process.env.services__api__http__0 ??
-  'http://localhost:5246';
+  'https://localhost:7000';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -45,6 +45,11 @@ export default defineConfig({
         secure: false, // local ASP.NET dev certificate
       },
     },
+  },
+  build: {
+    // The API serves the build from server/wwwroot (single deployable, same origin).
+    outDir: '../server/wwwroot',
+    emptyOutDir: true,
   },
   preview: { port: PORT },
 });
