@@ -1,14 +1,14 @@
 import { paths } from 'src/routes/paths';
 
-import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
+import { STAFF_ROLE_CODES } from 'src/sections/auth/types';
 
 // ----------------------------------------------------------------------
 
 export type NavItemData = {
   title: string;
   path: string;
-  // Role code (Codes.Value) required for this item; omit for everyone.
-  requiredRole?: string;
+  // Role codes (Codes.Value) that may see this item; omit for everyone.
+  requiredRoles?: readonly string[];
   // File name in public/assets/icons/navbar (template icon set), without the extension.
   icon: string;
 };
@@ -17,8 +17,8 @@ export type NavGroupData = {
   id: string;
   // Visible group label. A group without a label renders its list only.
   label?: string;
-  // Role code (Codes.Value) the user needs to see the group. Omit for everyone.
-  requiredRole?: string;
+  // Role codes (Codes.Value) that may see the group. Omit for everyone.
+  requiredRoles?: readonly string[];
   items: NavItemData[];
 };
 
@@ -36,7 +36,7 @@ export const NAV_GROUPS: NavGroupData[] = [
   {
     id: 'management',
     label: 'Management',
-    requiredRole: ADMIN_ROLE_CODE,
+    requiredRoles: STAFF_ROLE_CODES,
     items: [{ title: 'Review queue', path: paths.admin.requests, icon: 'ic-kanban' }],
   },
   // Dev-only proof of concept; left out of production bundles and of tests (MODE is 'test' there).
@@ -60,10 +60,14 @@ export function filterNavGroups(
   roleCode: string | undefined
 ): NavGroupData[] {
   return groups
-    .filter((group) => !group.requiredRole || group.requiredRole === roleCode)
+    .filter(
+      (group) => !group.requiredRoles || (!!roleCode && group.requiredRoles.includes(roleCode))
+    )
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.requiredRole || item.requiredRole === roleCode),
+      items: group.items.filter(
+        (item) => !item.requiredRoles || (!!roleCode && item.requiredRoles.includes(roleCode))
+      ),
     }))
     .filter((group) => group.items.length > 0);
 }

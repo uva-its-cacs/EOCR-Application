@@ -150,6 +150,26 @@ namespace Eocr.Server.Data.Migrations
                         },
                         new
                         {
+                            CodeId = 3,
+                            CodeType = "UserRole",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Sys Admin",
+                            SortOrder = 3,
+                            Value = "SysAdmin"
+                        },
+                        new
+                        {
+                            CodeId = 4,
+                            CodeType = "UserRole",
+                            IsActive = true,
+                            IsSystem = true,
+                            Label = "Super Admin",
+                            SortOrder = 4,
+                            Value = "SuperAdmin"
+                        },
+                        new
+                        {
                             CodeId = 101,
                             CodeType = "RequestStatus",
                             IsActive = true,

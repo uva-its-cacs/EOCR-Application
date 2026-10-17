@@ -13,6 +13,33 @@ public static class DevSeeder
         SeedVersions(db);
         SeedReviews(db);
         SeedExceptions(db);
+        SeedStaffRoles(db);
+    }
+
+    // Staff roles (issue #23). The seeded reviewers admin@ and riley@ can run the workflow, so they are Sys
+    // Admins (promoted here when an older dev database still has them as Admin); Morgan is the read-only
+    // Admin and Casey the Super Admin. Fictional.
+    private static void SeedStaffRoles(EocrDbContext db)
+    {
+        int RoleId(string value) => db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == value)
+            .Select(c => c.CodeId)
+            .Single();
+
+        var adminId = RoleId(CodeConstants.UserRoles.Admin);
+        var sysAdminId = RoleId(CodeConstants.UserRoles.SysAdmin);
+        var superAdminId = RoleId(CodeConstants.UserRoles.SuperAdmin);
+
+        foreach (var user in db.Users.Where(u => (u.Email == "admin@example.com" || u.Email == "riley@example.com")
+            && u.RoleId == adminId))
+            user.RoleId = sysAdminId;
+
+        if (!db.Users.Any(u => u.Email == "morgan@example.com"))
+            db.Users.Add(new User { Email = "morgan@example.com", Name = "Morgan Example", RoleId = adminId });
+        if (!db.Users.Any(u => u.Email == "casey@example.com"))
+            db.Users.Add(new User { Email = "casey@example.com", Name = "Casey Example", RoleId = superAdminId });
+
+        db.SaveChanges();
     }
 
     // Once (while no exception exists): EEAAP exceptions in each visible state, on fictional requests.
@@ -141,11 +168,11 @@ public static class DevSeeder
     {
         if (!db.Users.Any(u => u.Email == "riley@example.com"))
         {
-            var adminRoleId = db.Codes
-                .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.Admin)
+            var sysAdminRoleId = db.Codes
+                .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.SysAdmin)
                 .Select(c => c.CodeId)
                 .Single();
-            db.Users.Add(new User { Email = "riley@example.com", Name = "Riley Example", RoleId = adminRoleId });
+            db.Users.Add(new User { Email = "riley@example.com", Name = "Riley Example", RoleId = sysAdminRoleId });
             db.SaveChanges();
         }
         if (db.Reviews.Any()) return;
@@ -361,8 +388,8 @@ public static class DevSeeder
             .Select(c => c.CodeId)
             .Single();
 
-        var adminRoleId = db.Codes
-            .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.Admin)
+        var sysAdminRoleId = db.Codes
+            .Where(c => c.CodeType == CodeConstants.CodeTypes.UserRole && c.Value == CodeConstants.UserRoles.SysAdmin)
             .Select(c => c.CodeId)
             .Single();
 
@@ -375,7 +402,7 @@ public static class DevSeeder
 
         var dana = new User { Email = "dana@example.com", Name = "Dana Example", RoleId = userRoleId };
         var sam = new User { Email = "sam@example.com", Name = "Sam Example", RoleId = userRoleId };
-        var adminUser = new User { Email = "admin@example.com", Name = "Admin Example", RoleId = adminRoleId };
+        var adminUser = new User { Email = "admin@example.com", Name = "Admin Example", RoleId = sysAdminRoleId };
 
         db.Users.AddRange(dana, sam, adminUser);
 

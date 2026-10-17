@@ -15,7 +15,7 @@ import { RouterLink } from 'src/routes/components';
 import { Label } from 'src/components/label';
 import { CustomPopover } from 'src/components/custom-popover';
 
-import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
+import { isStaffRole } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 
 import { AccountButton } from './account-button';
@@ -60,7 +60,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
             </Typography>
 
             <Label
-              color={current.user.roleCode === ADMIN_ROLE_CODE ? 'primary' : 'default'}
+              color={isStaffRole(current.user.roleCode) ? 'primary' : 'default'}
               sx={{ mt: 1 }}
             >
               {current.user.roleLabel}

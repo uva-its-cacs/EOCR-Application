@@ -29,4 +29,36 @@ describe('RequireAdmin', () => {
     expect(document.title).toBe('No access - EOCR');
     expect(screen.getByRole('link', { name: 'Go to home' }).getAttribute('href')).toBe('/');
   });
+
+  it('lets every staff role into staff pages, and only writers into write pages', async () => {
+    const cases = [
+      { roleCode: 'Admin', staff: true, write: false },
+      { roleCode: 'SysAdmin', staff: true, write: true },
+      { roleCode: 'SuperAdmin', staff: true, write: true },
+      { roleCode: 'User', staff: false, write: false },
+    ];
+
+    for (const { roleCode, staff, write } of cases) {
+      for (const requireWrite of [false, true]) {
+        mockFetch(ok({ ...ME, roleCode }));
+        renderView(<RequireAdmin requireWrite={requireWrite} />);
+        const expectAccess = requireWrite ? write : staff;
+
+        if (expectAccess) {
+          // No refusal page: wait for the access check to finish, then expect no 403 heading.
+          await vi.waitFor(() =>
+            expect(
+              screen.queryByRole('heading', { name: 'You do not have access to this page' })
+            ).toBeNull()
+          );
+          await vi.waitFor(() => expect(screen.queryByText('Loading page')).toBeNull());
+        } else {
+          expect(
+            await screen.findByRole('heading', { name: 'You do not have access to this page' })
+          ).toBeTruthy();
+        }
+        cleanup();
+      }
+    }
+  });
 });

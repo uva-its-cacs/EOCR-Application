@@ -6,7 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Eocr.Server.Controllers;
 
-// The review queue and the review workflow. Admins only.
+// The review queue and the review workflow. Staff read (Admin, SysAdmin, SuperAdmin); only SysAdmin and
+// SuperAdmin change anything (see Auth/Roles.cs).
 [ApiController]
 [Route("api/admin")]
 public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo reviewRepo) : ControllerBase
@@ -14,7 +15,7 @@ public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo revie
     [HttpGet("requests")]
     public async Task<ActionResult<List<AdminRequestSummaryDto>>> GetQueue(CancellationToken ct)
     {
-        var (_, denied) = await RequireAdminAsync(ct);
+        var (_, _, denied) = await RequireStaffAsync(ct);
         if (denied is not null) return denied;
 
         return Ok(await reviewRepo.GetQueueAsync(ct));
@@ -23,17 +24,21 @@ public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo revie
     [HttpGet("requests/{requestId:int}")]
     public async Task<ActionResult<AdminRequestDetailDto>> Get(int requestId, CancellationToken ct)
     {
-        var (_, denied) = await RequireAdminAsync(ct);
+        var (_, canWrite, denied) = await RequireStaffAsync(ct);
         if (denied is not null) return denied;
 
         var detail = await reviewRepo.GetDetailAsync(requestId, ct);
-        return detail is null ? NotFound() : Ok(detail);
+        if (detail is null) return NotFound();
+
+        // A read-only Admin sees the request but is offered no workflow steps.
+        if (!canWrite) detail.AllowedActions = [];
+        return Ok(detail);
     }
 
     [HttpGet("reviewers")]
     public async Task<ActionResult<List<ReviewerOptionDto>>> GetReviewers(CancellationToken ct)
     {
-        var (_, denied) = await RequireAdminAsync(ct);
+        var (_, _, denied) = await RequireStaffAsync(ct);
         if (denied is not null) return denied;
 
         return Ok(await reviewRepo.GetReviewersAsync(ct));
@@ -43,7 +48,7 @@ public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo revie
     public async Task<ActionResult<AdminRequestDetailDto>> Assign(
         int requestId, AssignRequestDto input, CancellationToken ct)
     {
-        var (adminId, denied) = await RequireAdminAsync(ct);
+        var (adminId, denied) = await RequireWriterAsync(ct);
         if (denied is not null) return denied;
 
         return ToResult(await reviewRepo.AssignAsync(adminId, requestId, input, ct));
@@ -53,7 +58,7 @@ public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo revie
     public async Task<ActionResult<AdminRequestDetailDto>> SaveReview(
         int requestId, SaveReviewDto input, CancellationToken ct)
     {
-        var (adminId, denied) = await RequireAdminAsync(ct);
+        var (adminId, denied) = await RequireWriterAsync(ct);
         if (denied is not null) return denied;
 
         return ToResult(await reviewRepo.SaveReviewAsync(adminId, requestId, input, ct));
@@ -83,7 +88,7 @@ public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo revie
     public async Task<ActionResult<AdminRequestDetailDto>> Decide(
         int requestId, DecideRequestDto input, CancellationToken ct)
     {
-        var (adminId, denied) = await RequireAdminAsync(ct);
+        var (adminId, denied) = await RequireWriterAsync(ct);
         if (denied is not null) return denied;
 
         return ToResult(await reviewRepo.DecideAsync(adminId, requestId, input, ct));
@@ -94,20 +99,30 @@ public class AdminRequestsController(ICurrentUser currentUser, IReviewRepo revie
     private async Task<ActionResult<AdminRequestDetailDto>> MoveAsync(
         int requestId, string action, RequestActionDto input, CancellationToken ct)
     {
-        var (adminId, denied) = await RequireAdminAsync(ct);
+        var (adminId, denied) = await RequireWriterAsync(ct);
         if (denied is not null) return denied;
 
         return ToResult(await reviewRepo.MoveAsync(adminId, requestId, action, input, ct));
     }
 
-    // The caller's user ID, or the 401/403 to return instead.
-    private async Task<(int AdminId, ActionResult? Denied)> RequireAdminAsync(CancellationToken ct)
+    // Staff (Admin, SysAdmin, SuperAdmin) may read. Returns the caller's user ID and whether they may write,
+    // or the 401/403 to return instead.
+    private async Task<(int AdminId, bool CanWrite, ActionResult? Denied)> RequireStaffAsync(CancellationToken ct)
     {
         var user = await currentUser.GetAsync(ct);
-        if (user is null) return (0, Unauthorized());
-        if (user.RoleCode != CodeConstants.UserRoles.Admin)
-            return (0, StatusCode(StatusCodes.Status403Forbidden));
-        return (user.UserId, null);
+        if (user is null) return (0, false, Unauthorized());
+        if (!Roles.IsStaff(user.RoleCode))
+            return (0, false, StatusCode(StatusCodes.Status403Forbidden));
+        return (user.UserId, Roles.CanWrite(user.RoleCode), null);
+    }
+
+    // Only SysAdmin and SuperAdmin may change data or run the workflow; a read-only Admin gets 403.
+    private async Task<(int AdminId, ActionResult? Denied)> RequireWriterAsync(CancellationToken ct)
+    {
+        var (userId, canWrite, denied) = await RequireStaffAsync(ct);
+        if (denied is not null) return (0, denied);
+        if (!canWrite) return (0, StatusCode(StatusCodes.Status403Forbidden));
+        return (userId, null);
     }
 
     private ActionResult<AdminRequestDetailDto> ToResult(AdminWriteResultDto result)

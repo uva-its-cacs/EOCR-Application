@@ -106,12 +106,18 @@ export const eocrRoutes: RouteObject[] = [
             } satisfies RouteHandle,
           },
           {
-            path: 'admin/software/:softwareId/edit',
-            element: <SoftwareEditPage />,
-            handle: {
-              crumb: 'Edit software',
-              parent: { crumb: 'Software catalog', path: paths.catalog.root },
-            } satisfies RouteHandle,
+            // The editor changes data, so the read-only Admin is kept out.
+            element: <RequireAdmin requireWrite />,
+            children: [
+              {
+                path: 'admin/software/:softwareId/edit',
+                element: <SoftwareEditPage />,
+                handle: {
+                  crumb: 'Edit software',
+                  parent: { crumb: 'Software catalog', path: paths.catalog.root },
+                } satisfies RouteHandle,
+              },
+            ],
           },
         ],
       },

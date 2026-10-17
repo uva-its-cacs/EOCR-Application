@@ -33,13 +33,15 @@ describe('filterNavGroups', () => {
       {
         id: 'admin',
         label: 'Management',
-        requiredRole: 'Admin',
+        requiredRoles: ['Admin', 'SysAdmin'],
         items: [{ title: 'Admin only', path: '/admin', icon: 'ic-file' }],
       },
     ];
     const ids = (roleCode: string | undefined) =>
       filterNavGroups(groups, roleCode).map((group) => group.id);
     expect(ids('Admin')).toEqual(['all', 'admin']);
+    expect(ids('SysAdmin')).toEqual(['all', 'admin']);
+    expect(ids('SuperAdmin')).toEqual(['all']);
     expect(ids('User')).toEqual(['all']);
     expect(ids('admin')).toEqual(['all']);
     expect(ids('3')).toEqual(['all']);

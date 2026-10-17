@@ -15,7 +15,7 @@ import { ErrorState } from 'src/components/feedback';
 import { VisuallyHidden } from 'src/components/visually-hidden';
 import { PageHeader, focusPageHeading } from 'src/components/page-header';
 
-import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
+import { isStaffRole, canWriteRole } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 import { useMyRequests } from 'src/sections/requests/use-my-requests';
 import { MyRequestsSummary } from 'src/sections/requests/my-requests-summary';
@@ -42,8 +42,11 @@ export function SoftwareCatalogPageView() {
   const software = useSoftwareCatalog(true);
   const myRequests = useMyRequests();
   const current = useCurrentUser();
-  // Edit links only show once the user is known to be an admin. The server still enforces access.
-  const isAdmin = current.status === 'authenticated' && current.user.roleCode === ADMIN_ROLE_CODE;
+  // Staff links only show once the user is known to be staff, Edit only for roles that may write (Admin is
+  // read-only). The server still enforces access.
+  const roleCode = current.status === 'authenticated' ? current.user.roleCode : undefined;
+  const isAdmin = isStaffRole(roleCode);
+  const canEdit = canWriteRole(roleCode);
   const busy = software.isFetching;
   // Only a refresh the user asked for is announced, not the initial load.
   const [refreshState, setRefreshState] = useState<RefreshState>('idle');
@@ -129,7 +132,7 @@ export function SoftwareCatalogPageView() {
         <SoftwareListView
           rows={software.data ?? []}
           loading={busy}
-          editHref={isAdmin ? paths.admin.softwareEdit : undefined}
+          editHref={canEdit ? paths.admin.softwareEdit : undefined}
         />
       )}
 

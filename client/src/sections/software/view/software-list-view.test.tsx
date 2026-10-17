@@ -196,7 +196,8 @@ const USER: MeDto = {
   roleCode: 'User',
   roleLabel: 'User',
 };
-const ADMIN: MeDto = { ...USER, roleCode: 'Admin', roleLabel: 'Admin' };
+const ADMIN: MeDto = { ...USER, roleCode: 'SysAdmin', roleLabel: 'Sys Admin' };
+const READ_ONLY_ADMIN: MeDto = { ...USER, roleCode: 'Admin', roleLabel: 'Admin' };
 
 // The viewer's requests and the review queue (both empty unless a test sets them).
 let myRequests: () => Promise<Response> = () => Promise.resolve(jsonResponse([]));
@@ -324,12 +325,20 @@ describe('SoftwareCatalogPageView', () => {
     expect(screen.queryByRole('button', { name: /Actions for/ })).toBeNull();
   });
 
-  it('shows row actions for an Admin', async () => {
+  it('shows row actions for a Sys Admin', async () => {
     mockCatalogApi(ADMIN, ok(SOFTWARE));
     renderView(<SoftwareCatalogPageView />);
 
     expect(await screen.findByRole('button', { name: 'Actions for Acme Reader' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Actions for Beacon Planner' })).toBeTruthy();
+  });
+
+  it('hides row actions from the read-only Admin, who may not edit software', async () => {
+    mockCatalogApi(READ_ONLY_ADMIN, ok(SOFTWARE));
+    renderView(<SoftwareCatalogPageView />);
+
+    expect(await screen.findByText('Acme Reader')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Actions for/ })).toBeNull();
   });
 
   it('hides row actions when the user is not signed in', async () => {

@@ -1,3 +1,4 @@
+using Eocr.Server.Auth;
 using Eocr.Server.Data;
 using Eocr.Server.Data.Entities;
 using Eocr.Server.DTOs;
@@ -104,7 +105,7 @@ public class ReviewRepo(EocrDbContext db) : IReviewRepo
 
     public Task<List<ReviewerOptionDto>> GetReviewersAsync(CancellationToken ct) =>
         db.Users.AsNoTracking()
-            .Where(u => u.Role.Value == CodeConstants.UserRoles.Admin)
+            .Where(u => Roles.WriterRoles.Contains(u.Role.Value))
             .OrderBy(u => u.Name).ThenBy(u => u.UserId)
             .Select(u => new ReviewerOptionDto { UserId = u.UserId, Name = u.Name })
             .ToListAsync(ct);
@@ -122,8 +123,8 @@ public class ReviewRepo(EocrDbContext db) : IReviewRepo
 
         var reviewerId = input.ReviewerId ?? adminId;
         if (!await db.Users.AnyAsync(u => u.UserId == reviewerId
-                && u.Role.Value == CodeConstants.UserRoles.Admin, ct))
-            return WithError(nameof(input.ReviewerId), "Select an administrator.");
+                && Roles.WriterRoles.Contains(u.Role.Value), ct))
+            return WithError(nameof(input.ReviewerId), "Select a Sys Admin or Super Admin.");
 
         request.AssignedReviewerId = reviewerId;
         request.UpdatedAt = DateTimeOffset.UtcNow;

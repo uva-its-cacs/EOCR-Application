@@ -15,7 +15,7 @@ public class SoftwareController(ICurrentUser currentUser, ISoftwareRepo software
     {
         var user = await currentUser.GetAsync(ct);
         if (user is null) return Unauthorized();
-        if (user.RoleCode != CodeConstants.UserRoles.Admin)
+        if (!Roles.IsStaff(user.RoleCode))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         return Ok(await softwareRepo.GetAllAsync(ct));
@@ -35,7 +35,7 @@ public class SoftwareController(ICurrentUser currentUser, ISoftwareRepo software
     {
         var user = await currentUser.GetAsync(ct);
         if (user is null) return Unauthorized();
-        if (user.RoleCode != CodeConstants.UserRoles.Admin)
+        if (!Roles.IsStaff(user.RoleCode))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         return Ok(await softwareRepo.GetOwnersAsync(ct));
@@ -47,7 +47,7 @@ public class SoftwareController(ICurrentUser currentUser, ISoftwareRepo software
     {
         var user = await currentUser.GetAsync(ct);
         if (user is null) return Unauthorized();
-        if (user.RoleCode != CodeConstants.UserRoles.Admin)
+        if (!Roles.CanWrite(user.RoleCode))
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var result = await softwareRepo.UpdateAsync(softwareId, input, ct);

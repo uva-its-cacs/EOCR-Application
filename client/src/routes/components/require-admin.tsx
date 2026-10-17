@@ -8,16 +8,18 @@ import { SplashScreen } from 'src/components/loading-screen';
 
 import { View403 } from 'src/sections/error/403-view';
 import { View500 } from 'src/sections/error/500-view';
-import { ADMIN_ROLE_CODE } from 'src/sections/auth/types';
+import { isStaffRole, canWriteRole } from 'src/sections/auth/types';
 import { useCurrentUser } from 'src/sections/auth/use-current-user';
 
 // ----------------------------------------------------------------------
 
 /**
- * Route guard for admin pages. It only decides what to show: the server stays the authority and
- * answers 403 to non-admins on its own. The refusal pages are the template's 403 and 500 views.
+ * Route guard for staff pages (Admin, SysAdmin, SuperAdmin). With `requireWrite` only the roles that may
+ * change data (SysAdmin, SuperAdmin) get in, so the read-only Admin cannot open an editor. It only decides
+ * what to show: the server stays the authority and answers 403 on its own. The refusal pages are the
+ * template's 403 and 500 views.
  */
-export function RequireAdmin() {
+export function RequireAdmin({ requireWrite = false }: { requireWrite?: boolean }) {
   const current = useCurrentUser();
 
   // As the template's auth guard: the splash screen while the session is checked.
@@ -52,13 +54,21 @@ export function RequireAdmin() {
     );
   }
 
-  if (current.user.roleCode !== ADMIN_ROLE_CODE) {
+  const allowed = requireWrite
+    ? canWriteRole(current.user.roleCode)
+    : isStaffRole(current.user.roleCode);
+
+  if (!allowed) {
     return (
       <DashboardContent>
         <View403
           title="You do not have access to this page"
           documentTitle="No access"
-          description="This page is for administrators. If you need access, contact your system administrator."
+          description={
+            requireWrite
+              ? 'This page is for Sys Admins and Super Admins. If you need access, contact your system administrator.'
+              : 'This page is for administrators. If you need access, contact your system administrator.'
+          }
         />
       </DashboardContent>
     );

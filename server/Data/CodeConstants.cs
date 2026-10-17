@@ -19,6 +19,8 @@ public static class CodeConstants
     {
         public const string User = "User";
         public const string Admin = "Admin";
+        public const string SysAdmin = "SysAdmin";
+        public const string SuperAdmin = "SuperAdmin";
     }
 
     public static class RequestStatuses
